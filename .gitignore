@@ -1,0 +1,13 @@
+# Variables de entorno
+.env
+
+# Archivos de Python
+__pycache__/
+*.pyc
+
+# Entornos virtuales (por si acaso usas uno luego)
+venv/
+env/
+
+# Archivos de sistema operativo
+.DS_Store

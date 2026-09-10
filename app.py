@@ -5,9 +5,8 @@ from backend import LetraDeMedicoBackend
 # Configuración de la página
 st.set_page_config(page_title="LetraDeMédico", page_icon="🩺", layout="wide")
 
-# Inicializar el backend en la sesión de Streamlit para no recargarlo cada vez
-if "backend" not in st.session_state:
-    st.session_state.backend = LetraDeMedicoBackend()
+# Inicializar el backend
+backend = LetraDeMedicoBackend()
 
 # --- ESTILOS CSS ---
 st.markdown("""
@@ -67,13 +66,16 @@ if not st.session_state.analisis_completado:
                 
                 # Ejecutar el backend
                 try:
-                    resultado = st.session_state.backend.procesar_resultado("simulacion.pdf", contexto_paciente)
+                    file_bytes = archivo_subido.read()
+                    mime_type = archivo_subido.type
+                    resultado = backend.procesar_resultado(file_bytes, mime_type, contexto_paciente)
                     
                     if "error" in resultado:
                         st.error(f"Hubo un error analizando el documento: {resultado['error']}")
                     else:
                         st.session_state.datos_extraidos = resultado["datos_extraidos"]
                         st.session_state.analisis_final = resultado["analisis_final"]
+                        st.session_state.tipo_examen = resultado.get("tipo_examen", "Examen Médico")
                         st.session_state.analisis_completado = True
                         st.rerun()
                 except Exception as e:
@@ -90,7 +92,8 @@ else:
     col_izq, col_der = st.columns([1.2, 1])
     
     with col_izq:
-        st.subheader("Tus resultados explicados")
+        tipo_ex = st.session_state.get("tipo_examen", "Tus Resultados")
+        st.subheader(f"📊 {tipo_ex}")
         
         # Iterar sobre las explicaciones generadas por la IA
         explicaciones = st.session_state.analisis_final.get("explicaciones", [])
@@ -126,9 +129,11 @@ else:
         for i, pregunta in enumerate(preguntas):
             st.info(f"**{i+1}.** {pregunta}")
             
-        st.markdown("""
+        disclaimer_text = st.session_state.analisis_final.get("disclaimer", "⚠️ Esta información no reemplaza el diagnóstico de tu médico.")
+            
+        st.markdown(f"""
         <div class="disclaimer">
-            ⚠️ Esta información no reemplaza el diagnóstico de tu médico.
+            {disclaimer_text}
         </div>
         """, unsafe_allow_html=True)
         

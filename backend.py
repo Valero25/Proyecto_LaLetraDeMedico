@@ -12,7 +12,7 @@ if "GEMINI_API_KEY" not in os.environ:
     print("Advertencia: No se encontró GEMINI_API_KEY en las variables de entorno.")
 
 class LetraDeMedicoBackend:
-    def __init__(self, model_name="gemini-flash-latest"):
+    def __init__(self, model_name="gemini-3.6-flash"):
         # Usamos un modelo potente para el razonamiento médico y la extracción
         self.client = genai.Client()
         self.model_name = model_name

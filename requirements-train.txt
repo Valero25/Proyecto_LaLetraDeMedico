@@ -4,9 +4,13 @@
 # Fase 1: generador sintético y pruebas
 pytest
 
-# Fase 2: RAG (se habilitan al empezar la fase)
-# sentence-transformers
-# faiss-cpu
+# Fase 2: RAG
+sentence-transformers
+faiss-cpu
+requests
+beautifulsoup4
+datasets
+accelerate
 
 # Fases 3 y 4: fine-tuning (se instalan en Colab con GPU)
 # torch

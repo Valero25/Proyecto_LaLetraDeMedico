@@ -1,0 +1,38 @@
+{
+  "_nota": "Fichas para analitos sin página propia de MedlinePlus (la NLM no publica el uroanálisis general fuera de la enciclopedia A.D.A.M., que tiene licencia). Redactadas como borrador: el equipo debe revisarlas contra una fuente médica, citarla en 'fuente' y cambiar 'revisada' a true.",
+  "fichas": [
+    {
+      "id": "equipo-densidad-urinaria",
+      "titulo": "Densidad urinaria (gravedad específica)",
+      "analitos": ["densidad_urinaria"],
+      "fuente": "Redacción del equipo (pendiente de revisión)",
+      "revisada": false,
+      "secciones": [
+        {"seccion": "¿Qué es la densidad urinaria?", "texto": "La densidad urinaria, también llamada gravedad específica, compara qué tan concentrada está la orina frente al agua. Forma parte del uroanálisis de rutina y da una idea de cómo los riñones están equilibrando el agua del cuerpo."},
+        {"seccion": "¿Qué significan los resultados?", "texto": "Una densidad alta indica orina muy concentrada, lo que suele ocurrir cuando se ha tomado poca agua, después de sudar mucho, con vómitos o diarrea, o cuando hay glucosa o proteínas en la orina. Una densidad baja indica orina diluida, que es común al tomar mucho líquido y que también puede verse con algunos medicamentos diuréticos o cuando los riñones no concentran bien la orina. El resultado se interpreta junto con el resto del uroanálisis; hable con su profesional de la salud para entenderlo."}
+      ]
+    },
+    {
+      "id": "equipo-ph-urinario",
+      "titulo": "pH de la orina",
+      "analitos": ["ph_urinario"],
+      "fuente": "Redacción del equipo (pendiente de revisión)",
+      "revisada": false,
+      "secciones": [
+        {"seccion": "¿Qué es el pH de la orina?", "texto": "El pH de la orina mide qué tan ácida o alcalina es. Forma parte del uroanálisis de rutina. La dieta influye mucho: comer mucha carne tiende a acidificar la orina y una dieta rica en frutas y verduras tiende a alcalinizarla."},
+        {"seccion": "¿Qué significan los resultados?", "texto": "Un pH bajo (orina ácida) puede deberse a la dieta, a deshidratación o a cambios en el metabolismo, por ejemplo en la diabetes mal controlada. Un pH alto (orina alcalina) puede deberse a la dieta, a algunos medicamentos o a ciertas infecciones urinarias. El pH también ayuda a entender el riesgo de formar algunos tipos de cálculos renales. Un valor fuera de rango por sí solo rara vez es concluyente; su profesional de la salud lo interpreta junto con los demás resultados."}
+      ]
+    },
+    {
+      "id": "equipo-leucocitos-orina",
+      "titulo": "Leucocitos (glóbulos blancos) en la orina",
+      "analitos": ["leucocitos_esterasa", "leucocitos_sedimento"],
+      "fuente": "Redacción del equipo (pendiente de revisión)",
+      "revisada": false,
+      "secciones": [
+        {"seccion": "¿Qué son los leucocitos en la orina?", "texto": "Los leucocitos o glóbulos blancos son células que defienden al cuerpo contra infecciones. En el uroanálisis se buscan de dos formas: con la tira reactiva, que detecta la esterasa leucocitaria (una sustancia que liberan los glóbulos blancos), y al microscopio, contando cuántos leucocitos se ven por campo en el sedimento de la orina."},
+        {"seccion": "¿Qué significan los resultados?", "texto": "Normalmente la esterasa leucocitaria es negativa y se ven pocos leucocitos por campo. Un resultado positivo o un número alto de leucocitos puede indicar inflamación o una infección en las vías urinarias o en los riñones, sobre todo si también hay nitritos o bacterias. También puede aparecer por contaminación de la muestra al recogerla. Su profesional de la salud decidirá si hace falta un urocultivo u otras pruebas."}
+      ]
+    }
+  ]
+}

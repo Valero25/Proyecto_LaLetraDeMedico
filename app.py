@@ -8,6 +8,30 @@ st.set_page_config(page_title="LetraDeMédico", page_icon="🩺", layout="wide")
 # Inicializar el backend
 backend = LetraDeMedicoBackend()
 
+# --- DATOS DEL MODO DEMOSTRACIÓN ---
+DEMO_ANALITOS = [
+    {"examen": "Hemoglobina", "valor": "14.2", "unidad": "g/dL", "rango_referencia": "13.0 - 17.0"},
+    {"examen": "Leucocitos", "valor": "7.20", "unidad": "10³/µL", "rango_referencia": "4.0 - 11.0"},
+    {"examen": "Glucosa", "valor": "108", "unidad": "mg/dL", "rango_referencia": "70 - 99"},
+    {"examen": "Colesterol total", "valor": "178", "unidad": "mg/dL", "rango_referencia": "< 200"},
+    {"examen": "Colesterol HDL", "valor": "36", "unidad": "mg/dL", "rango_referencia": "> 40"},
+    {"examen": "Triglicéridos", "valor": "118", "unidad": "mg/dL", "rango_referencia": "< 150"},
+]
+DEMO_EXPLICACIONES = [
+    {"examen": "Hemoglobina", "explicacion": "La hemoglobina es la proteína que lleva el oxígeno a todo el cuerpo. Un valor de 14.2 g/dL está dentro del rango de referencia (13.0 - 17.0), lo que indica un transporte de oxígeno adecuado."},
+    {"examen": "Leucocitos", "explicacion": "Los leucocitos son los glóbulos blancos, las defensas del organismo. El valor de 7.20 está dentro del rango de referencia (4.0 - 11.0)."},
+    {"examen": "Glucosa", "explicacion": "La glucosa es el azúcar que circula en la sangre y sirve de energía. El valor de 108 mg/dL está un poco por encima del rango de referencia en ayunas (70 - 99). Vale la pena comentarlo con el médico para saber si conviene repetir la prueba."},
+    {"examen": "Colesterol total", "explicacion": "El colesterol es una grasa que el cuerpo necesita en cierta cantidad. El valor de 178 mg/dL está por debajo de 200, que es el nivel deseable."},
+    {"examen": "Colesterol HDL", "explicacion": "El HDL se conoce como el colesterol 'bueno' porque ayuda a retirar grasa de las arterias. El valor de 36 mg/dL está por debajo del nivel recomendado (más de 40). El médico puede orientar sobre hábitos que ayudan a subirlo."},
+    {"examen": "Triglicéridos", "explicacion": "Los triglicéridos son otro tipo de grasa en la sangre. El valor de 118 mg/dL está dentro del nivel deseable (menos de 150)."},
+]
+DEMO_PREGUNTAS = [
+    "Mi glucosa salió un poco alta, ¿debo repetir el examen o hacerme otra prueba?",
+    "¿Qué puedo hacer para subir mi colesterol HDL?",
+    "¿Estos resultados explican el cansancio que he sentido?",
+    "¿Cada cuánto debería repetir estos exámenes?",
+]
+
 # --- ESTILOS CSS ---
 st.markdown("""
     <style>
@@ -76,19 +100,42 @@ if not st.session_state.analisis_completado:
                         st.session_state.datos_extraidos = resultado["datos_extraidos"]
                         st.session_state.analisis_final = resultado["analisis_final"]
                         st.session_state.tipo_examen = resultado.get("tipo_examen", "Examen Médico")
+                        st.session_state.es_demo = False
                         st.session_state.analisis_completado = True
                         st.rerun()
                 except Exception as e:
                     error_msg = str(e)
                     if "503" in error_msg or "high demand" in error_msg:
                         st.error("⚠️ Los servidores de IA de Google están experimentando mucha demanda en este momento. Por favor, intenta de nuevo en unos segundos.")
+                    elif "PerDay" in error_msg:
+                        st.error("⚠️ Se agotó la cuota diaria gratuita de la API de Gemini para este modelo. Intenta mañana o cambia de modelo con GEMINI_MODEL en el archivo .env.")
+                    elif "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                        st.error("⚠️ Se alcanzó el límite de solicitudes por minuto de la API de Gemini. Espera un minuto e intenta de nuevo.")
                     else:
                         st.error(f"⚠️ Ocurrió un error inesperado al conectar con la IA: {error_msg}")
         else:
             st.warning("Por favor, sube un archivo primero.")
 
+    # Modo demostración: carga un análisis de ejemplo sin llamar a la IA
+    if st.button("Ver análisis de ejemplo (demo, sin IA)", use_container_width=True):
+        datos_demo = [dict(d) for d in DEMO_ANALITOS]
+        for d in datos_demo:
+            d["estado"] = backend.evaluar_estado_analito(d["valor"], d["rango_referencia"])
+        st.session_state.datos_extraidos = datos_demo
+        st.session_state.analisis_final = backend.step_4_validation({
+            "explicaciones": [dict(e) for e in DEMO_EXPLICACIONES],
+            "preguntas_sugeridas": list(DEMO_PREGUNTAS),
+        })
+        st.session_state.tipo_examen = "Hemograma y Perfil Lipídico"
+        st.session_state.es_demo = True
+        st.session_state.analisis_completado = True
+        st.rerun()
+
 # --- PANTALLA 3: DASHBOARD DE RESULTADOS ---
 else:
+    if st.session_state.get("es_demo"):
+        st.caption("Modo demostración: datos de ejemplo, no provienen de un examen real.")
+
     col_izq, col_der = st.columns([1.2, 1])
     
     with col_izq:

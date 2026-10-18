@@ -1,7 +1,9 @@
 import json
 import os
 import re
+import time
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 from dotenv import load_dotenv
 
@@ -14,10 +16,50 @@ if "GEMINI_API_KEY" not in os.environ:
     print("Advertencia: No se encontró GEMINI_API_KEY en las variables de entorno.")
 
 class LetraDeMedicoBackend:
-    def __init__(self, model_name="gemini-3.6-flash"):
-        # Usamos un modelo potente para el razonamiento médico y la extracción
+    def __init__(self, model_name=None):
+        # Usamos un modelo potente para el razonamiento médico y la extracción.
+        # Se puede cambiar con la variable GEMINI_MODEL en .env (cada modelo tiene su propia cuota).
         self.client = genai.Client()
-        self.model_name = model_name
+        self.model_name = model_name or os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        # Modelo de respaldo cuando el principal está saturado o sin cuota diaria.
+        # Debe ser un modelo con cuota propia (gemini-3.5-flash comparte la de gemini-3.6-flash).
+        self.fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash")
+
+    def _generar(self, contents, intentos=3):
+        """
+        Llama al modelo reintentando con espera creciente cuando Gemini está saturado (503/429).
+        Si el modelo principal sigue fallando, pasa al modelo de respaldo.
+        Si todo falla, propaga el error para que el frontend muestre el mensaje real.
+        """
+        modelos = [self.model_name]
+        if self.fallback_model and self.fallback_model != self.model_name:
+            modelos.append(self.fallback_model)
+
+        for modelo in modelos:
+            ultimo_modelo = modelo == modelos[-1]
+            for intento in range(1, intentos + 1):
+                try:
+                    return self.client.models.generate_content(
+                        model=modelo,
+                        contents=contents,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json"
+                        )
+                    )
+                except genai_errors.APIError as e:
+                    if e.code not in (429, 500, 503):
+                        raise
+                    # La cuota diaria agotada no se recupera esperando: no tiene sentido reintentar
+                    cuota_diaria = e.code == 429 and "PerDay" in str(e)
+                    if cuota_diaria or intento == intentos:
+                        if ultimo_modelo:
+                            raise
+                        print(f"{modelo} respondió {e.code}; cambiando al modelo de respaldo", flush=True)
+                        break
+                    # El límite gratuito es por minuto, así que ante un 429 la espera debe cubrir esa ventana
+                    espera = 30 if e.code == 429 else 5 * intento
+                    print(f"{modelo} respondió {e.code}; reintentando en {espera}s (intento {intento}/{intentos})", flush=True)
+                    time.sleep(espera)
 
     def step_1_and_2_multimodal_ner(self, file_bytes, mime_type):
         """
@@ -47,26 +89,14 @@ class LetraDeMedicoBackend:
         
         try:
             document_part = types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=[
-                    document_part,
-                    prompt
-                ],
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                )
-            )
-            
+            response = self._generar([document_part, prompt])
+
             # Limpiamos la respuesta (ya no debería tener backticks gracias al config, pero por si acaso)
             json_str = response.text.strip().removeprefix("```json").removesuffix("```").strip()
             entidades = json.loads(json_str)
             return entidades
         except json.JSONDecodeError:
             print("Error al decodificar el JSON del Multimodal NER.")
-            return []
-        except Exception as e:
-            print(f"Error procesando el documento: {e}")
             return []
 
     @staticmethod
@@ -96,13 +126,15 @@ class LetraDeMedicoBackend:
                 return "ANORMAL"
 
             # Extraer el valor numérico del paciente
-            valor_match = re.search(r'[\d\.]+', str(valor_str))
+            valor_match = re.search(r'[\d\.]+', str(valor_str).replace(',', '.'))
             if not valor_match:
                 return "DESCONOCIDO"
             valor = float(valor_match.group())
 
             # Limpiar el string del rango numérico
             rango_str = str(rango_str).replace(' ', '').replace(',', '.')
+            # Muchos laboratorios escriben el rango con raya (–, —) o signo menos (−) en vez de guion
+            rango_str = re.sub(r'[–—−‐‑‒]', '-', rango_str)
             
             # Caso 1: Rango con guion ej. "70-99" o "4.0-5.6"
             rango_match = re.search(r'([\d\.]+)-([\d\.]+)', rango_str)
@@ -207,14 +239,8 @@ class LetraDeMedicoBackend:
         Responde ÚNICAMENTE con el JSON válido.
         """
         
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        
+        response = self._generar(prompt)
+
         try:
             json_str = response.text.strip().removeprefix("```json").removesuffix("```").strip()
             resultado_final = json.loads(json_str)

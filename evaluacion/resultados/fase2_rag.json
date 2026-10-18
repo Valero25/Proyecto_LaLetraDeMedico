@@ -1,6 +1,54 @@
 {
   "fragmentos": 208,
   "consultas": 505,
+  "split": {
+    "seed": 13,
+    "train": [
+      "acido_urico",
+      "alt",
+      "bilirrubina_orina",
+      "bilirrubina_total",
+      "bun",
+      "calcio",
+      "colesterol_hdl",
+      "colesterol_ldl",
+      "colesterol_total",
+      "creatinina",
+      "densidad_urinaria",
+      "eritrocitos_sedimento",
+      "glucosa",
+      "glucosa_orina",
+      "hcm",
+      "hemoglobina",
+      "hemoglobina_a1c",
+      "leucocitos",
+      "leucocitos_esterasa",
+      "leucocitos_sedimento",
+      "nitritos_orina",
+      "plaquetas",
+      "proteinas_orina",
+      "sangre_orina",
+      "sodio",
+      "trigliceridos",
+      "tsh",
+      "urea",
+      "vcm"
+    ],
+    "test": [
+      "albumina",
+      "ast",
+      "cetonas_orina",
+      "eritrocitos",
+      "fosfatasa_alcalina",
+      "ggt",
+      "hematocrito",
+      "linfocitos",
+      "neutrofilos",
+      "ph_urinario",
+      "potasio",
+      "t4_libre"
+    ]
+  },
   "resultados": {
     "subcadena": {
       "metricas": {
@@ -17,6 +65,13 @@
           "hit@3": 0.06336633663366337,
           "hit@5": 0.06336633663366337,
           "mrr@10": 0.06336633663366337
+        },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.09411764705882353,
+          "hit@3": 0.09411764705882353,
+          "hit@5": 0.09411764705882353,
+          "mrr@10": 0.09411764705882353
         },
         "alias_estado": {
           "n": 167.0,
@@ -38,6 +93,13 @@
           "hit@3": 0.06666666666666667,
           "hit@5": 0.06666666666666667,
           "mrr@10": 0.06666666666666667
+        },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.0,
+          "hit@3": 0.0,
+          "hit@5": 0.0,
+          "mrr@10": 0.0
         },
         "manual": {
           "n": 40.0,
@@ -4341,6 +4403,13 @@
           "hit@5": 0.7782178217821782,
           "mrr@10": 0.6916572371522866
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.6352941176470588,
+          "hit@3": 0.7264705882352941,
+          "hit@5": 0.7647058823529411,
+          "mrr@10": 0.6896767040149395
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.6347305389221557,
@@ -4361,6 +4430,13 @@
           "hit@3": 0.6952380952380952,
           "hit@5": 0.7714285714285715,
           "mrr@10": 0.640275888133031
+        },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.6,
+          "hit@3": 0.76875,
+          "hit@5": 0.80625,
+          "mrr@10": 0.6987301587301588
         },
         "manual": {
           "n": 40.0,
@@ -6116,6 +6192,13 @@
           "hit@5": 0.8613861386138614,
           "mrr@10": 0.7757669338362404
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.6911764705882353,
+          "hit@3": 0.8264705882352941,
+          "hit@5": 0.8588235294117647,
+          "mrr@10": 0.7672549019607845
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.6766467065868264,
@@ -6137,6 +6220,13 @@
           "hit@5": 0.9047619047619048,
           "mrr@10": 0.7798526077097507
         },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.725,
+          "hit@3": 0.8375,
+          "hit@5": 0.8625,
+          "mrr@10": 0.7899727182539682
+        },
         "manual": {
           "n": 40.0,
           "hit@1": 0.85,
@@ -6145,7 +6235,7 @@
           "mrr@10": 0.898611111111111
         }
       },
-      "segundos": 77.5,
+      "segundos": 68.2,
       "fallos": [
         {
           "tipo": "alias_estado",
@@ -7518,6 +7608,13 @@
           "hit@5": 0.8475247524752475,
           "mrr@10": 0.7633686940122583
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.7088235294117647,
+          "hit@3": 0.8,
+          "hit@5": 0.85,
+          "mrr@10": 0.7693230625583567
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.688622754491018,
@@ -7539,6 +7636,13 @@
           "hit@5": 0.8666666666666667,
           "mrr@10": 0.7900340136054422
         },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.69375,
+          "hit@3": 0.7875,
+          "hit@5": 0.84375,
+          "mrr@10": 0.7566021825396826
+        },
         "manual": {
           "n": 40.0,
           "hit@1": 0.725,
@@ -7547,7 +7651,7 @@
           "mrr@10": 0.8158630952380953
         }
       },
-      "segundos": 93.8,
+      "segundos": 92.1,
       "fallos": [
         {
           "tipo": "alias",
@@ -8937,6 +9041,13 @@
           "hit@5": 0.9841584158415841,
           "mrr@10": 0.8977392739273925
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.8147058823529412,
+          "hit@3": 0.9705882352941176,
+          "hit@5": 0.9823529411764705,
+          "mrr@10": 0.885857843137255
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.9520958083832335,
@@ -8957,6 +9068,13 @@
           "hit@3": 0.9523809523809523,
           "hit@5": 0.9809523809523809,
           "mrr@10": 0.8146031746031746
+        },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.8875,
+          "hit@3": 0.99375,
+          "hit@5": 0.99375,
+          "mrr@10": 0.9322916666666666
         },
         "manual": {
           "n": 40.0,
@@ -9748,6 +9866,13 @@
           "hit@5": 0.9663366336633663,
           "mrr@10": 0.9003787521609301
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.8382352941176471,
+          "hit@3": 0.9294117647058824,
+          "hit@5": 0.961764705882353,
+          "mrr@10": 0.8884267040149391
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.8323353293413174,
@@ -9769,6 +9894,13 @@
           "hit@5": 0.9809523809523809,
           "mrr@10": 0.9085714285714285
         },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.8875,
+          "hit@3": 0.95625,
+          "hit@5": 0.975,
+          "mrr@10": 0.9257886904761904
+        },
         "manual": {
           "n": 40.0,
           "hit@1": 0.875,
@@ -9777,7 +9909,7 @@
           "mrr@10": 0.9166666666666667
         }
       },
-      "segundos": 55.2,
+      "segundos": 37.9,
       "fallos": [
         {
           "tipo": "alias_estado",
@@ -10467,6 +10599,13 @@
           "hit@5": 0.9168316831683169,
           "mrr@10": 0.8654856199905706
         },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.8235294117647058,
+          "hit@3": 0.8705882352941177,
+          "hit@5": 0.9029411764705882,
+          "mrr@10": 0.8570378151260505
+        },
         "alias_estado": {
           "n": 167.0,
           "hit@1": 0.8203592814371258,
@@ -10488,6 +10627,13 @@
           "hit@5": 0.9619047619047619,
           "mrr@10": 0.912962962962963
         },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.84375,
+          "hit@3": 0.925,
+          "hit@5": 0.95,
+          "mrr@10": 0.8932961309523811
+        },
         "manual": {
           "n": 40.0,
           "hit@1": 0.725,
@@ -10496,7 +10642,7 @@
           "mrr@10": 0.7922916666666666
         }
       },
-      "segundos": 113.9,
+      "segundos": 98.7,
       "fallos": [
         {
           "tipo": "alias",
@@ -11300,6 +11446,592 @@
           ],
           "posicion": 2,
           "primer_resultado": "Conteo de glóbulos blancos"
+        }
+      ]
+    },
+    "e5-small-ajustado-split+alias": {
+      "metricas": {
+        "alias": {
+          "n": 96.0,
+          "hit@1": 0.9375,
+          "hit@3": 0.96875,
+          "hit@5": 0.96875,
+          "mrr@10": 0.957142857142857
+        },
+        "total": {
+          "n": 505.0,
+          "hit@1": 0.9366336633663367,
+          "hit@3": 0.9683168316831683,
+          "hit@5": 0.9722772277227723,
+          "mrr@10": 0.9549709256639951
+        },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.9264705882352942,
+          "hit@3": 0.9588235294117647,
+          "hit@5": 0.961764705882353,
+          "mrr@10": 0.9461087768440711
+        },
+        "alias_estado": {
+          "n": 167.0,
+          "hit@1": 0.9341317365269461,
+          "hit@3": 0.9700598802395209,
+          "hit@5": 0.9700598802395209,
+          "mrr@10": 0.9532601463739188
+        },
+        "pregunta": {
+          "n": 97.0,
+          "hit@1": 0.9484536082474226,
+          "hit@3": 0.979381443298969,
+          "hit@5": 0.979381443298969,
+          "mrr@10": 0.9650630011454754
+        },
+        "alias_panel": {
+          "n": 105.0,
+          "hit@1": 0.9619047619047619,
+          "hit@3": 0.9809523809523809,
+          "hit@5": 1.0,
+          "mrr@10": 0.9741269841269841
+        },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.9625,
+          "hit@3": 0.99375,
+          "hit@5": 1.0,
+          "mrr@10": 0.9786458333333332
+        },
+        "manual": {
+          "n": 40.0,
+          "hit@1": 0.85,
+          "hit@3": 0.9,
+          "hit@5": 0.9,
+          "mrr@10": 0.8821428571428571
+        }
+      },
+      "segundos": 37.0,
+      "fallos": [
+        {
+          "tipo": "alias_panel",
+          "consulta": "Eritrocitos (Hemograma)",
+          "relevantes": [
+            "eritrocitos"
+          ],
+          "posicion": 3,
+          "primer_resultado": "Prueba de sangre en la orina"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Leucocitos alto",
+          "relevantes": [
+            "leucocitos"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "alias_panel",
+          "consulta": "Leucocitos (Hemograma)",
+          "relevantes": [
+            "leucocitos"
+          ],
+          "posicion": 5,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Neutrófilos alto",
+          "relevantes": [
+            "neutrofilos"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Neutrófilos alto?",
+          "relevantes": [
+            "neutrofilos"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Urea alto",
+          "relevantes": [
+            "urea"
+          ],
+          "posicion": 3,
+          "primer_resultado": "Prueba de ácido úrico"
+        },
+        {
+          "tipo": "alias_panel",
+          "consulta": "ALB (Bioquímica Sanguínea)",
+          "relevantes": [
+            "albumina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Fosfatasa alcalina"
+        },
+        {
+          "tipo": "alias_panel",
+          "consulta": "ALB (Perfil Hepático)",
+          "relevantes": [
+            "albumina"
+          ],
+          "posicion": 4,
+          "primer_resultado": "Fosfatasa alcalina"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "ALT",
+          "relevantes": [
+            "alt"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Prueba de AST"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "ALT alto",
+          "relevantes": [
+            "alt"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Prueba de AST"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Sangre",
+          "relevantes": [
+            "sangre_orina"
+          ],
+          "posicion": 10,
+          "primer_resultado": "Pruebas de plaquetas"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Sangre positivo",
+          "relevantes": [
+            "sangre_orina"
+          ],
+          "posicion": 9,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Sangre positivo?",
+          "relevantes": [
+            "sangre_orina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Bilirrubina",
+          "relevantes": [
+            "bilirrubina_orina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Examen de bilirrubina en sangre"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Bilirrubina positivo",
+          "relevantes": [
+            "bilirrubina_orina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Examen de bilirrubina en sangre"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Bilirrubina positivo?",
+          "relevantes": [
+            "bilirrubina_orina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Examen de bilirrubina en sangre"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Leucocitos por campo",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Leucocitos por campo alto",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": null,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Leucocitos por campo bajo",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": null,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Leucocitos por campo alto?",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": null,
+          "primer_resultado": "Fórmula leucocitaria"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Eritrocitos (sedimento)",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos rojos"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Eritrocitos (sedimento) alto",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos rojos"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Hematíes por campo",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Hematíes por campo alto",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 8,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Hematíes por campo bajo",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 8,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Hematíes por campo alto?",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 9,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "azúcar en la sangre",
+          "relevantes": [
+            "glucosa"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Prueba de hemoglobina A1c"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "defensas bajas en el hemograma",
+          "relevantes": [
+            "leucocitos",
+            "neutrofilos",
+            "linfocitos"
+          ],
+          "posicion": null,
+          "primer_resultado": "Análisis de hemoglobina"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "tamaño de los glóbulos rojos",
+          "relevantes": [
+            "vcm",
+            "hcm"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Conteo de glóbulos rojos"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "función del riñón",
+          "relevantes": [
+            "creatinina",
+            "bun",
+            "urea"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Prueba de proteínas en la orina"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "sal en la sangre baja",
+          "relevantes": [
+            "sodio"
+          ],
+          "posicion": null,
+          "primer_resultado": "Niveles de colesterol"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "neutrofilos altos infección",
+          "relevantes": [
+            "neutrofilos"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        }
+      ]
+    },
+    "e5-small-ajustado-completo+alias": {
+      "metricas": {
+        "alias": {
+          "n": 96.0,
+          "hit@1": 0.9791666666666666,
+          "hit@3": 0.9895833333333334,
+          "hit@5": 0.9895833333333334,
+          "mrr@10": 0.9861111111111112
+        },
+        "total": {
+          "n": 505.0,
+          "hit@1": 0.9643564356435643,
+          "hit@3": 0.9801980198019802,
+          "hit@5": 0.9821782178217822,
+          "mrr@10": 0.9741513437057994
+        },
+        "vistos": {
+          "n": 340.0,
+          "hit@1": 0.9588235294117647,
+          "hit@3": 0.9735294117647059,
+          "hit@5": 0.9764705882352941,
+          "mrr@10": 0.9690826330532216
+        },
+        "alias_estado": {
+          "n": 167.0,
+          "hit@1": 0.9700598802395209,
+          "hit@3": 0.9820359281437125,
+          "hit@5": 0.9880239520958084,
+          "mrr@10": 0.9782577701739379
+        },
+        "pregunta": {
+          "n": 97.0,
+          "hit@1": 0.979381443298969,
+          "hit@3": 0.979381443298969,
+          "hit@5": 0.979381443298969,
+          "mrr@10": 0.9828178694158076
+        },
+        "alias_panel": {
+          "n": 105.0,
+          "hit@1": 0.9714285714285714,
+          "hit@3": 1.0,
+          "hit@5": 1.0,
+          "mrr@10": 0.9841269841269842
+        },
+        "no_vistos": {
+          "n": 160.0,
+          "hit@1": 0.98125,
+          "hit@3": 1.0,
+          "hit@5": 1.0,
+          "mrr@10": 0.9895833333333333
+        },
+        "manual": {
+          "n": 40.0,
+          "hit@1": 0.85,
+          "hit@3": 0.9,
+          "hit@5": 0.9,
+          "mrr@10": 0.8811011904761905
+        }
+      },
+      "segundos": 38.2,
+      "fallos": [
+        {
+          "tipo": "alias_panel",
+          "consulta": "Glóbulos rojos (Hemograma)",
+          "relevantes": [
+            "eritrocitos"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Análisis de hemoglobina"
+        },
+        {
+          "tipo": "alias_panel",
+          "consulta": "ALB (Bioquímica Sanguínea)",
+          "relevantes": [
+            "albumina"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Fosfatasa alcalina"
+        },
+        {
+          "tipo": "alias_panel",
+          "consulta": "ALB (Perfil Hepático)",
+          "relevantes": [
+            "albumina"
+          ],
+          "posicion": 3,
+          "primer_resultado": "Fosfatasa alcalina"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Sangre",
+          "relevantes": [
+            "sangre_orina"
+          ],
+          "posicion": 6,
+          "primer_resultado": "Pruebas de plaquetas"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Sangre positivo",
+          "relevantes": [
+            "sangre_orina"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "alias",
+          "consulta": "Leucocitos por campo",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Leucocitos por campo alto",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": 3,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Leucocitos por campo bajo",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Leucocitos por campo alto?",
+          "relevantes": [
+            "leucocitos_sedimento"
+          ],
+          "posicion": 6,
+          "primer_resultado": "Conteo de glóbulos blancos"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Hematíes por campo alto",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "alias_estado",
+          "consulta": "Hematíes por campo bajo",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 4,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "pregunta",
+          "consulta": "¿Qué significa tener Hematíes por campo alto?",
+          "relevantes": [
+            "eritrocitos_sedimento"
+          ],
+          "posicion": 6,
+          "primer_resultado": "Hematocrito"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "azúcar en la sangre",
+          "relevantes": [
+            "glucosa"
+          ],
+          "posicion": 3,
+          "primer_resultado": "Prueba de hemoglobina A1c"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "defensas bajas en el hemograma",
+          "relevantes": [
+            "leucocitos",
+            "neutrofilos",
+            "linfocitos"
+          ],
+          "posicion": 8,
+          "primer_resultado": "Índices de glóbulos rojos"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "tamaño de los glóbulos rojos",
+          "relevantes": [
+            "vcm",
+            "hcm"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Conteo de glóbulos rojos"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "función del riñón",
+          "relevantes": [
+            "creatinina",
+            "bun",
+            "urea"
+          ],
+          "posicion": 7,
+          "primer_resultado": "Prueba de proteínas en la orina"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "ojos amarillos bilirrubina",
+          "relevantes": [
+            "bilirrubina_total"
+          ],
+          "posicion": 2,
+          "primer_resultado": "Pruebas de bilirrubina en la orina"
+        },
+        {
+          "tipo": "manual",
+          "consulta": "sal en la sangre baja",
+          "relevantes": [
+            "sodio"
+          ],
+          "posicion": null,
+          "primer_resultado": "Niveles de colesterol"
         }
       ]
     }

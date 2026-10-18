@@ -126,8 +126,30 @@ Detalle con hit@3, hit@5, MRR y cada fallo en `evaluacion/resultados/fase2_rag.j
   - Los negativos difíciles salen de las confusiones medidas: sangre/orina, HbA1c/hemoglobina, ALT/AST…
   - Variantes `split` (experimento honesto) y `completo` (modelo para la app), para ALIA y para e5-small.
 - [x] Corrida de prueba en CPU: funciona, pero tarda unos 50 s por paso. Los 4 entrenamientos tomarían unas 6 horas, así que se corren en Colab.
-- [ ] **Pendiente del equipo:** correr `training/rag/ajuste_embeddings_colab.ipynb` en Colab Pro con GPU, descargar `fase2_ajuste.zip` y descomprimirlo en la raíz del proyecto.
-- [ ] Analizar resultados: la métrica clave es `no_vistos` de los modelos `-split` frente a los modelos base. Luego, elegir el modelo final.
+- [ ] **Pendiente del equipo:** correr `training/rag/ajuste_embeddings_colab.ipynb` en Colab con GPU T4, descargar `fase2_ajuste.zip` y descomprimirlo en la raíz del proyecto.
+- [x] Entrenamiento en Colab (T4, 3 épocas, batch 32, max_seq 384): **e5-small** `split` (814 ejemplos, 2 min, pérdida 3,24 → 1,34) y `completo` (1.198 ejemplos, 3 min, pérdida 3,28 → 1,09).
+- [ ] **ALIA falló en Colab por falta de memoria** (`CUDA out of memory` en el primer paso): ModernBERT con 32 tripletas de 384 tokens supera los 15 GB de la T4.
+  - Corrección: `--mini-batch 8` usa `CachedMultipleNegativesRankingLoss` (GradCache), que calcula la misma pérdida del batch de 32 por trozos. Así ALIA y e5 se comparan con los mismos hiperparámetros. Probado en CPU.
+  - La evaluación ahora omite los modelos que falten en vez de caerse.
+  - *Pendiente: reentrenar ALIA en Colab.*
+- [x] Analizar resultados (abajo). **Modelo elegido para la app: `e5-small-ajustado-completo` + alias.**
+
+#### Resultados del ajuste (hit@1)
+
+| Recuperador | Total (505) | Manuales (40) | Analitos vistos (340) | **Analitos no vistos (160)** |
+|---|---|---|---|---|
+| Subcadena (sistema actual) | 6,3 % | 5,0 % | 9,4 % | 0,0 % |
+| BM25 + alias | 83,4 % | 82,5 % | 81,5 % | 88,8 % |
+| ALIA-MrBERT + alias | 82,6 % | 72,5 % | 82,4 % | 84,4 % |
+| e5-small + alias (base) | 85,3 % | **87,5 %** | 83,8 % | 88,8 % |
+| **e5-small ajustado (split) + alias** | **93,7 %** | 85,0 % | **92,6 %** | **96,2 %** |
+| e5-small ajustado (completo) + alias | 96,4 % | 85,0 % | 95,9 % | *98,1 % (no es justo: los vio)* |
+
+**Lectura:**
+1. **El ajuste generaliza.** En los 12 analitos que el modelo nunca vio al entrenar, el acierto sube de 88,8 % a **96,2 %** (+7,4 puntos) y el hit@3 llega a 99,4 %. No es memorización: aprendió a relacionar abreviaturas y lenguaje coloquial con la página correcta. En analitos vistos sube de 83,8 % a 92,6 %.
+2. **En las consultas manuales queda prácticamente igual** (34 frente a 35 de 40 aciertos). Algunos fallos nuevos son razonables ("azúcar en la sangre" → HbA1c en 1.er lugar y glucosa en 2.º). Otros son metáforas que empeoran: "defensas bajas en el hemograma" y "sal en la sangre baja" ya no aparecen en el top 10. Es una limitación para el informe; se mitigaría con consultas de entrenamiento más coloquiales.
+3. Los analitos no vistos resultan algo más fáciles que los vistos incluso para los modelos base. Por eso la comparación se hace siempre dentro del mismo grupo.
+4. El modelo `completo` es el que usará la app. Sus números sobre analitos vistos son optimistas; la cifra honesta para el informe es la del `split`.
 
 ## Fase 3: clasificador de guardrails con MrBERT-biomed ⬜
 
@@ -163,7 +185,7 @@ Detalle con hit@3, hit@5, MRR y cada fallo en `evaluacion/resultados/fase2_rag.j
 1. **Fecha de entrega:** entre 2 y 3 semanas desde el 2026-10-18 (entre el **2026-11-01** y el **2026-11-08**). Se planifica para 2 semanas:
    - Fuera: NER propio y modelo de extracción.
    - Solo si hay una tercera semana: ajuste contrastivo de embeddings (Fase 2 opcional) y rúbrica humana de 50 casos en vez de 20 a 30.
-2. **GPU:** **Colab Pro** (GPU L4/A100, sesiones más largas). Permite usar un modelo base de 3B o más sin pelear con la memoria. Respaldo: Kaggle Notebooks.
+2. **GPU:** **Colab gratuito con GPU T4** (16 GB; no hay Colab Pro). Para la Fase 4 conviene un modelo base de 1,5B a 3B con QLoRA (Unsloth) y guardar checkpoints en Drive, porque la sesión gratuita se corta. Respaldo: Kaggle Notebooks (T4 con cuota semanal).
 3. **Modelo profesor:** **Groq** (cuenta creada, `GROQ_API_KEY` en `.env` y verificada el 2026-10-18). No usar Gemini, porque sus términos prohíben usar sus salidas para entrenar modelos que compitan.
    - Principal: `qwen/qwen3.8-27b`. En la prueba tuteó, fue cálido, usó el contexto del paciente y respetó los estados.
    - Secundario o juez: `openai/gpt-oss-120b`. Más técnico; en un valor BAJO dijo "suele considerarse normal", lo que contradice el estado.

@@ -152,6 +152,10 @@ def main():
 
     resultados = {}
     for nombre in args.modelos:
+        ruta = RAIZ / "models" / "rag" / nombre.removesuffix("+alias")
+        if "-ajustado-" in nombre and not (ruta / "model.safetensors").exists():
+            print(f"== {nombre}: se omite, no existe {ruta.relative_to(RAIZ)} (¿falló su entrenamiento?)\n")
+            continue
         inicio = time.time()
         recuperador = crear_recuperador(nombre, documentos[nombre.endswith("+alias")])
         metricas, fallos = evaluar(recuperador, consultas, split)

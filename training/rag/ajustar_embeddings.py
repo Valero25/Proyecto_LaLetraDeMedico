@@ -128,6 +128,9 @@ def main():
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--max-seq", type=int, default=384, help="Truncado durante el entrenamiento, por velocidad")
+    parser.add_argument("--limite", type=int, help="Usar solo los primeros N ejemplos (prueba rápida del script)")
+    parser.add_argument("--mini-batch", type=int,
+                        help="Calcula cada batch en trozos de este tamaño (CachedMNRL): misma pérdida, mucha menos memoria")
     args = parser.parse_args()
 
     from datasets import Dataset
@@ -144,6 +147,8 @@ def main():
 
     config = MODELOS[args.modelo]
     anclas, positivos, negativos = construir_ejemplos(documentos, consultas, permitidos, config)
+    if args.limite:
+        anclas, positivos, negativos = anclas[:args.limite], positivos[:args.limite], negativos[:args.limite]
     print(f"{len(anclas)} ejemplos de entrenamiento ({len(permitidos)} analitos permitidos)", flush=True)
 
     modelo = SentenceTransformer(config["nombre"])
@@ -164,11 +169,17 @@ def main():
         report_to="none",
         seed=13,
     )
+    # ALIA (ModernBERT) no cabe en una T4 con batch 32: la versión cacheada (GradCache) calcula la
+    # misma pérdida por trozos, así ALIA y e5 se entrenan con los mismos hiperparámetros
+    if args.mini_batch:
+        perdida = losses.CachedMultipleNegativesRankingLoss(modelo, mini_batch_size=args.mini_batch)
+    else:
+        perdida = losses.MultipleNegativesRankingLoss(modelo)
     entrenador = SentenceTransformerTrainer(
         model=modelo,
         args=argumentos,
         train_dataset=Dataset.from_dict({"ancla": anclas, "positivo": positivos, "negativo": negativos}),
-        loss=losses.MultipleNegativesRankingLoss(modelo),
+        loss=perdida,
     )
     inicio = time.time()
     entrenador.train()
@@ -180,7 +191,8 @@ def main():
     with open(salida / "entrenamiento.json", "w", encoding="utf-8") as f:
         json.dump({"modelo_base": config["nombre"], "variante": args.variante, "ejemplos": len(anclas),
                    "analitos_entrenamiento": sorted(permitidos), "epocas": args.epocas, "lr": args.lr,
-                   "batch": args.batch, "max_seq_entrenamiento": args.max_seq, "minutos": round(minutos, 1),
+                   "batch": args.batch, "mini_batch": args.mini_batch, "perdida": type(perdida).__name__,
+                   "max_seq_entrenamiento": args.max_seq, "minutos": round(minutos, 1),
                    "perdida_por_paso": [h for h in entrenador.state.log_history if "loss" in h]},
                   f, indent=2, ensure_ascii=False)
     print(f"Modelo guardado en {salida.relative_to(RAIZ)} ({minutos:.1f} min)")

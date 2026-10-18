@@ -14,13 +14,13 @@
 
 ## Estado actual
 
-**Fase en curso:** Fase 2. La base de conocimiento, los recuperadores y la evaluación están listos. Falta decidir el modelo de embeddings final y si se hace el ajuste contrastivo.
+**Fase en curso:** Fase 3. La Fase 2 terminó con ALIA y e5 ajustados y evaluados; el modelo para la app es `alia-ajustado-completo` + alias.
 
 | Fase | Estado |
 |---|---|
 | 0. Preparación | ✅ Terminada |
 | 1. Generador de exámenes sintéticos | ✅ Terminada |
-| 2. RAG con embeddings | 🟡 En curso |
+| 2. RAG con embeddings | ✅ Terminada |
 | 3. Clasificador de guardrails | ⬜ Pendiente |
 | 4. Fine-tuning QLoRA del generador | ⬜ Pendiente |
 | 5. Integración en la app | ⬜ Pendiente |
@@ -75,7 +75,7 @@ Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
 
 ---
 
-## Fase 2: RAG con embeddings 🟡
+## Fase 2: RAG con embeddings ✅
 
 - [x] **Base de conocimiento** (`training/rag/construir_base_conocimiento.py` → `data/rag/documentos.jsonl`, versionado):
   - 31 páginas de pruebas de laboratorio de **MedlinePlus en español** (NLM, dominio público), mapeadas en `training/rag/fuentes.json`.
@@ -128,11 +128,11 @@ Detalle con hit@3, hit@5, MRR y cada fallo en `evaluacion/resultados/fase2_rag.j
 - [x] Corrida de prueba en CPU: funciona, pero tarda unos 50 s por paso. Los 4 entrenamientos tomarían unas 6 horas, así que se corren en Colab.
 - [ ] **Pendiente del equipo:** correr `training/rag/ajuste_embeddings_colab.ipynb` en Colab con GPU T4, descargar `fase2_ajuste.zip` y descomprimirlo en la raíz del proyecto.
 - [x] Entrenamiento en Colab (T4, 3 épocas, batch 32, max_seq 384): **e5-small** `split` (814 ejemplos, 2 min, pérdida 3,24 → 1,34) y `completo` (1.198 ejemplos, 3 min, pérdida 3,28 → 1,09).
-- [ ] **ALIA falló en Colab por falta de memoria** (`CUDA out of memory` en el primer paso): ModernBERT con 32 tripletas de 384 tokens supera los 15 GB de la T4.
-  - Corrección: `--mini-batch 8` usa `CachedMultipleNegativesRankingLoss` (GradCache), que calcula la misma pérdida del batch de 32 por trozos. Así ALIA y e5 se comparan con los mismos hiperparámetros. Probado en CPU.
+- [x] **ALIA falló al principio en Colab por falta de memoria** (`CUDA out of memory` en el primer paso): ModernBERT con 32 tripletas de 384 tokens supera los 15 GB de la T4.
+  - Corrección: `--mini-batch 8` usa `CachedMultipleNegativesRankingLoss` (GradCache), que calcula la misma pérdida del batch de 32 por trozos. Así ALIA y e5 se comparan con los mismos hiperparámetros.
   - La evaluación ahora omite los modelos que falten en vez de caerse.
-  - *Pendiente: reentrenar ALIA en Colab.*
-- [x] Analizar resultados (abajo). **Modelo elegido para la app: `e5-small-ajustado-completo` + alias.**
+- [x] Reentrenamiento de **ALIA** en Colab (T4, mismos hiperparámetros + `--mini-batch 8`): `split` (814 ejemplos, 10,4 min, pérdida 1,80 → 1,03) y `completo` (1.198 ejemplos, 15,9 min, pérdida 1,77 → 0,80).
+- [x] Analizar resultados (abajo). **Modelo elegido para la app: `alia-ajustado-completo` + alias** (alternativa casi empatada: `e5-small-ajustado-completo`).
 
 #### Resultados del ajuste (hit@1)
 
@@ -140,16 +140,29 @@ Detalle con hit@3, hit@5, MRR y cada fallo en `evaluacion/resultados/fase2_rag.j
 |---|---|---|---|---|
 | Subcadena (sistema actual) | 6,3 % | 5,0 % | 9,4 % | 0,0 % |
 | BM25 + alias | 83,4 % | 82,5 % | 81,5 % | 88,8 % |
-| ALIA-MrBERT + alias | 82,6 % | 72,5 % | 82,4 % | 84,4 % |
-| e5-small + alias (base) | 85,3 % | **87,5 %** | 83,8 % | 88,8 % |
-| **e5-small ajustado (split) + alias** | **93,7 %** | 85,0 % | **92,6 %** | **96,2 %** |
+| ALIA-MrBERT + alias (base) | 82,6 % | 72,5 % | 82,4 % | 84,4 % |
+| e5-small + alias (base) | 85,3 % | 87,5 % | 83,8 % | 88,8 % |
+| **e5-small ajustado (split) + alias** | **93,7 %** | 85,0 % | 92,6 % | **96,2 %** |
+| **ALIA ajustado (split) + alias** | 92,1 % | 82,5 % | **92,9 %** | 91,2 % |
 | e5-small ajustado (completo) + alias | 96,4 % | 85,0 % | 95,9 % | *98,1 % (no es justo: los vio)* |
+| **ALIA ajustado (completo) + alias** | 95,4 % | **92,5 %** | 93,8 % | *99,4 % (no es justo: los vio)* |
+
+Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
+
+| Recuperador | Total | Manuales | No vistos | MRR@10 total |
+|---|---|---|---|---|
+| e5-small ajustado (split) | 96,8 % | 90,0 % | **99,4 %** | 0,955 |
+| ALIA ajustado (split) | **97,2 %** | **92,5 %** | 98,1 % | 0,948 |
+| e5-small ajustado (completo) | 98,0 % | 90,0 % | — | **0,974** |
+| ALIA ajustado (completo) | **98,6 %** | **95,0 %** | — | 0,970 |
 
 **Lectura:**
-1. **El ajuste generaliza.** En los 12 analitos que el modelo nunca vio al entrenar, el acierto sube de 88,8 % a **96,2 %** (+7,4 puntos) y el hit@3 llega a 99,4 %. No es memorización: aprendió a relacionar abreviaturas y lenguaje coloquial con la página correcta. En analitos vistos sube de 83,8 % a 92,6 %.
-2. **En las consultas manuales queda prácticamente igual** (34 frente a 35 de 40 aciertos). Algunos fallos nuevos son razonables ("azúcar en la sangre" → HbA1c en 1.er lugar y glucosa en 2.º). Otros son metáforas que empeoran: "defensas bajas en el hemograma" y "sal en la sangre baja" ya no aparecen en el top 10. Es una limitación para el informe; se mitigaría con consultas de entrenamiento más coloquiales.
-3. Los analitos no vistos resultan algo más fáciles que los vistos incluso para los modelos base. Por eso la comparación se hace siempre dentro del mismo grupo.
-4. El modelo `completo` es el que usará la app. Sus números sobre analitos vistos son optimistas; la cifra honesta para el informe es la del `split`.
+1. **El ajuste generaliza, con los dos modelos.** En los 12 analitos que el modelo nunca vio, e5 pasa de 88,8 % a **96,2 %** y ALIA de 84,4 % a **91,2 %**; ambos llegan a 98-99 % en hit@3. No es memorización: aprendieron a relacionar abreviaturas y lenguaje coloquial con la página correcta.
+2. **ALIA es el que más gana con el ajuste.** Sube 9,5 puntos en total (82,6 → 92,1 %), frente a 8,4 de e5. En las consultas manuales ALIA pasa de 72,5 % a 82,5 % (split) y a **92,5 %** (completo), mientras que e5 baja de 87,5 % a 85,0 %. El modelo biomédico en español no destacaba de base, pero aprovecha mejor el ajuste.
+3. **Fallos manuales del modelo final (ALIA completo, 3 de 40):** "defensas bajas en el hemograma" (fuera del top 10), "tamaño de los glóbulos rojos" (5.º) y "función del riñón" (2.º). e5 completo falla 6, entre ellas "sal en la sangre baja", que ni aparece en su top 10, y "azúcar en la sangre", que pone HbA1c antes que glucosa. "Defensas bajas" sigue siendo una limitación para el informe; se mitigaría con consultas de entrenamiento más coloquiales.
+4. **Elección: ALIA ajustado (completo).** En hit@1 total, e5 está 1 punto arriba, pero la ventaja sale de las consultas de alias, que son fáciles por construcción. ALIA gana en hit@3, que es lo que recibe el generador, y en las consultas manuales, que son las más parecidas a lenguaje real (37 frente a 34 de 40; el set es pequeño, así que la diferencia es indicativa). Su costo: en CPU indexa y busca unas 3 veces más lento que e5 (unos 4 min frente a 1,3 min para las 505 consultas) y pesa 600 MB frente a 470 MB. En la app la base se indexa una sola vez, así que es aceptable.
+5. Los analitos no vistos resultan algo más fáciles que los vistos incluso para los modelos base. Por eso la comparación se hace siempre dentro del mismo grupo.
+6. El modelo `completo` es el que usará la app. Sus números sobre analitos vistos son optimistas; las cifras honestas para el informe son las del `split`.
 
 ## Fase 3: clasificador de guardrails con MrBERT-biomed ⬜
 
@@ -240,6 +253,7 @@ El `xfail` es intencional: documenta la brecha de formatos de la regla, que se c
   - Feedback del profesor: el proyecto era "usar un LLM y ya"; hay que hacer fine-tuning y participar en la construcción del modelo.
   - Revisión de modelos: Med-BERT descartado (la rama `version_2` agrega medicamentos y procedimientos, no idiomas, y trabaja con códigos ICD). MrBERT-biomed elegido para guardrails y ALIA-MrBERT para RAG.
   - Fases 0 y 1 completadas.
-  - Decisiones: entrega en 2 a 3 semanas, Colab Pro, Groq verificado (profesor principal: Qwen).
+  - Decisiones: entrega en 2 a 3 semanas, Colab gratuito con GPU T4, Groq verificado (profesor principal: Qwen).
   - Fase 2: base de conocimiento de MedlinePlus (208 fragmentos), recuperadores y evaluación con 505 consultas. Mejor resultado: e5-small + alias (85,3 % hit@1) frente a 6,3 % del sistema actual. ALIA-MrBERT no supera a e5-small.
   - Ajuste contrastivo: 1.198 consultas generadas con Qwen, split de 29/12 analitos, script de entrenamiento y notebook de Colab listos.
+  - Entrenamiento en Colab T4: e5 sin problemas. ALIA se quedó sin memoria y se corrigió con CachedMNRL (`--mini-batch 8`). Resultado: ambos generalizan a analitos no vistos (e5 96,2 %, ALIA 91,2 % hit@1). ALIA ajustado completo queda elegido por hit@3 y consultas manuales (92,5 % frente a 85,0 %). Fase 2 terminada.

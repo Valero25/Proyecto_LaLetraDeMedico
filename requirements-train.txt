@@ -12,7 +12,10 @@ beautifulsoup4
 datasets
 accelerate
 
-# Fases 3 y 4: fine-tuning (se instalan en Colab con GPU)
+# Fase 3: guardrails (MrBERT corre en CPU en unos 25 min)
+scikit-learn
+
+# Fase 4: fine-tuning (se instalan en Colab con GPU)
 # torch
 # transformers
 # datasets
@@ -21,4 +24,3 @@ accelerate
 # accelerate
 # bitsandbytes
 # evaluate
-# scikit-learn

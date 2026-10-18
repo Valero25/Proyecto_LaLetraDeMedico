@@ -14,14 +14,14 @@
 
 ## Estado actual
 
-**Fase en curso:** Fase 3. La Fase 2 terminó con ALIA y e5 ajustados y evaluados; el modelo para la app es `alia-ajustado-completo` + alias.
+**Fase en curso:** Fase 3. Los scripts están listos y el dataset de frases se está generando con Groq. La Fase 2 terminó con ALIA y e5 ajustados y evaluados; el modelo para la app es `alia-ajustado-completo` + alias.
 
 | Fase | Estado |
 |---|---|
 | 0. Preparación | ✅ Terminada |
 | 1. Generador de exámenes sintéticos | ✅ Terminada |
 | 2. RAG con embeddings | ✅ Terminada |
-| 3. Clasificador de guardrails | ⬜ Pendiente |
+| 3. Clasificador de guardrails | 🟡 En curso |
 | 4. Fine-tuning QLoRA del generador | ⬜ Pendiente |
 | 5. Integración en la app | ⬜ Pendiente |
 | 6. Informe | ⬜ Pendiente |
@@ -46,7 +46,7 @@ Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
   ```
 - [x] `requirements-train.txt` separado de `requirements.txt` (la app no carga dependencias de entrenamiento).
 - [x] `.gitignore`: excluye `models/` y los `.jsonl` generados.
-- [ ] **Pendiente del equipo:** hacer commit de los cambios previos en `app.py` y `backend.py` (reintentos y modelo de respaldo de Gemini). No se tocaron.
+- [x] Commit de los cambios previos en `app.py` y `backend.py` (reintentos y modelo de respaldo de Gemini), hecho por el equipo (`fb14d22`).
 
 ## Fase 1: generador de exámenes sintéticos ✅
 
@@ -90,7 +90,7 @@ Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
   - 465 generadas del catálogo: alias solo, alias + estado, pregunta, alias + panel.
   - 40 difíciles escritas a mano (`training/rag/consultas_manuales.json`): coloquiales, sin tildes, con errores.
 - [x] `tests/test_rag.py`: 7 pruebas que no requieren descargar modelos.
-- [ ] **Decisión:** modelo de embeddings final y si se hace el ajuste contrastivo (ver abajo).
+- [x] **Decisión:** se hizo el ajuste contrastivo; modelo final `alia-ajustado-completo` + alias (ver abajo).
 - [ ] **Pendiente del equipo:** revisar las 3 fichas propias, citar su fuente y marcar `"revisada": true`.
 
 ### Resultados (acierto en el primer resultado, hit@1)
@@ -126,7 +126,7 @@ Detalle con hit@3, hit@5, MRR y cada fallo en `evaluacion/resultados/fase2_rag.j
   - Los negativos difíciles salen de las confusiones medidas: sangre/orina, HbA1c/hemoglobina, ALT/AST…
   - Variantes `split` (experimento honesto) y `completo` (modelo para la app), para ALIA y para e5-small.
 - [x] Corrida de prueba en CPU: funciona, pero tarda unos 50 s por paso. Los 4 entrenamientos tomarían unas 6 horas, así que se corren en Colab.
-- [ ] **Pendiente del equipo:** correr `training/rag/ajuste_embeddings_colab.ipynb` en Colab con GPU T4, descargar `fase2_ajuste.zip` y descomprimirlo en la raíz del proyecto.
+- [x] Correr `training/rag/ajuste_embeddings_colab.ipynb` en Colab con GPU T4, descargar `fase2_ajuste.zip` y descomprimirlo en la raíz del proyecto.
 - [x] Entrenamiento en Colab (T4, 3 épocas, batch 32, max_seq 384): **e5-small** `split` (814 ejemplos, 2 min, pérdida 3,24 → 1,34) y `completo` (1.198 ejemplos, 3 min, pérdida 3,28 → 1,09).
 - [x] **ALIA falló al principio en Colab por falta de memoria** (`CUDA out of memory` en el primer paso): ModernBERT con 32 tripletas de 384 tokens supera los 15 GB de la T4.
   - Corrección: `--mini-batch 8` usa `CachedMultipleNegativesRankingLoss` (GradCache), que calcula la misma pérdida del batch de 32 por trozos. Así ALIA y e5 se comparan con los mismos hiperparámetros.
@@ -164,11 +164,25 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 5. Los analitos no vistos resultan algo más fáciles que los vistos incluso para los modelos base. Por eso la comparación se hace siempre dentro del mismo grupo.
 6. El modelo `completo` es el que usará la app. Sus números sobre analitos vistos son optimistas; las cifras honestas para el informe son las del `split`.
 
-## Fase 3: clasificador de guardrails con MrBERT-biomed ⬜
+## Fase 3: clasificador de guardrails con MrBERT-biomed 🟡
 
-- [ ] Dataset de unas 2.000 frases en tres clases (*informativa*, *diagnóstica*, *alarmista*), con etiquetado y revisión del equipo. Split 70/15/15.
-- [ ] Notebook de fine-tuning para Colab (`BSC-LT/MrBERT-biomed`, alternativa `MrBERT-es`).
-- [ ] Métricas: F1 por clase y matriz de confusión, contra la lista de palabras actual de `step_4_validation`.
+- [ ] **Dataset** (`training/guardrails/generar_frases.py` → `data/guardrails/frases.jsonl`): Qwen escribe 8 frases por petición, para cada (analito, clase) y en 2 rondas. En total son 246 peticiones y unas 1.970 frases.
+  - Cada petición fija un resultado sintético de la Fase 1 (valor, rango, estado y contexto del paciente). El estado se sortea igual para las tres clases, para que el modelo no aprenda el atajo "valor alto = frase peligrosa".
+  - Se piden casos difíciles para el filtro actual: informativas que usan "tienes" o "diagnóstico", diagnósticas sin esas palabras y alarmistas sutiles, sin signos de exclamación.
+  - *En curso (~2 h): el límite real de Groq es de **1.000 tokens de salida por minuto** por modelo, unas 2 peticiones por minuto. El script se puede reanudar.*
+- [ ] **Verificación de etiquetas** (`training/guardrails/verificar_etiquetas.py`): `openai/gpt-oss-120b` vuelve a etiquetar cada frase sin ver la clase pedida.
+  - Muestra de 128 frases: acuerdo 91,4 %, **kappa 0,87**.
+  - Casi todos los desacuerdos son frases que descartan una enfermedad con certeza sobre un valor normal ("no tienes ninguna infección"). Por definición son diagnósticas, pero el juez las ve como informativas.
+  - Se entrena solo con las frases en que coinciden profesor y juez. Los desacuerdos van a `data/guardrails/revisar_equipo.csv`.
+- [ ] **Pendiente del equipo:** llenar la columna `clase_equipo` de `revisar_equipo.csv` (`informativa`, `diagnostica`, `alarmista` o `descartar`).
+- [x] **Split por analito** (`training/guardrails/dataset.py`): las frases de los 12 analitos de test de la Fase 2 van a test, para medir la generalización a exámenes no vistos. Del resto, 15 % va a validación.
+- [x] **Entrenamiento** (`training/guardrails/ajustar_clasificador.py`):
+  - MrBERT-biomed con cabeza de clasificación de 3 clases. Se elige la mejor época por F1 macro en validación.
+  - Corre en CPU en unos 25 min (probado con una corrida mínima), así que no hace falta Colab.
+- [x] **Evaluación** (`evaluacion/evaluar_guardrails.py`):
+  - Tarea binaria (¿frase riesgosa?) frente al filtro de palabras actual, más F1 por clase y matriz de confusión.
+  - Con la muestra parcial, el filtro de palabras detecta solo el 7 % de las frases riesgosas. Falta confirmarlo con el dataset completo.
+- [ ] Entrenar MrBERT-biomed y, como comparación, `MrBERT-es` (general), para medir si el preentrenamiento biomédico ayuda.
 
 ## Fase 4: fine-tuning QLoRA del generador ⬜
 
@@ -202,7 +216,7 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 3. **Modelo profesor:** **Groq** (cuenta creada, `GROQ_API_KEY` en `.env` y verificada el 2026-10-18). No usar Gemini, porque sus términos prohíben usar sus salidas para entrenar modelos que compitan.
    - Principal: `qwen/qwen3.8-27b`. En la prueba tuteó, fue cálido, usó el contexto del paciente y respetó los estados.
    - Secundario o juez: `openai/gpt-oss-120b`. Más técnico; en un valor BAJO dijo "suele considerarse normal", lo que contradice el estado.
-   - Límite medido: **8.000 tokens por minuto por modelo**. Con unos 1.000 a 1.600 tokens por ejemplo salen 5 a 8 ejemplos por minuto, o sea unas 2 a 3 horas para 1.000 ejemplos. Falta confirmar el límite diario en console.groq.com → Settings → Limits.
+   - Límite medido: **8.000 tokens por minuto por modelo, de los que solo 1.000 pueden ser de salida**. La salida es el verdadero cuello de botella. Con unos 1.000 a 1.600 tokens por ejemplo salen 5 a 8 ejemplos por minuto, o sea unas 2 a 3 horas para 1.000 ejemplos. Falta confirmar el límite diario en console.groq.com → Settings → Limits.
 
 ### Calendario
 
@@ -225,7 +239,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 19 passed, 1 xfailed)
+# Pruebas (esperado: 24 passed, 1 xfailed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

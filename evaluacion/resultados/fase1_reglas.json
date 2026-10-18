@@ -1,0 +1,111 @@
+{
+  "datos": "data\\sintetico\\examenes.jsonl",
+  "exactitud_global": 0.8343078083741984,
+  "por_formato": {
+    "rango_guion": {
+      "tipo": "canónico",
+      "total": 2258,
+      "correcto": 2258,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "rango_raya": {
+      "tipo": "canónico",
+      "total": 2222,
+      "correcto": 2222,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "rango_guion_espacios": {
+      "tipo": "canónico",
+      "total": 2131,
+      "correcto": 2131,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "cualitativo": {
+      "tipo": "canónico",
+      "total": 1046,
+      "correcto": 1046,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "max_simbolo_junto": {
+      "tipo": "canónico",
+      "total": 495,
+      "correcto": 495,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "max_simbolo": {
+      "tipo": "canónico",
+      "total": 451,
+      "correcto": 451,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "min_simbolo_junto": {
+      "tipo": "canónico",
+      "total": 129,
+      "correcto": 129,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "min_simbolo": {
+      "tipo": "canónico",
+      "total": 115,
+      "correcto": 115,
+      "desconocido": 0,
+      "incorrecto": 0,
+      "exactitud": 1.0
+    },
+    "cualitativo_cruces": {
+      "tipo": "variante",
+      "total": 369,
+      "correcto": 0,
+      "desconocido": 369,
+      "incorrecto": 0,
+      "exactitud": 0.0
+    },
+    "max_hasta": {
+      "tipo": "variante",
+      "total": 72,
+      "correcto": 0,
+      "desconocido": 72,
+      "incorrecto": 0,
+      "exactitud": 0.0
+    },
+    "max_texto": {
+      "tipo": "variante",
+      "total": 88,
+      "correcto": 0,
+      "desconocido": 88,
+      "incorrecto": 0,
+      "exactitud": 0.0
+    },
+    "min_texto": {
+      "tipo": "variante",
+      "total": 46,
+      "correcto": 0,
+      "desconocido": 46,
+      "incorrecto": 0,
+      "exactitud": 0.0
+    },
+    "rango_a": {
+      "tipo": "variante",
+      "total": 1182,
+      "correcto": 0,
+      "desconocido": 1182,
+      "incorrecto": 0,
+      "exactitud": 0.0
+    }
+  },
+  "errores": []
+}

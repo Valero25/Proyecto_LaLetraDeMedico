@@ -11,3 +11,10 @@ env/
 
 # Archivos de sistema operativo
 .DS_Store
+
+# Pesos de modelos entrenados (se guardan fuera del repo: Drive / Hugging Face)
+models/*
+!models/.gitkeep
+
+# Datos generados (se regeneran con la semilla, ver PLAN.md)
+data/sintetico/*.jsonl

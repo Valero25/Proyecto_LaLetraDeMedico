@@ -1,0 +1,63 @@
+{
+  "_nota": "Rangos de referencia típicos para adultos, tomados de valores de uso común en laboratorios clínicos. Cada laboratorio define los suyos: estos sirven para generar datos sintéticos, no para uso clínico. El equipo debe revisarlos y citar la fuente en el informe.",
+  "paneles": {
+    "Hemograma": ["hemoglobina", "hematocrito", "eritrocitos", "leucocitos", "plaquetas", "vcm", "hcm", "neutrofilos", "linfocitos"],
+    "Perfil Lipídico": ["colesterol_total", "colesterol_hdl", "colesterol_ldl", "trigliceridos"],
+    "Control de Diabetes": ["glucosa", "hemoglobina_a1c"],
+    "Bioquímica Sanguínea": ["glucosa", "creatinina", "bun", "urea", "acido_urico", "calcio", "albumina"],
+    "Perfil Hepático": ["alt", "ast", "fosfatasa_alcalina", "bilirrubina_total", "ggt", "albumina"],
+    "Perfil Tiroideo": ["tsh", "t4_libre"],
+    "Electrolitos": ["sodio", "potasio", "calcio"],
+    "Análisis de Orina Completo": ["densidad_urinaria", "ph_urinario", "proteinas_orina", "glucosa_orina", "cetonas_orina", "nitritos_orina", "sangre_orina", "leucocitos_esterasa", "bilirrubina_orina", "leucocitos_sedimento", "eritrocitos_sedimento"]
+  },
+  "analitos": {
+    "hemoglobina": {"nombres": ["Hemoglobina", "HGB", "Hb"], "unidad": "g/dL", "tipo": "rango", "rango": {"M": [13.5, 17.5], "F": [12.0, 15.5]}, "decimales": 1, "limites_fisiologicos": [5, 22]},
+    "hematocrito": {"nombres": ["Hematocrito", "HCT", "Hto"], "unidad": "%", "tipo": "rango", "rango": {"M": [41, 53], "F": [36, 46]}, "decimales": 1, "limites_fisiologicos": [15, 65]},
+    "eritrocitos": {"nombres": ["Eritrocitos", "Glóbulos rojos", "RBC"], "unidad": "x10^6/µL", "tipo": "rango", "rango": {"M": [4.5, 5.9], "F": [4.0, 5.2]}, "decimales": 2, "limites_fisiologicos": [2, 7.5]},
+    "leucocitos": {"nombres": ["Leucocitos", "Glóbulos blancos", "WBC"], "unidad": "x10^3/µL", "tipo": "rango", "rango": [4.5, 11.0], "decimales": 1, "limites_fisiologicos": [1, 40]},
+    "plaquetas": {"nombres": ["Plaquetas", "PLT"], "unidad": "x10^3/µL", "tipo": "rango", "rango": [150, 450], "decimales": 0, "limites_fisiologicos": [20, 1000]},
+    "vcm": {"nombres": ["VCM", "Volumen corpuscular medio", "MCV"], "unidad": "fL", "tipo": "rango", "rango": [80, 100], "decimales": 1, "limites_fisiologicos": [60, 120]},
+    "hcm": {"nombres": ["HCM", "Hemoglobina corpuscular media", "MCH"], "unidad": "pg", "tipo": "rango", "rango": [27, 33], "decimales": 1, "limites_fisiologicos": [18, 40]},
+    "neutrofilos": {"nombres": ["Neutrófilos", "Neutrófilos %", "NEU%"], "unidad": "%", "tipo": "rango", "rango": [40, 70], "decimales": 1, "limites_fisiologicos": [10, 95]},
+    "linfocitos": {"nombres": ["Linfocitos", "Linfocitos %", "LYM%"], "unidad": "%", "tipo": "rango", "rango": [20, 40], "decimales": 1, "limites_fisiologicos": [5, 80]},
+
+    "colesterol_total": {"nombres": ["Colesterol total", "Colesterol", "CHOL"], "unidad": "mg/dL", "tipo": "max", "umbral": 200, "decimales": 0, "limites_fisiologicos": [100, 400]},
+    "colesterol_hdl": {"nombres": ["Colesterol HDL", "HDL", "Col. HDL"], "unidad": "mg/dL", "tipo": "min", "umbral": {"M": 40, "F": 50}, "decimales": 0, "limites_fisiologicos": [15, 100]},
+    "colesterol_ldl": {"nombres": ["Colesterol LDL", "LDL", "Col. LDL"], "unidad": "mg/dL", "tipo": "max", "umbral": 100, "decimales": 0, "limites_fisiologicos": [40, 250]},
+    "trigliceridos": {"nombres": ["Triglicéridos", "TG"], "unidad": "mg/dL", "tipo": "max", "umbral": 150, "decimales": 0, "limites_fisiologicos": [40, 800]},
+
+    "glucosa": {"nombres": ["Glucosa", "Glucosa en ayunas", "GLU", "Glicemia basal"], "unidad": "mg/dL", "tipo": "rango", "rango": [70, 99], "decimales": 0, "limites_fisiologicos": [40, 400]},
+    "hemoglobina_a1c": {"nombres": ["Hemoglobina A1c", "HbA1c", "Hemoglobina glicosilada"], "unidad": "%", "tipo": "max", "umbral": 5.7, "decimales": 1, "limites_fisiologicos": [4, 14]},
+
+    "creatinina": {"nombres": ["Creatinina", "CREA"], "unidad": "mg/dL", "tipo": "rango", "rango": {"M": [0.7, 1.3], "F": [0.6, 1.1]}, "decimales": 2, "limites_fisiologicos": [0.3, 8]},
+    "bun": {"nombres": ["BUN", "Nitrógeno ureico"], "unidad": "mg/dL", "tipo": "rango", "rango": [7, 20], "decimales": 0, "limites_fisiologicos": [2, 100]},
+    "urea": {"nombres": ["Urea"], "unidad": "mg/dL", "tipo": "rango", "rango": [15, 45], "decimales": 0, "limites_fisiologicos": [5, 200]},
+    "acido_urico": {"nombres": ["Ácido úrico", "AU"], "unidad": "mg/dL", "tipo": "rango", "rango": {"M": [3.4, 7.0], "F": [2.4, 6.0]}, "decimales": 1, "limites_fisiologicos": [1, 14]},
+    "calcio": {"nombres": ["Calcio", "Ca"], "unidad": "mg/dL", "tipo": "rango", "rango": [8.5, 10.5], "decimales": 1, "limites_fisiologicos": [6, 14]},
+    "albumina": {"nombres": ["Albúmina", "ALB"], "unidad": "g/dL", "tipo": "rango", "rango": [3.5, 5.0], "decimales": 1, "limites_fisiologicos": [1.5, 6]},
+
+    "alt": {"nombres": ["ALT", "TGP", "Alanina aminotransferasa"], "unidad": "U/L", "tipo": "rango", "rango": [7, 56], "decimales": 0, "limites_fisiologicos": [3, 600]},
+    "ast": {"nombres": ["AST", "TGO", "Aspartato aminotransferasa"], "unidad": "U/L", "tipo": "rango", "rango": [10, 40], "decimales": 0, "limites_fisiologicos": [3, 600]},
+    "fosfatasa_alcalina": {"nombres": ["Fosfatasa alcalina", "FA", "ALP"], "unidad": "U/L", "tipo": "rango", "rango": [44, 147], "decimales": 0, "limites_fisiologicos": [20, 800]},
+    "bilirrubina_total": {"nombres": ["Bilirrubina total", "BT"], "unidad": "mg/dL", "tipo": "rango", "rango": [0.1, 1.2], "decimales": 2, "limites_fisiologicos": [0.05, 15]},
+    "ggt": {"nombres": ["GGT", "Gamma glutamil transferasa"], "unidad": "U/L", "tipo": "rango", "rango": {"M": [8, 61], "F": [5, 36]}, "decimales": 0, "limites_fisiologicos": [3, 800]},
+
+    "tsh": {"nombres": ["TSH", "Hormona estimulante de tiroides"], "unidad": "µUI/mL", "tipo": "rango", "rango": [0.4, 4.0], "decimales": 2, "limites_fisiologicos": [0.01, 50]},
+    "t4_libre": {"nombres": ["T4 libre", "FT4", "Tiroxina libre"], "unidad": "ng/dL", "tipo": "rango", "rango": [0.8, 1.8], "decimales": 2, "limites_fisiologicos": [0.2, 5]},
+
+    "sodio": {"nombres": ["Sodio", "Na"], "unidad": "mmol/L", "tipo": "rango", "rango": [135, 145], "decimales": 0, "limites_fisiologicos": [115, 165]},
+    "potasio": {"nombres": ["Potasio", "K"], "unidad": "mmol/L", "tipo": "rango", "rango": [3.5, 5.1], "decimales": 1, "limites_fisiologicos": [2, 7.5]},
+
+    "densidad_urinaria": {"nombres": ["Densidad", "Gravedad específica"], "unidad": "", "tipo": "rango", "rango": [1.005, 1.030], "decimales": 3, "limites_fisiologicos": [1.000, 1.040]},
+    "ph_urinario": {"nombres": ["pH"], "unidad": "", "tipo": "rango", "rango": [4.5, 8.0], "decimales": 1, "limites_fisiologicos": [4.0, 9.0]},
+    "proteinas_orina": {"nombres": ["Proteínas", "Proteínas en orina"], "unidad": "", "tipo": "cualitativo"},
+    "glucosa_orina": {"nombres": ["Glucosa", "Glucosa en orina"], "unidad": "", "tipo": "cualitativo"},
+    "cetonas_orina": {"nombres": ["Cetonas", "Cuerpos cetónicos"], "unidad": "", "tipo": "cualitativo"},
+    "nitritos_orina": {"nombres": ["Nitritos"], "unidad": "", "tipo": "cualitativo"},
+    "sangre_orina": {"nombres": ["Sangre", "Hemoglobina en orina"], "unidad": "", "tipo": "cualitativo"},
+    "leucocitos_esterasa": {"nombres": ["Leucocitos (esterasa)", "Esterasa leucocitaria"], "unidad": "", "tipo": "cualitativo"},
+    "bilirrubina_orina": {"nombres": ["Bilirrubina", "Bilirrubina en orina"], "unidad": "", "tipo": "cualitativo"},
+    "leucocitos_sedimento": {"nombres": ["Leucocitos (sedimento)", "Leucocitos por campo"], "unidad": "/campo", "tipo": "rango", "rango": [0, 5], "decimales": 0, "limites_fisiologicos": [0, 100]},
+    "eritrocitos_sedimento": {"nombres": ["Eritrocitos (sedimento)", "Hematíes por campo"], "unidad": "/campo", "tipo": "rango", "rango": [0, 3], "decimales": 0, "limites_fisiologicos": [0, 100]}
+  }
+}

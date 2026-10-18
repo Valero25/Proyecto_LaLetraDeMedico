@@ -1,0 +1,20 @@
+# Dependencias para entrenamiento y evaluación (la app solo necesita requirements.txt)
+-r requirements.txt
+
+# Fase 1: generador sintético y pruebas
+pytest
+
+# Fase 2: RAG (se habilitan al empezar la fase)
+# sentence-transformers
+# faiss-cpu
+
+# Fases 3 y 4: fine-tuning (se instalan en Colab con GPU)
+# torch
+# transformers
+# datasets
+# peft
+# trl
+# accelerate
+# bitsandbytes
+# evaluate
+# scikit-learn

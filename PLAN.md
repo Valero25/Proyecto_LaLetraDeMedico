@@ -14,15 +14,15 @@
 
 ## Estado actual
 
-**Fase en curso:** Fase 3. Los scripts están listos y el dataset de frases se está generando con Groq. La Fase 2 terminó con ALIA y e5 ajustados y evaluados; el modelo para la app es `alia-ajustado-completo` + alias.
+**Fase en curso:** Fase 4. Los scripts y el notebook de QLoRA están listos y probados en CPU; los profesores están generando las respuestas de referencia en Groq. Modelos elegidos: `alia-ajustado-completo` + alias para el RAG (Fase 2) y `mrbert-biomed` sin ponderar para los guardrails (Fase 3).
 
 | Fase | Estado |
 |---|---|
 | 0. Preparación | ✅ Terminada |
 | 1. Generador de exámenes sintéticos | ✅ Terminada |
 | 2. RAG con embeddings | ✅ Terminada |
-| 3. Clasificador de guardrails | 🟡 En curso |
-| 4. Fine-tuning QLoRA del generador | ⬜ Pendiente |
+| 3. Clasificador de guardrails | ✅ Terminada (falta la revisión del equipo) |
+| 4. Fine-tuning QLoRA del generador | 🟡 En curso |
 | 5. Integración en la app | ⬜ Pendiente |
 | 6. Informe | ⬜ Pendiente |
 
@@ -164,7 +164,7 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 5. Los analitos no vistos resultan algo más fáciles que los vistos incluso para los modelos base. Por eso la comparación se hace siempre dentro del mismo grupo.
 6. El modelo `completo` es el que usará la app. Sus números sobre analitos vistos son optimistas; las cifras honestas para el informe son las del `split`.
 
-## Fase 3: clasificador de guardrails con MrBERT-biomed 🟡
+## Fase 3: clasificador de guardrails con MrBERT-biomed ✅
 
 - [ ] **Dataset** (`training/guardrails/generar_frases.py` → `data/guardrails/frases.jsonl`): Qwen escribe 8 frases por petición, para cada (analito, clase) y en 2 rondas. En total son 246 peticiones y unas 1.970 frases.
   - Cada petición fija un resultado sintético de la Fase 1 (valor, rango, estado y contexto del paciente). El estado se sortea igual para las tres clases, para que el modelo no aprenda el atajo "valor alto = frase peligrosa".
@@ -189,6 +189,7 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
   - Entrenamiento: AdamW con lr 2e-3, parada temprana por F1 en validación (paciencia 5), 1 min en CPU. Se corrió con 3 semillas para medir la variación.
   - Un test (`test_red_propia_ignora_el_relleno`) detectó que, sin empaquetar, la dirección hacia atrás de la LSTM leía primero el relleno. Por eso la salida de una frase dependía de las demás frases del lote. Se corrigió antes de reportar resultados.
 - [x] **Baseline clásico**: TF-IDF de 1 y 2 palabras + regresión logística, entrenado dentro de `evaluar_guardrails.py`.
+- [x] **Pérdida ponderada** (`--pesos 1,2,2` en los dos scripts de entrenamiento): en la entropía cruzada, equivocarse con una frase diagnóstica o alarmista cuesta el doble que con una informativa. Los pesos se fijaron de antemano, sin mirar el test. Se comparó con **bajar el umbral** de decisión sobre P(riesgosa), que no necesita reentrenar (`--umbrales` en la evaluación).
 
 #### Resultados (test: 506 frases de 12 analitos no vistos)
 
@@ -207,13 +208,54 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 2. **El preentrenamiento es lo que más aporta.** Con solo 899 frases, la red propia queda **por debajo de TF-IDF** (0,90 frente a 0,93). Tiene que aprender el español desde cero: 988 palabras de vocabulario, y una palabra que no vio en train es `<unk>`. Los transformers ya traen ese conocimiento y suben unos 4-7 puntos. La clase diagnóstica es la más difícil para todos, y es donde más se nota la diferencia (0,87 → 0,96).
 3. **Biomédico frente a general:** MrBERT-biomed gana en 3 clases (0,973 frente a 0,967), sobre todo en diagnóstica (0,961 frente a 0,944). En la tarea binaria empatan. La diferencia es de unas pocas frases, así que es indicativa. **Para la app se elige MrBERT-biomed**, por ser el mejor en distinguir diagnóstica de alarmista y el que menos falsos positivos tiene.
 4. **Los errores que quedan son los casos sutiles.** Hay frases que descartan algo con certeza ("Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias") y alarmistas con tono técnico ("suele ser un signo de deterioro hepático avanzado").
+#### Pérdida ponderada frente a umbral (test, tarea binaria)
+
+| Modelo | Sin ponderar: FN / FP | Ponderado [1, 2, 2]: FN / FP | Sin ponderar, umbral 0,3: FN / FP | Sin ponderar, umbral 0,1: FN / FP |
+|---|---|---|---|---|
+| TF-IDF + regresión logística | 8 / 7 (umbral 0,5) | — | **2** / 14 | 0 / 63 |
+| BiLSTM propia (media de 3 semillas) | 11,3 / 12,7 | 11,3 / 12,7 | — | — |
+| MrBERT-biomed | 5 / 1 | 5 / 2 | 4 / 2 | 4 / 8 |
+
+FN = frases riesgosas que pasan; FP = frases informativas marcadas.
+
+**Lectura** (desarrollada en la sección 7 de `informe/fundamentos.md`):
+- **Ponderar la pérdida no mejora nada** en ninguno de los dos modelos. Una explicación: el train es separable para estos modelos y la pérdida llega casi a 0, así que los pesos multiplican errores que ya no existen y la solución final es la misma. En la BiLSTM, la variación entre semillas (6 a 21 FN) pesa más que los pesos.
+- **Bajar el umbral sí funciona, pero solo en el modelo calibrado.** En TF-IDF, con umbral 0,3 los FN bajan de 8 a 2. MrBERT está sobreconfiado: sus 4-5 errores tienen P(riesgosa) cercana a 0, y ni con umbral 0,1 los detecta. Sus errores no son de umbral. Vienen de la representación o de la etiqueta: hay al menos un caso de etiqueta dudosa ("tú no tienes riesgo" está etiquetada como informativa, y el modelo ponderado la marca).
+- **Decisión:** la app usa MrBERT-biomed sin ponderar con umbral 0,5. Bajar el umbral quita 1 FN y suma 1 FP, una diferencia que no justifica cambiarlo. Si se cambia, debe elegirse en validación y no en test.
+
 5. **Limitación importante para el informe:** el test solo tiene frases en que los dos LLM coinciden, que son las más claras, así que el 0,99 es optimista. Los 200 desacuerdos son el set difícil. Sobre ellos, MrBERT suele dar la razón al profesor: en 57 de los 89 casos "diagnóstica vs. informativa" dice diagnóstica. Cuando el equipo los revise, entran al dataset con su etiqueta y se reevalúa. Ese número es el más honesto.
 6. Las frases de entrenamiento y de test las escribió el mismo profesor (Qwen). En la Fase 4 se mide el clasificador sobre las salidas reales del generador.
 
-## Fase 4: fine-tuning QLoRA del generador ⬜
+## Fase 4: fine-tuning QLoRA del generador 🟡
 
-- [ ] Dataset SFT de 1.000 a 2.000 ejemplos: entrada (caso sintético + pasajes RAG + contexto), salida (JSON `{explicaciones, preguntas_sugeridas}`). Los redacta un modelo abierto grande como profesor; el equipo revisa una muestra.
-- [ ] Notebook QLoRA (Unsloth o PEFT + TRL) sobre un modelo base de unos 3B.
+- [x] **Formato** (`training/generador/prompt.py`):
+  - El estudiante ve un prompt de sistema corto con las reglas, más los datos del caso y los pasajes. Es el mismo formato que usará la app.
+  - El profesor recibe además una guía de estilo (largo según el estado, causas en condicional, 3-4 preguntas) que el estudiante **no** ve: debe aprender el estilo de los ejemplos.
+- [x] **Casos** (`training/generador/preparar_casos.py` → `data/generador/casos.jsonl`):
+  - 1.000 casos de train, 100 de val y 150 de test, del mismo split de la Fase 1, con hasta 8 analitos.
+  - Cada analito lleva el primer pasaje que recupera el RAG de la Fase 2 (ALIA ajustado). El 95,8 % de esos pasajes es correcto: el generador aprende con los mismos errores de recuperación que tendrá en la app.
+- [ ] **Respuestas de los profesores** (`training/generador/generar_sft.py`): `qwen/qwen3.8-27b` y `openai/gpt-oss-120b` en paralelo, cada uno con la mitad de los casos de train y val. *En curso.*
+  - gpt-oss es unas 5 veces más rápido, pero más escueto, y en la prueba tuvo un error de contenido (atribuyó la ALT baja a "menor masa muscular"). Qwen escribe explicaciones más completas. Cada ejemplo registra su profesor, para compararlos o filtrar.
+  - Límites de Groq: 1.000 peticiones por día por modelo y unos 1.000 tokens de salida por minuto. Además, parece haber un límite diario de tokens: tras unas horas de uso aparecen esperas de 5 a 15 minutos. El script se puede reanudar.
+  - **Decisión del 2026-10-19: entrenar con unos 500 ejemplos.** Con la cuota de Groq salen unos 100 a 250 casos por modelo al día, y 1.000 tomarían 3 a 4 días más. Para que avance más rápido:
+    - El profesor recibe pasajes de 350 caracteres en lugar de 700; su prompt queda un 20 % más corto. El estudiante sigue viendo los pasajes completos.
+    - Los casos de validación se generan primero.
+    - La generación sigue corriendo. Si se llega a 1.000, se entrena una versión 2 y se comparan 500 contra 1.000 ejemplos (curva de datos para el informe).
+  - Avance al 2026-10-19: 225 respuestas (gpt-oss 150, Qwen 75), de las que ~190 pasan las verificaciones.
+- [ ] **Tercer profesor, propio y sin cuotas** (`training/generador/profesor_local.py` + `profesor_colab.ipynb`):
+  - Qwen2.5-14B-Instruct-AWQ (Apache 2.0) en la T4 de Colab, con vLLM. Si vLLM no funciona en la T4, se usa Qwen2.5-7B-Instruct con transformers en 4 bits.
+  - Recorre los casos de train desde el final, mientras Groq avanza desde el principio, y guarda en Drive tras cada lote.
+  - Si un caso tiene respuestas de varios profesores, `dataset.py` se queda con la del más grande (Qwen3.8-27B > gpt-oss-120b > Qwen2.5-14B > Qwen2.5-7B).
+  - Probado en CPU con SmolLM2-135M y el motor transformers.
+- [x] **Verificaciones automáticas** (`training/generador/verificacion.py`): JSON válido, un examen por analito, menciona el valor, estado consistente, número de preguntas e índice INFLESZ (con un contador de sílabas en español). Sirven para filtrar el dataset y para evaluar.
+- [x] **Dataset SFT** (`training/generador/dataset.py` → `sft_train.jsonl` y `sft_val.jsonl`): entran solo las respuestas que pasan las verificaciones **y** cuyas oraciones aprueba el guardrail MrBERT-biomed de la Fase 3.
+- [x] **Entrenamiento** (`training/generador/ajustar_qlora.py` + `qlora_colab.ipynb`):
+  - Qwen2.5-3B-Instruct cuantizado a 4 bits (NF4), con LoRA r = 16 y α = 32 en las 7 capas lineales de atención y MLP. lr de 2e-4 con calentamiento y caída coseno, lote efectivo de 16, 2 épocas.
+  - Los checkpoints van a Drive y el entrenamiento se reanuda si Colab se desconecta.
+  - Probado en CPU con SmolLM2-135M: el conteo de LoRA cuadra con r(d + k), se guardan las curvas de pérdida y **la pérdida cubre solo la respuesta**. En el ejemplo verificado, 832 de 2.743 tokens llevan pérdida, y el primero es el `{"explicaciones"` del asistente.
+- [x] **Respuestas del test** (`training/generador/generar_respuestas.py`), del modelo base y del ajustado, con decodificación voraz. **Evaluación** (`evaluacion/evaluar_generador.py`). Los dos están probados de punta a punta en CPU.
+- [ ] Generar las respuestas de Gemini sobre el mismo test, como referencia, solo para evaluar. Sus salidas no se usan para entrenar, porque sus términos lo prohíben.
+- [ ] El equipo revisa una muestra de unos 30 ejemplos del dataset SFT.
 - [ ] Evaluar en el test set tres variantes (base, fine-tuneado, Gemini):
   - % de JSON válido.
   - Fidelidad al estado y a los valores.
@@ -259,7 +301,7 @@ Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega
 
 **Pendiente teórico:**
 - Agregar weight decay al ajuste del RAG. Hoy vale 0, así que el problema de Hebb "sin reducción de pesos" queda sin resolver ahí.
-- La pérdida ponderada por clase en guardrails (sección 7).
+- [x] ~~La pérdida ponderada por clase en guardrails (sección 7)~~: hecha; no mejora (ver 7.1). Queda la calibración (temperature scaling).
 - Las curvas de aprendizaje como gráfica, no solo como tabla.
 
 ---
@@ -296,7 +338,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 26 passed, 1 xfailed)
+# Pruebas (esperado: 33 passed, 1 xfailed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

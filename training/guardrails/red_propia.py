@@ -26,7 +26,7 @@ from torch import nn
 RAIZ = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).parent))
 
-from dataset import CLASES, cargar_dataset, resumen  # noqa: E402
+from dataset import CLASES, cargar_dataset, parsear_pesos, resumen  # noqa: E402
 
 SALIDA = RAIZ / "models" / "guardrails" / "bilstm"
 PAD, UNK = 0, 1
@@ -78,7 +78,8 @@ class ClasificadorBiLSTM(nn.Module):
         return self.clasificador(torch.cat([media, maximo], dim=-1))
 
 
-def predecir(frases, ruta=SALIDA):
+def probabilidades(frases, ruta=SALIDA):
+    """Probabilidad de cada clase por frase (softmax de la salida), en el orden de CLASES."""
     vocab = json.loads((ruta / "vocab.json").read_text(encoding="utf-8"))
     config = json.loads((ruta / "config.json").read_text(encoding="utf-8"))
     modelo = ClasificadorBiLSTM(**config)
@@ -86,7 +87,11 @@ def predecir(frases, ruta=SALIDA):
     modelo.eval()
     with torch.no_grad():
         return [p for i in range(0, len(frases), 128)
-                for p in modelo(codificar(frases[i:i + 128], vocab)).argmax(-1).tolist()]
+                for p in modelo(codificar(frases[i:i + 128], vocab)).softmax(-1).tolist()]
+
+
+def predecir(frases, ruta=SALIDA):
+    return [max(range(len(p)), key=p.__getitem__) for p in probabilidades(frases, ruta)]
 
 
 def main():
@@ -97,6 +102,8 @@ def main():
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--salida", type=Path, default=SALIDA)
+    parser.add_argument("--pesos", default="1,1,1",
+                        help="Pesos de la entropía cruzada por clase (informativa,diagnostica,alarmista), ej. 1,2,2")
     parser.add_argument("--paciencia", type=int, default=5, help="Épocas sin mejorar en validación antes de parar")
     args = parser.parse_args()
 
@@ -117,7 +124,8 @@ def main():
     x_val = codificar([d["frase"] for d in val], vocab)
     y_val = [d["etiqueta"] for d in val]
     optimizador = torch.optim.AdamW(modelo.parameters(), lr=args.lr, weight_decay=0.01)
-    perdida_fn = nn.CrossEntropyLoss()
+    pesos = parsear_pesos(args.pesos)
+    perdida_fn = nn.CrossEntropyLoss(weight=torch.tensor(pesos))
 
     mejor_f1, mejor_estado, sin_mejorar, historial = -1, None, 0, []
     inicio = time.time()
@@ -158,7 +166,7 @@ def main():
     (salida / "config.json").write_text(json.dumps(config), encoding="utf-8")
     with open(salida / "entrenamiento.json", "w", encoding="utf-8") as f:
         json.dump({"arquitectura": "Embedding + BiLSTM + pooling media/máximo + MLP", "parametros": parametros,
-                   "frases_train": len(train), "frases_val": len(val), "seed": args.seed, "lr": args.lr, "batch": args.batch,
+                   "frases_train": len(train), "frases_val": len(val), "seed": args.seed, "pesos_clase": pesos, "lr": args.lr, "batch": args.batch,
                    "mejor_f1_val": mejor_f1, "minutos": round(minutos, 2), "historial": historial},
                   f, indent=2, ensure_ascii=False)
     print(f"Mejor F1 macro en validación: {mejor_f1:.3f}")

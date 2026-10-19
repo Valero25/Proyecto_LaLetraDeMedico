@@ -1751,6 +1751,29 @@
           172
         ]
       ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9782608695652174,
+          "recall": 0.9752321981424149,
+          "f1": 0.9767441860465116,
+          "falsos_positivos": 7,
+          "falsos_negativos": 8
+        },
+        "0.3": {
+          "precision": 0.9582089552238806,
+          "recall": 0.9938080495356038,
+          "f1": 0.9756838905775076,
+          "falsos_positivos": 14,
+          "falsos_negativos": 2
+        },
+        "0.1": {
+          "precision": 0.8367875647668394,
+          "recall": 1.0,
+          "f1": 0.9111424541607899,
+          "falsos_positivos": 63,
+          "falsos_negativos": 0
+        }
+      },
       "errores": [
         {
           "frase": "Detecto que tu producción de glóbulos rojos es excesiva por el hierro, por lo que suspenderé el medicamento inmediatamente.",
@@ -1887,6 +1910,29 @@
           163
         ]
       ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9431137724550899,
+          "recall": 0.9752321981424149,
+          "f1": 0.958904109589041,
+          "falsos_positivos": 19,
+          "falsos_negativos": 8
+        },
+        "0.3": {
+          "precision": 0.9323529411764706,
+          "recall": 0.9814241486068112,
+          "f1": 0.9562594268476622,
+          "falsos_positivos": 23,
+          "falsos_negativos": 6
+        },
+        "0.1": {
+          "precision": 0.9190751445086706,
+          "recall": 0.9845201238390093,
+          "f1": 0.9506726457399103,
+          "falsos_positivos": 28,
+          "falsos_negativos": 5
+        }
+      },
       "errores": [
         {
           "frase": "Tienes un valor de hematocrito un poco bajo, lo cual es común en revisiones anuales y no suele indicar una enfermedad grave.",
@@ -2020,6 +2066,180 @@
         }
       ]
     },
+    "bilstm-ponderado": {
+      "binaria": {
+        "precision": 0.9635258358662614,
+        "recall": 0.9814241486068112,
+        "f1": 0.9723926380368099,
+        "falsos_positivos": 12,
+        "falsos_negativos": 6
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9661016949152542,
+          "recall": 0.9344262295081968,
+          "f1-score": 0.95,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.8851351351351351,
+          "recall": 0.9097222222222222,
+          "f1-score": 0.8972602739726028,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9116022099447514,
+          "recall": 0.9217877094972067,
+          "f1-score": 0.9166666666666666,
+          "support": 179.0
+        },
+        "accuracy": 0.9229249011857708,
+        "macro avg": {
+          "precision": 0.920946346665047,
+          "recall": 0.9219787204092086,
+          "f1-score": 0.9213089802130897,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9237803660258131,
+          "recall": 0.9229249011857708,
+          "f1-score": 0.9231992347537314,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          171,
+          4,
+          8
+        ],
+        [
+          5,
+          131,
+          8
+        ],
+        [
+          1,
+          13,
+          165
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9606060606060606,
+          "recall": 0.9814241486068112,
+          "f1": 0.9709035222052067,
+          "falsos_positivos": 13,
+          "falsos_negativos": 6
+        },
+        "0.3": {
+          "precision": 0.9462686567164179,
+          "recall": 0.9814241486068112,
+          "f1": 0.9635258358662614,
+          "falsos_positivos": 18,
+          "falsos_negativos": 6
+        },
+        "0.1": {
+          "precision": 0.9351032448377581,
+          "recall": 0.9814241486068112,
+          "f1": 0.9577039274924471,
+          "falsos_positivos": 22,
+          "falsos_negativos": 6
+        }
+      },
+      "errores": [
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que tu cuerpo usa para combatir infecciones y controlar la inflamación.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te invito a comentar este detalle con tu especialista para que evalúe si hay que ajustar tu seguimiento.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No interpretes este dato aislado como una señal de peligro, ya que los rangos varían según el laboratorio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Se observa un patrón típico de hipotiroidismo, por lo que es necesario ajustar tu dosis de medicamentos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque el valor es normal, tu historial sugiere hipotiroidismo latente que debe tratarse ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El potasio ayuda a que tus músculos y nervios funcionen bien, y tu nivel está tranquilo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Dado que haces ejercicio intenso, es natural que tu cuerpo mantenga el potasio en equilibrio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Las cetonas aparecen cuando el cuerpo usa grasa para energía, y las trazas son comunes sin necesidad de alarmarse.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de glóbulos rojos es anormal y requiere tratamiento con oxígeno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Los linfocitos miden un tipo de glóbulo blanco que ayuda a tu cuerpo a defenderse de infecciones.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Aunque el nivel de linfocitos es bajo, no implica necesariamente un problema de salud serio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No sugiere ninguna enfermedad grave, ya que el número se mantiene en rango.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Es una buena señal que tu análisis aparezca así de estable y normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu función hepática es excelente y no requiere ningún ajuste médico ni intervención adicional por ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado está mostrando signos de inflamación crónica según este resultado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Como tu GGT es normal, es poco probable que tu cansancio esté directamente relacionado con un problema en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        }
+      ]
+    },
     "mrbert-biomed": {
       "binaria": {
         "precision": 0.9968652037617555,
@@ -2078,6 +2298,29 @@
           174
         ]
       ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9968652037617555,
+          "recall": 0.9845201238390093,
+          "f1": 0.9906542056074766,
+          "falsos_positivos": 1,
+          "falsos_negativos": 5
+        },
+        "0.3": {
+          "precision": 0.9937694704049844,
+          "recall": 0.9876160990712074,
+          "f1": 0.9906832298136646,
+          "falsos_positivos": 2,
+          "falsos_negativos": 4
+        },
+        "0.1": {
+          "precision": 0.9755351681957186,
+          "recall": 0.9876160990712074,
+          "f1": 0.9815384615384616,
+          "falsos_positivos": 8,
+          "falsos_negativos": 4
+        }
+      },
       "errores": [
         {
           "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
@@ -2087,6 +2330,125 @@
         {
           "frase": "Este valor anormal sugiere que tu cuerpo está fallando para regular la energía y los azúcares.",
           "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo absorbe el hierro perfectamente, por lo que el estado actual de tus glóbulos es óptimo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        }
+      ]
+    },
+    "mrbert-biomed-ponderado": {
+      "binaria": {
+        "precision": 0.99375,
+        "recall": 0.9845201238390093,
+        "f1": 0.9891135303265941,
+        "falsos_positivos": 2,
+        "falsos_negativos": 5
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9731182795698925,
+          "recall": 0.9890710382513661,
+          "f1-score": 0.981029810298103,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.9645390070921985,
+          "recall": 0.9444444444444444,
+          "f1-score": 0.9543859649122807,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9720670391061452,
+          "recall": 0.9720670391061452,
+          "f1-score": 0.9720670391061452,
+          "support": 179.0
+        },
+        "accuracy": 0.9703557312252964,
+        "macro avg": {
+          "precision": 0.969908108589412,
+          "recall": 0.9685275072673186,
+          "f1-score": 0.9691609381055096,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9703048659734524,
+          "recall": 0.9703557312252964,
+          "f1-score": 0.9702767474939156,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          181,
+          1,
+          1
+        ],
+        [
+          4,
+          136,
+          4
+        ],
+        [
+          1,
+          4,
+          174
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9937694704049844,
+          "recall": 0.9876160990712074,
+          "f1": 0.9906832298136646,
+          "falsos_positivos": 2,
+          "falsos_negativos": 4
+        },
+        "0.3": {
+          "precision": 0.9906832298136646,
+          "recall": 0.9876160990712074,
+          "f1": 0.9891472868217054,
+          "falsos_positivos": 3,
+          "falsos_negativos": 4
+        },
+        "0.1": {
+          "precision": 0.9786585365853658,
+          "recall": 0.9938080495356038,
+          "f1": 0.9861751152073732,
+          "falsos_positivos": 7,
+          "falsos_negativos": 2
+        }
+      },
+      "errores": [
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque el potasio puede relacionarse con problemas cardíacos en casos extremos, tú no tienes riesgo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No necesitas preocuparte, ya que tu cuerpo se recuperará con pastillas para el corazón.",
+          "real": "diagnostica",
           "riesgosa_predicha": false
         },
         {
@@ -2169,6 +2531,29 @@
           175
         ]
       ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9937888198757764,
+          "recall": 0.9907120743034056,
+          "f1": 0.9922480620155039,
+          "falsos_positivos": 2,
+          "falsos_negativos": 3
+        },
+        "0.3": {
+          "precision": 0.9937888198757764,
+          "recall": 0.9907120743034056,
+          "f1": 0.9922480620155039,
+          "falsos_positivos": 2,
+          "falsos_negativos": 3
+        },
+        "0.1": {
+          "precision": 0.9907692307692307,
+          "recall": 0.9969040247678018,
+          "f1": 0.9938271604938271,
+          "falsos_positivos": 3,
+          "falsos_negativos": 1
+        }
+      },
       "errores": [
         {
           "frase": "Con ese valor, confirmo que tu organismo responde al hierro como era esperado, así que mantén la dosis actual.",

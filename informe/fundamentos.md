@@ -123,7 +123,26 @@ La función de pérdida define qué significa estar cerca de la solución correc
 
 **Pérdida de entrenamiento frente a métrica de evaluación.** El curso presenta también la pérdida cero-uno, que vale 1 si la predicción es incorrecta y 0 si es correcta. La exactitud y el F1 con que se reportan los resultados se basan en ella: cuentan aciertos. Pero la pérdida cero-uno es escalonada, y su derivada es cero en casi todas partes, así que no le dice al descenso del gradiente hacia dónde moverse. Por eso **se entrena con entropía cruzada**, una aproximación suave y diferenciable, y **se evalúa con F1**. La entropía cruzada sigue bajando aunque las predicciones ya sean correctas, porque premia la confianza. Por eso la pérdida en train de la red propia llega a 0,007 mientras su F1 en validación ya no mejora (sección 6).
 
-**Limitación y trabajo futuro:** la entropía cruzada usada penaliza igual todos los errores. En un guardrail, un falso negativo (dejar pasar una frase diagnóstica al paciente) es más grave que un falso positivo (reescribir una frase que estaba bien). Una pérdida ponderada por clase, o un umbral más bajo sobre la probabilidad de "riesgosa", favorecería la sensibilidad a cambio de algunos falsos positivos más.
+### 7.1 Experimento: pérdida ponderada frente a umbral
+
+La entropía cruzada estándar penaliza igual todos los errores. En un guardrail, en cambio, un falso negativo (dejar pasar una frase diagnóstica al paciente) es más grave que un falso positivo (reescribir una frase que estaba bien). Se probaron dos formas de inclinar la balanza hacia la sensibilidad:
+
+1. **Pérdida ponderada por clase:** $L = -w_y \log \hat{p}_y$, con $w = (1, 2, 2)$ para (informativa, diagnóstica, alarmista). Equivocarse con una frase riesgosa cuesta el doble. Los pesos se fijaron de antemano, sin mirar el test.
+2. **Umbral de decisión:** marcar la frase si $P(\text{diagnóstica}) + P(\text{alarmista}) \geq \tau$, con $\tau < 0{,}5$. No cambia la pérdida ni requiere reentrenar.
+
+| Modelo | FN / FP sin ponderar (τ = 0,5) | FN / FP ponderado | FN / FP con τ = 0,3 | FN / FP con τ = 0,1 |
+|---|---|---|---|---|
+| TF-IDF + regresión logística | 8 / 7 | — | **2** / 14 | 0 / 63 |
+| BiLSTM propia (media de 3 semillas) | 11,3 / 12,7 | 11,3 / 12,7 | — | — |
+| MrBERT-biomed | 5 / 1 | 5 / 2 | 4 / 2 | 4 / 8 |
+
+En test hay 323 frases riesgosas y 183 informativas.
+
+**La pérdida ponderada no cambió nada**, y la razón es teórica. Los pesos multiplican la pérdida de cada ejemplo, así que solo mueven el mínimo cuando el modelo no puede acertar todos los ejemplos de entrenamiento a la vez y debe elegir cuáles sacrificar. Aquí ese conflicto no existe: la BiLSTM y MrBERT llevan la pérdida de train casi a cero (0,007 y 0,0009, sección 6), es decir, separan el train por completo. Multiplicar por 2 un error que ya es casi nulo no cambia la solución. Además, las clases están balanceadas (37 % informativas), así que tampoco hay un desbalance que corregir. En la BiLSTM, la diferencia entre semillas (de 6 a 21 FN) es mucho mayor que el efecto de los pesos: es el problema de los mínimos locales de la sección 8.
+
+**El umbral solo funciona si las probabilidades están calibradas.** La regresión logística regularizada da probabilidades moderadas: con τ = 0,3 los FN bajan de 8 a 2, a cambio de 7 FP más. MrBERT, en cambio, está **sobreconfiado**. Es la otra cara de la entropía cruzada (que premia la confianza, como se vio arriba) llevada casi a cero: sus probabilidades son casi siempre 0 o 1. Sus errores tienen P(riesgosa) cercana a 0, y ni con τ = 0,1 los recupera. Esos errores no se arreglan moviendo el umbral. Son casos sutiles que el modelo no distingue, o etiquetas dudosas: "tú no tienes riesgo" está etiquetada como informativa, y el modelo ponderado la marca, posiblemente con razón.
+
+**Conclusión:** se mantiene MrBERT-biomed sin ponderar y con τ = 0,5. Para mejorar la sensibilidad, lo que falta son datos de los casos difíciles: los 200 desacuerdos que revisará el equipo. Calibrar el modelo, por ejemplo con *temperature scaling* sobre validación, haría útil el umbral y queda como trabajo futuro.
 
 ## 8. Descenso del gradiente y tasa de aprendizaje
 
@@ -180,6 +199,6 @@ Por cada matriz ajustada de tamaño $d \times k$, LoRA de rango $r$ agrega $r(d 
 | Funciones de activación | Sigmoide y tanh en la LSTM, ReLU en su cabeza, GeGLU y SiLU en MrBERT, softmax de salida | Elección justificada por capa |
 | Red retroalimentada y conteo de parámetros | Cabeza de la red propia (131 neuronas) y red completa | 456.707, desglosados por capa |
 | Poder de representación y sobreajuste | Red propia frente a transformers | Pérdida en train 0,007 con F1 en validación ≈ 0,93 |
-| Función de pérdida (MSE, cero-uno, entropía cruzada) | Entropía cruzada para entrenar, F1 para evaluar | Pérdida ponderada por clase como trabajo futuro |
+| Función de pérdida (MSE, cero-uno, entropía cruzada, ponderada) | Entropía cruzada para entrenar, F1 para evaluar; experimento de pérdida ponderada frente a umbral | Ponderar no cambia nada con train separable; el umbral solo funciona en el modelo calibrado (TF-IDF: FN 8 → 2) |
 | Descenso del gradiente, tasa de aprendizaje y mínimos locales | AdamW con 2 × 10⁻³ desde cero y 2 a 3 × 10⁻⁵ en ajuste fino; 3 semillas | Recorte activo en los primeros ~130 de 228 pasos; F1 de 0,902 ± 0,009 entre semillas |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |

@@ -5,8 +5,11 @@ Se agrega una cabeza de clasificación sobre BSC-LT/MrBERT-biomed (ModernBERT, 3
 entrena el modelo completo. Se elige la época con mejor F1 macro en validación; el test (analitos no
 vistos) se evalúa aparte con evaluacion/evaluar_guardrails.py.
 
+Con --pesos, la entropía cruzada pondera cada clase (ver sección 7 de informe/fundamentos.md) y el
+modelo se guarda con el sufijo "-ponderado".
+
 Uso:
-    python training/guardrails/ajustar_clasificador.py [--modelo BSC-LT/MrBERT-biomed] [--epocas 4]
+    python training/guardrails/ajustar_clasificador.py [--modelo mrbert-biomed] [--epocas 4] [--pesos 1,2,2]
 """
 import argparse
 import json
@@ -17,7 +20,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).parent))
 
-from dataset import CLASES, cargar_dataset, resumen  # noqa: E402
+from dataset import CLASES, cargar_dataset, parsear_pesos, resumen  # noqa: E402
 
 SALIDA_DIR = RAIZ / "models" / "guardrails"
 MODELOS = {"mrbert-biomed": "BSC-LT/MrBERT-biomed", "mrbert-es": "BSC-LT/MrBERT-es"}
@@ -31,10 +34,12 @@ def main():
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--max-len", type=int, default=96)
+    parser.add_argument("--pesos", help="Pesos de la entropía cruzada por clase, ej. 1,2,2 (por defecto, sin ponderar)")
     parser.add_argument("--limite", type=int, help="Usar solo N frases de train (prueba rápida)")
     args = parser.parse_args()
 
     import numpy as np
+    import torch
     from datasets import Dataset
     from sklearn.metrics import accuracy_score, f1_score
     from transformers import (AutoModelForSequenceClassification, AutoTokenizer, DataCollatorWithPadding,
@@ -60,7 +65,8 @@ def main():
         p = np.argmax(pred.predictions, axis=-1)
         return {"accuracy": accuracy_score(y, p), "f1_macro": f1_score(y, p, average="macro")}
 
-    salida = SALIDA_DIR / args.modelo
+    pesos = parsear_pesos(args.pesos) if args.pesos else None
+    salida = SALIDA_DIR / (args.modelo + ("-ponderado" if pesos else ""))
     argumentos = TrainingArguments(
         output_dir=str(salida / "checkpoints"),
         num_train_epochs=args.epocas,
@@ -78,7 +84,16 @@ def main():
         report_to="none",
         seed=13,
     )
-    entrenador = Trainer(
+    class TrainerPonderado(Trainer):
+        """Igual que Trainer, pero con entropía cruzada ponderada por clase."""
+        def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+            etiquetas = inputs.pop("labels")
+            salidas = model(**inputs)
+            perdida = torch.nn.functional.cross_entropy(
+                salidas.logits, etiquetas, weight=torch.tensor(pesos, device=salidas.logits.device))
+            return (perdida, salidas) if return_outputs else perdida
+
+    entrenador = (TrainerPonderado if pesos else Trainer)(
         model=modelo,
         args=argumentos,
         train_dataset=a_dataset(train),
@@ -96,7 +111,7 @@ def main():
     tokenizador.save_pretrained(str(salida))
     with open(salida / "entrenamiento.json", "w", encoding="utf-8") as f:
         json.dump({"modelo_base": nombre, "frases_train": len(train), "frases_val": len(val),
-                   "epocas": args.epocas, "lr": args.lr, "batch": args.batch, "max_len": args.max_len,
+                   "epocas": args.epocas, "pesos_clase": pesos, "lr": args.lr, "batch": args.batch, "max_len": args.max_len,
                    "minutos": round(minutos, 1), "val_mejor_epoca": final,
                    "historial": entrenador.state.log_history}, f, indent=2, ensure_ascii=False)
     print(f"Validación (mejor época): F1 macro {final['eval_f1_macro']:.3f}, accuracy {final['eval_accuracy']:.3f}")

@@ -25,6 +25,14 @@ CLASES = ["informativa", "diagnostica", "alarmista"]
 PROPORCION_VAL = 0.15
 
 
+def parsear_pesos(texto):
+    """"1,2,2" -> [1.0, 2.0, 2.0], en el orden de CLASES."""
+    pesos = [float(x) for x in texto.split(",")]
+    if len(pesos) != len(CLASES) or min(pesos) <= 0:
+        raise ValueError(f"Se esperan {len(CLASES)} pesos positivos ({', '.join(CLASES)}): {texto}")
+    return pesos
+
+
 def _leer_jsonl(path):
     if not path.exists():
         return []

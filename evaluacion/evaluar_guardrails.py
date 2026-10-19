@@ -7,8 +7,14 @@ El test son frases de los 12 analitos que el clasificador no vio al entrenar (ve
   El filtro de palabras solo puede hacer esta tarea.
 - Tarea de 3 clases: solo para el clasificador.
 
+Modelos:
+- palabras: el filtro actual de step_4_validation (solo tarea binaria)
+- tfidf: TF-IDF + regresión logística, el baseline clásico sin red neuronal (se entrena aquí mismo)
+- bilstm: la red propia de training/guardrails/red_propia.py
+- mrbert-biomed, mrbert-es: transformers ajustados con training/guardrails/ajustar_clasificador.py
+
 Uso:
-    python evaluacion/evaluar_guardrails.py [--modelos palabras mrbert-biomed]
+    python evaluacion/evaluar_guardrails.py [--modelos palabras tfidf bilstm mrbert-biomed mrbert-es]
 """
 import argparse
 import json
@@ -30,7 +36,21 @@ def predecir_palabras(frases):
     return [int(any(p in f.lower() for p in PALABRAS_RIESGO)) for f in frases]
 
 
+def predecir_tfidf(train, frases):
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import make_pipeline
+
+    modelo = make_pipeline(TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True, min_df=2),
+                           LogisticRegression(C=10, max_iter=2000))
+    modelo.fit([d["frase"] for d in train], [d["etiqueta"] for d in train])
+    return modelo.predict(frases).tolist()
+
+
 def predecir_modelo(nombre, frases):
+    if nombre.startswith("bilstm"):
+        from red_propia import predecir
+        return predecir(frases, RAIZ / "models" / "guardrails" / nombre)
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -56,7 +76,7 @@ def metricas_binarias(y, p):
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--modelos", nargs="+", default=["palabras", "mrbert-biomed"])
+    parser.add_argument("--modelos", nargs="+", default=["palabras", "tfidf", "bilstm", "mrbert-biomed", "mrbert-es"])
     parser.add_argument("--split", default="test")
     args = parser.parse_args()
 
@@ -75,10 +95,13 @@ def main():
             p2 = predecir_palabras(frases)
             r = {"binaria": metricas_binarias(y2, p2)}
         else:
-            if not (RAIZ / "models" / "guardrails" / nombre / "config.json").exists():
+            if nombre == "tfidf":
+                p3 = predecir_tfidf([d for d in dataset if d["split"] == "train"], frases)
+            elif not (RAIZ / "models" / "guardrails" / nombre / "config.json").exists():
                 print(f"== {nombre}: se omite, no existe models/guardrails/{nombre}\n")
                 continue
-            p3 = predecir_modelo(nombre, frases)
+            else:
+                p3 = predecir_modelo(nombre, frases)
             p2 = [int(e != 0) for e in p3]
             r = {"binaria": metricas_binarias(y2, p2),
                  "tres_clases": classification_report(y3, p3, target_names=CLASES, output_dict=True, zero_division=0),

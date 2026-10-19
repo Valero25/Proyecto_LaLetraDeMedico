@@ -1,0 +1,2201 @@
+{
+  "split": "test",
+  "n": 506,
+  "resultados": {
+    "palabras": {
+      "binaria": {
+        "precision": 0.4392523364485981,
+        "recall": 0.14551083591331268,
+        "f1": 0.2186046511627907,
+        "falsos_positivos": 60,
+        "falsos_negativos": 276
+      },
+      "errores": [
+        {
+          "frase": "Tienes un valor de hematocrito un poco bajo, lo cual es común en revisiones anuales y no suele indicar una enfermedad grave.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico preciso al interpretar este valor junto con tu historial clínico completo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu cuerpo está produciendo demasiadas células rojas, lo que indica policitemia vera.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes iniciar tratamiento con venoclisis inmediatamente para reducir tu hematocrito.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu riñón está fallando porque el hematocrito está fuera de control.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Toma hierro intravenoso cada semana para corregir tu condición crónica.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sangre está espesa debido a una mutación genética permanente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese nivel de hematocrito, tu sangre está demasiado espesa y es casi seguro que tengas un bloqueador en las venas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Me preocupa que este valor indique una coagulación inminente que podría llevarte a un accidente cerebrovascular grave.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Por favor, ve a urgencias ahora mismo porque este resultado sugiere que tu corazón está al límite de sufrir un infarto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sangre se está espesando peligrosamente y pronto podrías sufrir un tromboembolismo que dañaría tus órganos de forma irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Me asusta pensar que este valor oculte una enfermedad grave que está destruyendo tu sistema circulatorio lentamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No podemos dejar pasar esto porque significa que tu cuerpo está luchando contra una falla cardíaca inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este resultado es una señal de alerta máxima de que estás a punto de sufrir un daño permanente en tus arterias.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu médico no puede esperar, porque este nivel de espesamiento sanguíneo suele preceder a muerte súbita en pocos días.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes el valor un poco elevado, pero esto no indica necesariamente ninguna enfermedad grave o seria.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico definitivo después de evaluar todos tus síntomas y antecedentes.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Asumo que la suplementación de hierro está elevando tus eritrocitos, por lo que debo ajustar tu tratamiento actual.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor, confirmo que tu organismo responde al hierro como era esperado, así que mantén la dosis actual.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu recuento alto revela que la anemia previa se corrigió completamente gracias a los suplementos que estás tomando.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Detecto que tu producción de glóbulos rojos es excesiva por el hierro, por lo que suspenderé el medicamento inmediatamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Te receto que detengas el hierro al instante, ya que tu recuento alto es una señal clara de sobrecarga.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de glóbulos rojos es tan bajo que tu corazón podría fallar por falta de oxígeno.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor, es muy probable que estés desarrollando una anemia grave y peligrosa.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque tu sangre está crítica y peligroso.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado sugiere que tu cuerpo ya no puede funcionar correctamente sin ayuda inmediata.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que tengas un daño irreversible en tus órganos por falta de oxígeno celular.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no subes ese número rápido, podrías sufrir un infarto o un paro cardíaco inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu paciencia con losartán no sirve de nada frente a esta caída tan alarmante de glóbulos.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor bajo indica que estás a punto de perder el control sobre tu salud física.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes una cifra un poco baja, lo cual a veces se relaciona con efectos secundarios de tu tratamiento.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico preciso considerando tu historial de diabetes y tu medicación.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu cuerpo no produce suficientes glóbulos blancos, lo cual indica una falla en tu médula ósea.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes dejar de tomar metformina porque está causando esta reducción en tus defensas.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Recomiendo que tomes antibióticos orales ahora mismo para evitar una sepsis letal.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu anemia es lo que está provocando esta caída en las defensas, sin duda alguna.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor, es muy probable que ya tengas una infección grave que está dañando tus órganos internos.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Deberías ir a urgencias de inmediato porque ese número indica que tu cuerpo está luchando contra algo mortal.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado sugiere que tu sistema inmune está colapsando y no puedes esperar para ver al médico.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Está pasando algo muy serio con tus neutrófilos que podría terminar en una sepsis si no actúas rápido.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No subestimes ese pequeño cambio, porque suele ser el primer signo de un cáncer de sangre avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu salud corre un riesgo inminente de deterioro irreversible si no tratas esa desviación en el laboratorio.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor anormalmente bajo significa que tu cuerpo ya no puede defenderse de ninguna infección común.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico completo, por lo que te recomiendo conversar este resultado con él.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes el resultado un poco por encima del rango, lo cual suele ser transitorio y no requiere tratamiento inmediato.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu sistema inmune está reaccionando fuerte, lo que confirma la infección.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes tomar antibióticos inmediatamente para controlar esta situación.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tus resultados muestran una disfunción inmunitaria clara.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu médico debe ajustarte la medicación ahora mismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este patrón es típico de una patología infecciosa severa.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de linfocitos podría indicar un problema de inmunidad grave que requiere atención inmediata.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor sugiere que tu cuerpo está luchando contra una infección seria que no debes ignorar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No pongas en riesgo tu salud; ve a urgencias ahora mismo para descartar una condición crítica.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que tengas una enfermedad autoinmune grave que necesite tratamiento urgente este mismo día.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado es una señal de alarma que podría derivar en daños permanentes si no actúas pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No descuides este dato, ya que podría ser el inicio de una patología compleja y difícil de tratar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema inmune está fallando gravemente y corres el riesgo real de desarrollar complicaciones mortales.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esa cifra es preocupante porque a veces precede a infecciones severas que pueden ser fatales sin control.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un resultado normal, por lo que no hay motivos para alarma ni necesidad de intervención inmediata.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico completo, pero este valor por sí solo no indica ninguna enfermedad.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te receto ibuprofeno de 400 mg cada 8 horas para bajar la inflamación asociada a este resultado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con esa cifra, podemos descartar por completo cualquier problema hepático crónico en tu organismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Te recomiendo seguir una dieta estricta baja en sodio para corregir este desbalance inmediato.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu albúmina baja sugiere que tu cuerpo está perdiendo proteínas vitales rápidamente, lo cual puede indicar un daño hepático severo inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debido a este resultado, es probable que estés desarrollando cirrosis avanzada y tengas pocas opciones de tratamiento a partir de ahora.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias inmediatamente porque esta cifra indica que tu estado está en peligro de muerte por desnutrición aguda.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor bajo es una señal de alerta crítica que pocas veces se recupera, así que prepárate para complicaciones graves en las próximas semanas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "La albúmina en ese nivel suele preceder a la falla múltiple de órganos, un desenlace que debemos asumir como probable en tu caso.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No subestimes este examen, ya que valores así a menudo marcan el inicio de un deterioro clínico irreversible para el paciente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado probablemente ya no puede sintetizar correctamente, lo que apunta a una disfunción avanzada que requiere atención extrema urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con esa cifra, es muy común que los pacientes terminen en cuidados intensivos debido a edemas masivos y riesgo inmediato de infección.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un valor dentro de lo esperado, lo que indica que no hay señales de daño hepático significativo en este momento.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Aunque el resultado es normal, si tomas suplementos de hierro, solo tu médico puede hacer un diagnóstico completo de tu salud.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes niveles altos de esta enzima, lo cual es una buena señal para la función general de tus células.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Debes tomar paracetamol de 500 mg cada 6 horas para controlar la inflamación en tu hígado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema inmunológico está atacando tus células hepáticas, confirmando una autoinmunidad severa.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado está inflamado debido a una infección viral que debes tratar con antivirales específicos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que tengas un daño hepático irreversible que requiere atención inmediata para evitar complicaciones graves.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora porque este resultado indica una falla orgánica inminente y peligrosa.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado está fallando lentamente y este examen confirma que el daño es profundo e irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El riesgo de morir por una complicación hepática aguda es alto si no actúas de inmediato con este resultado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor es una señal de alerta roja que indica que tu cuerpo está colapsando por el efecto del losartán.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Pierdes tiempo si no buscas ayuda urgente, ya que tu hígado está a punto de dejar de funcionar correctamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes el resultado dentro de los parámetros esperados, por lo que no hay motivo de preocupación inicial por este indicador.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Aunque el valor es normal, siempre es importante que lo revises con tu médico para un diagnóstico integral y personalizado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes ninguna anomalía en este examen específico, ya que el valor reportado es completamente adecuado y estable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Adelgánta el hígado está inflamado por una hepatitis activa, así que debes dejar el alcohol hoy mismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esto es una enfermedad ósea progressiva, así que no puedes seguir trabajando en posiciones que carguen peso.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esto significa que tu hígado está dañado permanentemente, así que ya no puedes consumir grasas saturadas nunca más.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor bajo, es muy probable que tu hígado esté sufriendo un daño irreversible inmediato.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Un nivel tan bajo sugiere que podrías desarrollar una falla hepática aguda en las próximas horas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque este resultado indica una condición terminal oculta.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está fallando críticamente y este examen confirma que morirás pronto si no actúas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor anormalmente bajo es la señal definitiva de un cáncer maligno inoperable que se expande rápido.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No ignore este resultado, ya que implica un deterioro neurológico severo que llegará a paralisiarte.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un resultado normal, por lo que no hay señales de alteración hepática significativa en esta prueba.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu resultado es estable; recuerda que solo tu médico puede hacer un diagnóstico completo de tu salud.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu hígado está dañada por la hepatitis B, así que necesitas tratamiento inmediato.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes tomar paracetamol de 500 mg cada cuatro horas para bajar esa marca.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hepatitis C es la causa directa de este resultado anormal.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Estás padeciendo una obstrucción biliar seria que debes tratar ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado ha dejado de funcionar correctamente por la fibrosis.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel bajo de GGT sugiere que tu hígado está sufriendo un daño severo que podría volverse irreversible muy pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con este resultado tan bajo, es muy probable que tengas una enfermedad hepática grave que requiere atención inmediata.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque tu cansancio y este valor bajo indican una falla orgánica crítica.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor bajo indica que tu cuerpo está perdiendo la capacidad de funcionar correctamente por un fallo interno serio.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado parece estar fallando debido a ese resultado anormalmente bajo, así que no debes esperar más para actuar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que tufatiga extrema se deba a una afección grave del hígado que necesita intervención urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ignorar este valor bajo de GGT podría conducir a un colapso sistémico del que no podrás recuperarte.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque tienes hipertensión, este resultado no sugiere problemas tiroideos, pero solo tu médico puede hacer un diagnóstico completo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu valor es normal, por lo que no hay señales de enfermedad tiroidea aguda, aunque siempre es bueno revisarlo con tu especialista si tienes síntomas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre ayuda a diagnóstico de desequilibrios hormonales; tu resultado normal significa que no se detecta alteración en esta prueba específica.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu hipotiroidismo está activo por lo que necesitas levothyroxina a diario para regular tu metabolismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu glándula tiroides no produce suficiente hormona, lo que causa fatiga crónica y requires medicación.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Se observa un patrón típico de hipotiroidismo, por lo que es necesario ajustar tu dosis de medicamentos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu resultado indica claramente una falla en la tiroides que requiere intervención médica inmediata.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esto es hipotiroidismo, así que debes tomar levothyroxina 50 microgramos cada mañana en ayunas.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu tiroides está fallando, lo que explica tus síntomas y necesita tratamiento hormonal específico.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque el valor es normal, tu historial sugiere hipotiroidismo latente que debe tratarse ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es posible que este valor sugiera un deterioro grave en tu metabolismo relacionado con la diabetes.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Deberías ir a urgencias de inmediato porque este análisis podría indicar una crisis tiroidea inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Me preocupa que esta cifra sea el inicio de un daño irreversible en tu corazón y tiroides.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu riesgo de sufrir una complicación crítica con la metformina es muy alto según este resultado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Lo más probable es que tengas una enfermedad tiroidea progresiva que requiere atención urgente hoy.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor anormal sugiere que tu cuerpo está fallando para regular la energía y los azúcares.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No debes esperar a tu médico porque este examen apunta a una afección seria y descontrolada.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que este nivel de tiroxina libre esté causando cambios permanentes en tu salud general.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque el potasio puede relacionarse con problemas cardíacos en casos extremos, tú no tienes riesgo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico completo, pero este valor por sí solo es saludable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes el valor fuera de rango, por lo que no necesitas cambios en tu alimentación actual.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu riñón no está funcionando bien debido a este nivel de potasio elevado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes tomar diuréticos específicos para bajar este valor de potasio.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No necesitas preocuparte, ya que tu cuerpo se recuperará con pastillas para el corazón.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo acumula potasio porque tus glándulas suprarrenales fallan crónicamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Deberías comenzar una dieta estricta baja en sales de inmediato para salvar tus riñones.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu potasio bajo podría causar una parálisis cardíaca súbita en cualquier momento.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Necesitas ir a urgencias ahora mismo porque tu corazón se detendrá pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese nivel, es casi seguro que sufrirás una arritmia fatal esta noche.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu ejercicio intenso está destruyendo tu corazón y causando un daño irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no actúas hoy, tu cuerpo colapsará por la falta de minerales vitales.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que mueras por un paro cardíaco si no elevas ese valor ya.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Estás en riesgo inminente de un accidente cerebrovascular por esa lectura baja.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un valor ligeramente bajo, lo cual a veces se asocia con cambios en la dieta.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Este resultado solo describe la acidez actual, y no representa un diagnóstico de ninguna enfermedad.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Es importante que tu médico revise este dato junto con tu historial para darte un diagnóstico preciso.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de pH indica alcalosis metabólica, por lo que debes iniciar tratamiento con diureticos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes tomar acetazolamida 250 mg dos veces al día para corregir este desequilibrio ácido-base.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Está comprobado que tu hígado no está filtrando adecuadamente, causando esta alteración del pH.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo tiene una infección urinaria severa que está provocando este cambio en los niveles.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Conozco tu condición y sé que necesitas ajustar la dosis de tus medicamentos actuales hoy mismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu estado clínico revela una enfermedad autoinmune activa que está afectando tu equilibrio interno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu riñón no está funcionando bien y necesitas diálisis urgente para estabilizar tu química corporal.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes suspender todos tus analgésicos actuales porque están empeorando tu daño hepático crónico.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes consumir únicamente dieta líquida clara porque tu páncreas está en estado de inflamación total.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese pH de 5.9 sugiere que tu sistema digestivo está sufriendo un daño irreversible que no puede revertirse por sí solo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias inmediatamente porque ese valor indica que estás en riesgo vital inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que padezcas una enfermedad grave oculta que está exacerbando tu acidez estomacal crónica.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está experimentando un colapso sistémico debido a esa acidez, lo cual es extremadamente peligroso para tu salud.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu estómago está sufriendo una erosión grave que probablemente llevará a consecuencias irreversibles si no actúas ahora mismo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado alarmante implica que tu salud está deteriorándose rápidamente y necesitas atención especializada de emergencia.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "La acidez que presentas es un síntoma claro de una condición médica crítica que podría poner en riesgo tu vida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si tienes trazas de cetonas, podría relacionarse con una dieta baja en carbohidratos, pero tu médico lo confirmará.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No es un diagnóstico de enfermedad, sino una señal que debe revisarse junto con tu historial clínico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede dar un diagnóstico preciso, ya que un solo valor de cetonas no define una enfermedad.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu riñón no está funcionando bien por la acumulación de cetonas, así que toma AAS de 81 mg.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tus cetonas elevadas indican que tu cuerpo está destruyendo el músculo de forma irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esta lectura sugiere que tu hígado ya no puede procesar la glucosa y está fallando gravemente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes acudir a urgencias de inmediato porque este nivel predice un coma inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que tengas cáncer de páncreas dado que tus cetonas están totalmente fuera de rango.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ignorar este resultado provocará un daño cerebral permanente que no se puede revertir.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está entrandó en una crisis metabólica letal que requiere atención de emergencia ahora.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor significa que estés a punto de sufrir un paro cardíaco por deshidratación extrema.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tus cetonas altas son una señal de que tu sistema inmunológico está colapsando por completo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un valor de hematocrito levemente bajo, lo cual puede deberse a la hidratación previa o a variaciones naturales.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede establecer un diagnóstico preciso, ya que este examen debe interpretarse junto a otros factores.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu hematocrito es normal, descartamos cualquier déficit de hierro o anemia en este momento.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes reducir la dosis de tu suplemento a la mitad para evitar la sobreexposición al elemento.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo absorbe el hierro perfectamente, por lo que el estado actual de tus glóbulos es óptimo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu salud sanguínea está bien gestionada con los suplementos que tomas actualmente, sin riesgo alguno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hematocrito tan bajo sugiere que tu cuerpo podría estar fallando críticamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que este valor tan bajo indique un daño irreversible en tu organismo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No esperes más, ve a urgencias ahora mismo porque esto es urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado es tan grave que tu corazón podría detenerse pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese nivel de hematocrito, es muy probable que estés a punto de morir.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema nervioso ya está sufriendo un daño permanente por esta anemia.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no actúas hoy, tu hígado se destruirá completo en pocos días.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes el valor de eritrocitos ligeramente por debajo del rango de referencia, lo cual es un dato informativo para tu médico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Un valor bajo de RBC a veces se relaciona con la anemia, aunque tu médico debe confirmar cualquier causa o diagnóstico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico preciso basándose en tu historial clínico y no únicamente en este número.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu anemia es causada directamente por la falta de calcio en tu dieta.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Estás padeciendo una insuficiencia renal leve que requiere atención inmediata.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo no está produciendo glóbulos rojos debido a una enfermedad autoinmune.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado está fallando por el exceso de suplementos que consumes.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Has desarrollado un trastorno de coagulación severo que te pone en riesgo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de glóbulos rojos es anormal y requiere tratamiento con oxígeno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Estás sufriendo de una leucemia oculta que los analitos no detectan.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese nivel de glóbulos rojos tu oxigenación crítica está comprometida de forma inmediata.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que padezcas una anemia aplásica grave que requerirá intervención urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo no puede compensar más esta deficiencia aguda de hematopoyesis.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes acudir a urgencias ahora mismo porque esto suele preceder a un colapso circulatorio.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor indica una destrucción masiva de eritrocitos que no se detiene con reposo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no descartas una leucemia mieloide aguda, tu pronóstico vital se vuelve incierto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tus marcas sugieren una falla medular irreversible que avanza rápidamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "La fatitud extrema que sentirás pronto es señal de un daño orgánico profundo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un porcentaje de neutrófilos dentro del rango normal, lo cual es buena noticia ante tus antecedentes familiares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes elevación de neutrófilos, por lo que no sugiere una infección; solo tu médico puede dar un diagnóstico completo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes un resultado estable que ayuda a descartar bacterias en sangre, pero no sustituye la revisión de tu médico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Debes tomar amoxicilina 500 mg tres veces al día por esta infección.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esta elevación es causada directamente por una enfermedad autoinmune grave.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Necesitas iniciar un tratamiento con corticoides para bajar esa cifra inmediatamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema inmunitario está fallando debido a una deficiencia congénita severa.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado es patognomónico de una leucemia aguda que requiere quimioterapia.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Recibe el alta médica porque tu anemia falciforme está completamente controlada.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor, es probable que tu cuerpo ya esté sufriendo un daño celular irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no actúas rápido, este leve desequilibrio podría derivar en una infección fulminante.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que tengas una leucemia oculta, aunque el número parezca normal.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema inmune está fallando gravemente y esto suele ser la antesala de la muerte.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Necesitas atención inmediata porque tu sangre muestra señales de un colapso inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor indica que estás a un paso de una sepsis grave y potencialmente mortal.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No intentes calmarte, porque tu riesgo de complicaciones cardíacas agudas es inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes el valor un poco por debajo del rango, pero no significa que tengas ninguna enfermedad grave.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu médico puede hacer un diagnóstico más preciso si revisa tus síntomas y otros resultados.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Este resultado es informativo y no es un diagnóstico de ninguna condición específica.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico definitivo al interpretar este dato con tu historial.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Debes tomar ibuprofeno de 400 mg tres veces al día para controlar esta inflamación linfática.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema inmune está fallando por una carencia nutricional crítica que debo corregir ahora mismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tus linfocitos indican una insuficiencia cardíaca latente que solo se resuelve con medicación específica.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que tengas tuberculosis, ya que este patrón es característico de esa infección pulmonar.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de linfocitos sugiere que tu sistema inmunitario está combatiendo una infección grave o una neoplasia oculta.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese porcentaje elevado, es muy probable que estés desarrollando una leucemia que requiere atención inmediata.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque ese valor indica un fallo inminente en tu médula ósea.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No ignores ese resultado, ya que suele preceder a un daño irreversible en tus órganos vitales.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está luchando contra un cáncer de sangre que podría volverse letal en pocas semanas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es casi seguro que tengas una enfermedad terminal que el losartán no puede controlar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese aumento drástico de linfocitos es la señal de alarma de una metástasis avanzada.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu vida corre peligro inminente y necesitas hospitalización urgente para evitar el colapso sistémico.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de albúmina es normal, lo cual indica que tienes una función hepática y renal adecuada según este resultado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu resultado es adecuado, pero solo tu médico puede hacer un diagnóstico completo si sientes alguna molestia persistente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes un valor de albúmina normal, lo que sugiere que tu cuerpo está produciendo suficiente proteína de forma estable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu albúmina está alta, lo que indica que tu hígado está produciendo demasiada proteína de forma agresiva.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes tomar diuréticos de inmediato para reducir la retención de líquidos que está elevando tu albúmina.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es necesario que inicies una dieta estricta baja en sodio para controlar esta alteración en tu albúmina.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con este valor, podemos descartar cualquier deficiencia nutricional y asegurarnos de que tu hígado funciona mal.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu albúmina normal podría ocultar un fallo hepático grave que suele derivar en cirrosis irreversible.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No es buena idea esperar, ya que esta normalidad suele preceder complicaciones cardiovasculares letales.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque tu grasa sanguínea podría estar causando un infarto inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese nivel de albúmina sugiere que tus células están muriendo por falta de nutrientes esenciales.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "La estabilidad de tu resultado es engañosa, ya que a menudo precede a un colapso sistémico rápido.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está agotando sus reservas mientras el colesterol alto destruye tus vasos sanguíneos silenciosamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ignorar este contexto familiar pondrá en riesgo inmediato tu vida por una posible embolia fulminante.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un resultado dentro de los límites normales, sin señales de alerta.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico completo con base en tu historial.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes el valor en orden, por lo que no requiere acción inmediata.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu hígado está sano, puedes tomar paracetamol con seguridad hasta 1000 mg cuando lo necesites.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu función hepática es excelente y no requiere ningún ajuste médico ni intervención adicional por ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu resultado bajo sugiere que tu hígado está fallando gravemente, lo cual podría detenerse en cualquier momento.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que estés desarrollando una falla hepática irreversible debido a estos niveles anormales de enzimas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias de inmediato porque tu hígado está sufriendo un daño crítico que amenaza tu vida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor bajo indica que tu cuerpo está experimentando una crisis orgánica severa que no puede esperar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No descuides esto, ya que tu hígado podría dejar de funcionar por completo en las próximas horas.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cansancio es una señal de que tu hígado está colapsando y necesitas atención médica de emergencia.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este resultado confirma que tu hígado está muriendo y es muy probable que no haya solución a tiempo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No ignores este síntoma, pues tu hígado podría dejar de producir vida y necesitarás una donación urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un nivel bajo de fosfatasa alcalina, pero esto puede deberse a factores dietéticos o genéticos leves.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No hay motivo de alarma por este valor bajo; solo tu médico puede hacer un diagnóstico completo con tu historia clínica.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes el examen de fosfatasa alcalina por debajo de lo esperado, pero esto no significa que tengas una enfermedad seria.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu hígado está mostrando signos de inflamación crónica según este resultado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu sistema biliar presenta una obstrucción que requiere atención médica.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes iniciar con la medicación recetada para regular tu nivel de enzimas.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu organismo desarrolla una enfermedad autoinmune evidente en esta prueba.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado presenta una falla funcional que explica estos valores.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu metabolismo óseo está comprometido debido a una enfermedad subyacente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de fosfatasa alcalina sugiere un daño hepático irreversible que no se puede revertir.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias de inmediato porque tu hígado está fallando por el hierro.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que tengas cáncer de hueso avanzado y te quede poco tiempo de vida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor indica que tus huesos se están rompiendo solos y causarás una fractura fatal.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado está necrosando rápidamente y el tratamiento ya no será efectivo para salvarte.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El hierro está destruyendo tus células hepáticas y morirás si no paras de tomarlo hoy.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu condición es terminal y ningún médico puede hacer nada para evitar tu muerte inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque te sientes cansado, tu GGT es normal, así que el diagnóstico de la causa debe hacerlo tu médico con otros datos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes ninguna anomalía en este resultado, ya que tu valor se encuentra completamente dentro de los límites esperados.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu hígado está sano, descartamos cualquier problema hepático como causa de tu fatiga.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu resultado descarta totalmente una enfermedad hepática, por lo que tu cansancio tiene otra causa.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu resultado confirma que tu hígado está sano, descartando cualquier patología hepática subyacente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu GGT bajo sugiere que tu hígado ya no puede protegerse, lo cual es muy peligroso.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora porque este valor indica un fallo hepático inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que estés desarrollando cirrosis irreversible por este resultado anormalmente bajo.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Parece que tu hígado está muriendo lentamente a causa de tu diabetes y este valor.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este resultado es una señal de alarma crítica que no debes ignorar ni un segundo más.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está colapsando internamente, y este examen lo confirma de manera definitiva.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no recibes atención inmediata, podrías sufrir una hemorragia interna fatal muy pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hígado ha dejado de funcionar correctamente, lo cual pone en riesgo tu vida diaria.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un valor de T4 libre normal, por lo que no hay indicios de alteración en tu tiroides.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Solo tu médico puede hacer un diagnóstico completo, aunque este valor específico de T4 libre es correcto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu tiroides está hipoactiva, por lo que necesitas iniciar tratamiento con levotiroxina para regular tu metabolismo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El resultado confirma hipotiroidismo, así que debes tomar 50 microgramos de levotiroxina cada mañana en ayunas.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu glándula tiroides no produce suficiente hormona, lo cual indica una disfunción tiroidea persistente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con este valor, tu tiroides está comprometida y requiere medicación específica para mejorar tu estado general.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este examen revela que tu organismo padece un déficit hormonal crónico que debe tratarse médicamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu tiroides está fallando, por lo que es obligatorio comenzar con suplementos hormonales inmediatos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes evitar ciertos alimentos porque tu tiroides tiene una enfermedad autoinmune que exige control estricto.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo tiene una falla tiroidea concreta, así que no puedes esperar más para iniciar la terapia adecuada.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de T4 libre podría indicar una falla thyroidal grave que afectará tu corazón pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese resultado sugiere que tu tiroides está fallando y podrías terminar hospitalizado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Con ese valor, es probable que tengas hipotiroidismo severo que dañará tus órganos.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque tu tiroides está en riesgo de colapsar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese número muestra que tu tiroides está dañada y tu salud está en peligro inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu tiroides está fracasando y eso podría causarte problemas cardíacos graves muy pronto.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu tiroides está colapsando y eso puede llevar a la muerte si no actúas inmediatamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un nivel bajo de potasio, pero esto no es un diagnóstico de enfermedad, solo una señal para investigar.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu médico podrá hacer el diagnóstico definitivo al revisar tus síntomas y otros exámenes complementarios.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel bajo de potasio podría causar una parada cardíaca imprevista en cualquier momento.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes ir a urgencias ahora mismo porque tu corazón podría detenerse por este valor.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es muy probable que tengas un daño renal grave que no puedas revertir.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Si no subes ese número hoy, podrías sufrir un infarto mortal esta misma noche.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo está fallando y este indicador sugiere que te faltan pocas horas de vida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese desequilibrio eléctrico está matando tus células nerviosas de forma irreversible y rápida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No intentes tomar nada por tu cuenta, ya que tu salud corre un peligro extremo e inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu hipotensión y este valor baixo indican que tu sistema nervioso está colapsando definitivamente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque tu resultado es normal, solo tu médico puede hacer un diagnóstico completo de tu salud.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tienes un valor de pH dentro de los parámetros esperados, lo cual es una buena señal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No tienes síntomas específicos asociados a este resultado, pero es ideal consultarlo con tu especialista.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "El ácido elevado en tu estómago te está provocando úlceras que sangran internamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes iniciar una dieta estricta sin lácteos hoy mismo para revertir esta gastritis diagnosticada.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este resultado confirma que tu estómago está erosionado y necesita cirugía para repararse.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese nivel de acidez podría indicar un daño irreversible en tus órganos vitales si no se corrige de inmediato.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Te recomiendo ir a urgencias ahora mismo porque ese resultado sugiere una falla multiorgánica inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese valor anormal suele preceder a complicaciones graves que pueden poner en riesgo tu vida.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "No subestimes este hallazgo, ya que a menudo es el primer signo de un fallo sistémico serio.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es probable que estés desarrollando una condición crítica que requiere atención hospitalaria urgente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ese desequilibrio ácido-básico puede desencadenar daños permanentes en tu organismo si no actúas ya.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Debes acudir a emergencias, pues ese resultado apunta a una crisis metabólica potencialmente mortal.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Ignorar este valor podría llevarte a un desenlace trágico que nadie desea enfrentar.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        }
+      ]
+    },
+    "tfidf": {
+      "binaria": {
+        "precision": 0.9873417721518988,
+        "recall": 0.9659442724458205,
+        "f1": 0.9765258215962441,
+        "falsos_positivos": 4,
+        "falsos_negativos": 11
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9421052631578948,
+          "recall": 0.9781420765027322,
+          "f1-score": 0.9597855227882037,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.9453125,
+          "recall": 0.8402777777777778,
+          "f1-score": 0.8897058823529411,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9148936170212766,
+          "recall": 0.9608938547486033,
+          "f1-score": 0.9373297002724795,
+          "support": 179.0
+        },
+        "accuracy": 0.932806324110672,
+        "macro avg": {
+          "precision": 0.934103793393057,
+          "recall": 0.9264379030097044,
+          "f1-score": 0.9289403684712081,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9333917403255005,
+          "recall": 0.932806324110672,
+          "f1-score": 0.9318980515372305,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          179,
+          2,
+          2
+        ],
+        [
+          9,
+          121,
+          14
+        ],
+        [
+          2,
+          5,
+          172
+        ]
+      ],
+      "errores": [
+        {
+          "frase": "Detecto que tu producción de glóbulos rojos es excesiva por el hierro, por lo que suspenderé el medicamento inmediatamente.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que tu cuerpo usa para combatir infecciones y controlar la inflamación.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Se observa un patrón típico de hipotiroidismo, por lo que es necesario ajustar tu dosis de medicamentos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque el valor es normal, tu historial sugiere hipotiroidismo latente que debe tratarse ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Es posible que este valor sugiera un deterioro grave en tu metabolismo relacionado con la diabetes.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El potasio ayuda a que tus músculos y nervios funcionen bien, y tu nivel está tranquilo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Dado que haces ejercicio intenso, es natural que tu cuerpo mantenga el potasio en equilibrio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No necesitas preocuparte, ya que tu cuerpo se recuperará con pastillas para el corazón.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Según este dato, tienes un trastorno neuromuscular específico que exige intervención quirúrgica inmediata.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu salud sanguínea está bien gestionada con los suplementos que tomas actualmente, sin riesgo alguno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu función hepática es excelente y no requiere ningún ajuste médico ni intervención adicional por ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Como tu GGT es normal, es poco probable que tu cansancio esté directamente relacionado con un problema en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        }
+      ]
+    },
+    "bilstm": {
+      "binaria": {
+        "precision": 0.9459459459459459,
+        "recall": 0.9752321981424149,
+        "f1": 0.9603658536585366,
+        "falsos_positivos": 18,
+        "falsos_negativos": 8
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.953757225433526,
+          "recall": 0.9016393442622951,
+          "f1-score": 0.9269662921348315,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.8571428571428571,
+          "recall": 0.875,
+          "f1-score": 0.865979381443299,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.8763440860215054,
+          "recall": 0.9106145251396648,
+          "f1-score": 0.8931506849315068,
+          "support": 179.0
+        },
+        "accuracy": 0.8972332015810277,
+        "macro avg": {
+          "precision": 0.8957480561992962,
+          "recall": 0.8957512898006533,
+          "f1-score": 0.8953654528365459,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.8988769467999134,
+          "recall": 0.8972332015810277,
+          "f1-score": 0.8976478952396224,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          165,
+          8,
+          10
+        ],
+        [
+          5,
+          126,
+          13
+        ],
+        [
+          3,
+          13,
+          163
+        ]
+      ],
+      "errores": [
+        {
+          "frase": "Tienes un valor de hematocrito un poco bajo, lo cual es común en revisiones anuales y no suele indicar una enfermedad grave.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Ese valor bajo indica que estás a punto de perder el control sobre tu salud física.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que tu cuerpo usa para combatir infecciones y controlar la inflamación.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te invito a comentar este detalle con tu especialista para que evalúe si hay que ajustar tu seguimiento.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No interpretes este dato aislado como una señal de peligro, ya que los rangos varían según el laboratorio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te sugiero llevar este informe a tu próxima consulta para que lo analice junto a tus otros síntomas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Este resultado no sugiere problemas renales ni hepáticos graves, ya que la albúmina se mantiene estable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Se observa un patrón típico de hipotiroidismo, por lo que es necesario ajustar tu dosis de medicamentos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El potasio ayuda a que tus músculos y nervios funcionen bien, y tu nivel está tranquilo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Dado que haces ejercicio intenso, es natural que tu cuerpo mantenga el potasio en equilibrio.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "No es un diagnóstico de enfermedad, sino una señal que debe revisarse junto con tu historial clínico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Las cetonas aparecen cuando el cuerpo usa grasa para energía, y las trazas son comunes sin necesidad de alarmarse.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu nivel de glóbulos rojos es anormal y requiere tratamiento con oxígeno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El 54.5% está dentro de los límites esperados, así que no debes alarmarte por tus antecedentes de colesterol.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los linfocitos miden un tipo de glóbulo blanco que ayuda a tu cuerpo a defenderse de infecciones.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Este resultado es informativo y no es un diagnóstico de ninguna condición específica.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de albúmina es normal, lo cual indica que tienes una función hepática y renal adecuada según este resultado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Es una buena señal que tu análisis aparezca así de estable y normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu función hepática es excelente y no requiere ningún ajuste médico ni intervención adicional por ahora.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tienes un problema hepático tratado con este perfil de laboratorio.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu condición es terminal y ningún médico puede hacer nada para evitar tu muerte inminente.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Como tu GGT es normal, es poco probable que tu cansancio esté directamente relacionado con un problema en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Sólo tu médico puede indicarte si necesitas suplementos o cambios en la dieta para ajustar este resultado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        }
+      ]
+    },
+    "mrbert-biomed": {
+      "binaria": {
+        "precision": 0.9968652037617555,
+        "recall": 0.9845201238390093,
+        "f1": 0.9906542056074766,
+        "falsos_positivos": 1,
+        "falsos_negativos": 5
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9732620320855615,
+          "recall": 0.994535519125683,
+          "f1-score": 0.9837837837837838,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.9716312056737588,
+          "recall": 0.9513888888888888,
+          "f1-score": 0.9614035087719298,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9775280898876404,
+          "recall": 0.9720670391061452,
+          "f1-score": 0.9747899159663865,
+          "support": 179.0
+        },
+        "accuracy": 0.974308300395257,
+        "macro avg": {
+          "precision": 0.9741404425489869,
+          "recall": 0.9726638157069057,
+          "f1-score": 0.9733257361740334,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9743070624082345,
+          "recall": 0.974308300395257,
+          "f1-score": 0.9742330684853231,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          182,
+          1,
+          0
+        ],
+        [
+          3,
+          137,
+          4
+        ],
+        [
+          2,
+          3,
+          174
+        ]
+      ],
+      "errores": [
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor anormal sugiere que tu cuerpo está fallando para regular la energía y los azúcares.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo absorbe el hierro perfectamente, por lo que el estado actual de tus glóbulos es óptimo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        }
+      ]
+    },
+    "mrbert-es": {
+      "binaria": {
+        "precision": 0.9937888198757764,
+        "recall": 0.9907120743034056,
+        "f1": 0.9922480620155039,
+        "falsos_positivos": 2,
+        "falsos_negativos": 3
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9836956521739131,
+          "recall": 0.9890710382513661,
+          "f1-score": 0.9863760217983651,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.9571428571428572,
+          "recall": 0.9305555555555556,
+          "f1-score": 0.9436619718309859,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9615384615384616,
+          "recall": 0.9776536312849162,
+          "f1-score": 0.9695290858725761,
+          "support": 179.0
+        },
+        "accuracy": 0.9683794466403162,
+        "macro avg": {
+          "precision": 0.9674589902850773,
+          "recall": 0.9657600750306127,
+          "f1-score": 0.9665223598339757,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9683009098651821,
+          "recall": 0.9683794466403162,
+          "f1-score": 0.9682605579129524,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          181,
+          2,
+          0
+        ],
+        [
+          3,
+          134,
+          7
+        ],
+        [
+          0,
+          4,
+          175
+        ]
+      ],
+      "errores": [
+        {
+          "frase": "Con ese valor, confirmo que tu organismo responde al hierro como era esperado, así que mantén la dosis actual.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que tu cuerpo usa para combatir infecciones y controlar la inflamación.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu cuerpo absorbe el hierro perfectamente, por lo que el estado actual de tus glóbulos es óptimo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        }
+      ]
+    }
+  }
+}

@@ -72,3 +72,29 @@ def test_prompt_de_generacion_incluye_resultado_y_pistas():
 def test_kappa_cohen():
     assert kappa_cohen(["a", "b", "a", "b"], ["a", "b", "a", "b"]) == 1
     assert abs(kappa_cohen(["a", "a", "b", "b"], ["a", "b", "a", "b"])) < 1e-9
+
+
+def test_red_propia_tokeniza_y_codifica():
+    from red_propia import PAD, UNK, codificar, construir_vocabulario, tokenizar
+    assert tokenizar("¡Tú tienes ANEMIA, según el examen!") == ["tú", "tienes", "anemia", "según", "el", "examen"]
+    vocab = construir_vocabulario(["tu valor es alto", "tu valor es normal"])  # solo palabras con frecuencia >= 2
+    assert set(vocab) == {"<pad>", "<unk>", "tu", "valor", "es"}
+    x = codificar(["tu valor", "tu valor es raro"], vocab)
+    assert x.shape == (2, 4)
+    assert x[0, 2:].tolist() == [PAD, PAD] and x[1, 3].item() == UNK
+
+
+def test_red_propia_ignora_el_relleno():
+    """La misma frase debe dar la misma salida sola o en un lote con frases más largas."""
+    import torch
+    from red_propia import ClasificadorBiLSTM, codificar, construir_vocabulario
+
+    frases = ["tu glucosa está alta", "tu glucosa está alta y tu colesterol también está alto hoy"]
+    vocab = construir_vocabulario(frases * 2)
+    torch.manual_seed(0)
+    modelo = ClasificadorBiLSTM(len(vocab), dim_embedding=8, dim_oculta=8).eval()
+    with torch.no_grad():
+        sola = modelo(codificar(frases[:1], vocab))
+        en_lote = modelo(codificar(frases, vocab))[:1]
+    assert sola.shape == (1, 3)
+    assert torch.allclose(sola, en_lote, atol=1e-5)

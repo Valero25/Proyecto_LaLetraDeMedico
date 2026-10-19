@@ -169,20 +169,46 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 - [ ] **Dataset** (`training/guardrails/generar_frases.py` → `data/guardrails/frases.jsonl`): Qwen escribe 8 frases por petición, para cada (analito, clase) y en 2 rondas. En total son 246 peticiones y unas 1.970 frases.
   - Cada petición fija un resultado sintético de la Fase 1 (valor, rango, estado y contexto del paciente). El estado se sortea igual para las tres clases, para que el modelo no aprenda el atajo "valor alto = frase peligrosa".
   - Se piden casos difíciles para el filtro actual: informativas que usan "tienes" o "diagnóstico", diagnósticas sin esas palabras y alarmistas sutiles, sin signos de exclamación.
-  - *En curso (~2 h): el límite real de Groq es de **1.000 tokens de salida por minuto** por modelo, unas 2 peticiones por minuto. El script se puede reanudar.*
-- [ ] **Verificación de etiquetas** (`training/guardrails/verificar_etiquetas.py`): `openai/gpt-oss-120b` vuelve a etiquetar cada frase sin ver la clase pedida.
-  - Muestra de 128 frases: acuerdo 91,4 %, **kappa 0,87**.
-  - Casi todos los desacuerdos son frases que descartan una enfermedad con certeza sobre un valor normal ("no tienes ninguna infección"). Por definición son diagnósticas, pero el juez las ve como informativas.
-  - Se entrena solo con las frases en que coinciden profesor y juez. Los desacuerdos van a `data/guardrails/revisar_equipo.csv`.
+  - **Generadas: 1.774 frases** (219 de 246 peticiones). El límite real de Groq es de **1.000 tokens de salida por minuto** por modelo, unas 2 peticiones por minuto. Además, el proceso se cortó por falta de RAM en el equipo.
+  - Faltan 27 peticiones de la ronda 2 de los 9 analitos de orina. Todos tienen su ronda 1. Se completan con el mismo comando (es reanudable) y luego se reentrena.
+- [x] **Verificación de etiquetas** (`training/guardrails/verificar_etiquetas.py`): `openai/gpt-oss-120b` vuelve a etiquetar cada frase sin ver la clase pedida.
+  - Sobre las 1.774 frases: acuerdo 88,7 %, **kappa de Cohen 0,83**.
+  - Los desacuerdos se concentran en las diagnósticas: el juez ve 89 como informativas y 90 como alarmistas. Las informativas y alarmistas casi no generan dudas. Muchas de las diagnósticas que el juez ve como informativas descartan una enfermedad con certeza sobre un valor normal ("no tienes ninguna infección"). Por definición son diagnósticas.
+  - Se entrena solo con las 1.574 frases en que coinciden profesor y juez. Los 200 desacuerdos van a `data/guardrails/revisar_equipo.csv`.
 - [ ] **Pendiente del equipo:** llenar la columna `clase_equipo` de `revisar_equipo.csv` (`informativa`, `diagnostica`, `alarmista` o `descartar`).
 - [x] **Split por analito** (`training/guardrails/dataset.py`): las frases de los 12 analitos de test de la Fase 2 van a test, para medir la generalización a exámenes no vistos. Del resto, 15 % va a validación.
 - [x] **Entrenamiento** (`training/guardrails/ajustar_clasificador.py`):
   - MrBERT-biomed con cabeza de clasificación de 3 clases. Se elige la mejor época por F1 macro en validación.
-  - Corre en CPU en unos 25 min (probado con una corrida mínima), así que no hace falta Colab.
-- [x] **Evaluación** (`evaluacion/evaluar_guardrails.py`):
-  - Tarea binaria (¿frase riesgosa?) frente al filtro de palabras actual, más F1 por clase y matriz de confusión.
-  - Con la muestra parcial, el filtro de palabras detecta solo el 7 % de las frases riesgosas. Falta confirmarlo con el dataset completo.
-- [ ] Entrenar MrBERT-biomed y, como comparación, `MrBERT-es` (general), para medir si el preentrenamiento biomédico ayuda.
+  - Corre en CPU en unos 32 min y necesita unos 6 GB de RAM libres, así que no hace falta Colab.
+- [x] **Evaluación** (`evaluacion/evaluar_guardrails.py`): tarea binaria (¿frase riesgosa?) frente al filtro de palabras actual, más F1 por clase y matriz de confusión.
+- [x] **MrBERT-biomed entrenado** (899 frases, 4 épocas, lr 3e-5, batch 16, 32 min en CPU). Validación: F1 macro 0,993.
+- [x] **MrBERT-es** (general, sin adaptación biomédica) como comparación: mismos hiperparámetros, 29 min en CPU, F1 de 0,987 en validación.
+- [x] **Red neuronal propia** (`training/guardrails/red_propia.py`), diseñada y entrenada desde cero en PyTorch, sin preentrenamiento:
+  - Arquitectura: `Embedding(128) → BiLSTM(2×128, empaquetada para ignorar el relleno) → pooling media + máximo → Linear(512→128) → ReLU → Dropout(0,3) → Linear(128→3)`.
+  - Tamaño: 456.707 parámetros y un vocabulario de 988 palabras sacado del train.
+  - Entrenamiento: AdamW con lr 2e-3, parada temprana por F1 en validación (paciencia 5), 1 min en CPU. Se corrió con 3 semillas para medir la variación.
+  - Un test (`test_red_propia_ignora_el_relleno`) detectó que, sin empaquetar, la dirección hacia atrás de la LSTM leía primero el relleno. Por eso la salida de una frase dependía de las demás frases del lote. Se corrigió antes de reportar resultados.
+- [x] **Baseline clásico**: TF-IDF de 1 y 2 palabras + regresión logística, entrenado dentro de `evaluar_guardrails.py`.
+
+#### Resultados (test: 506 frases de 12 analitos no vistos)
+
+| Modelo | Tipo | Parámetros | F1 macro (3 clases) | F1 diagnóstica | F1 binaria (¿riesgosa?) | FP / FN binaria |
+|---|---|---|---|---|---|---|
+| Filtro de palabras (actual) | Reglas | 0 | — | — | 0,219 | 60 / 276 |
+| TF-IDF + regresión logística | Clásico | 8 mil | 0,929 | 0,890 | 0,977 | 4 / 11 |
+| BiLSTM propia (3 semillas) | Red desde cero | 457 mil | 0,902 ± 0,009 | 0,866* | 0,963 ± 0,004 | 18 / 8* |
+| MrBERT-es ajustado | Transformer preentrenado (general) | 308 M | 0,967 | 0,944 | **0,992** | 2 / 3 |
+| **MrBERT-biomed ajustado** | Transformer preentrenado (biomédico) | 308 M | **0,973** | **0,961** | 0,991 | **1** / 5 |
+
+\* De la semilla 13. Binaria = ¿la frase es diagnóstica o alarmista? Hay 323 frases riesgosas en test.
+
+**Lectura:**
+1. **El filtro actual no sirve como guardrail.** Deja pasar el 85 % de las frases riesgosas (276 de 323). Además, marca 60 frases informativas por usar "tienes" ("tienes el valor dentro del rango"). Frases como "Esto es una anemia" o "Deberías ir a urgencias de inmediato" no tienen ninguna de sus 4 palabras.
+2. **El preentrenamiento es lo que más aporta.** Con solo 899 frases, la red propia queda **por debajo de TF-IDF** (0,90 frente a 0,93). Tiene que aprender el español desde cero: 988 palabras de vocabulario, y una palabra que no vio en train es `<unk>`. Los transformers ya traen ese conocimiento y suben unos 4-7 puntos. La clase diagnóstica es la más difícil para todos, y es donde más se nota la diferencia (0,87 → 0,96).
+3. **Biomédico frente a general:** MrBERT-biomed gana en 3 clases (0,973 frente a 0,967), sobre todo en diagnóstica (0,961 frente a 0,944). En la tarea binaria empatan. La diferencia es de unas pocas frases, así que es indicativa. **Para la app se elige MrBERT-biomed**, por ser el mejor en distinguir diagnóstica de alarmista y el que menos falsos positivos tiene.
+4. **Los errores que quedan son los casos sutiles.** Hay frases que descartan algo con certeza ("Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias") y alarmistas con tono técnico ("suele ser un signo de deterioro hepático avanzado").
+5. **Limitación importante para el informe:** el test solo tiene frases en que los dos LLM coinciden, que son las más claras, así que el 0,99 es optimista. Los 200 desacuerdos son el set difícil. Sobre ellos, MrBERT suele dar la razón al profesor: en 57 de los 89 casos "diagnóstica vs. informativa" dice diagnóstica. Cuando el equipo los revise, entran al dataset con su etiqueta y se reevalúa. Ese número es el más honesto.
+6. Las frases de entrenamiento y de test las escribió el mismo profesor (Qwen). En la Fase 4 se mide el clasificador sobre las salidas reales del generador.
 
 ## Fase 4: fine-tuning QLoRA del generador ⬜
 
@@ -239,7 +265,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 24 passed, 1 xfailed)
+# Pruebas (esperado: 26 passed, 1 xfailed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend
@@ -271,3 +297,4 @@ El `xfail` es intencional: documenta la brecha de formatos de la regla, que se c
   - Fase 2: base de conocimiento de MedlinePlus (208 fragmentos), recuperadores y evaluación con 505 consultas. Mejor resultado: e5-small + alias (85,3 % hit@1) frente a 6,3 % del sistema actual. ALIA-MrBERT no supera a e5-small.
   - Ajuste contrastivo: 1.198 consultas generadas con Qwen, split de 29/12 analitos, script de entrenamiento y notebook de Colab listos.
   - Entrenamiento en Colab T4: e5 sin problemas. ALIA se quedó sin memoria y se corrigió con CachedMNRL (`--mini-batch 8`). Resultado: ambos generalizan a analitos no vistos (e5 96,2 %, ALIA 91,2 % hit@1). ALIA ajustado completo queda elegido por hit@3 y consultas manuales (92,5 % frente a 85,0 %). Fase 2 terminada.
+  - Fase 3: 1.774 frases generadas con Qwen y verificadas con gpt-oss-120b (kappa 0,83); 1.574 utilizables. En test (analitos no vistos), MrBERT-biomed logra F1 binario 0,991 frente a 0,219 del filtro de palabras. Se agregaron como comparación una red BiLSTM propia desde cero (0,963), TF-IDF (0,977) y MrBERT-es (0,992). El preentrenamiento es lo que más aporta. Falta la revisión del equipo de los 200 desacuerdos.

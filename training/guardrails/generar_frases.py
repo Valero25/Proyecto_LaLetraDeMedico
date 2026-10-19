@@ -122,7 +122,12 @@ def main():
             # Semilla por tarea: el mismo resultado sintético aunque el script se reanude
             rng = random.Random(f"{clave}-{clase}-{ronda}")
             prompt, resultado = construir_prompt(rng, catalogo, clave, clase)
-            respuesta = pedir_json(sesion, args.modelo, prompt, etiqueta=f"{clave}/{clase}/{ronda}")
+            try:
+                respuesta = pedir_json(sesion, args.modelo, prompt, etiqueta=f"{clave}/{clase}/{ronda}")
+            except RuntimeError as e:
+                # Queda pendiente: se reintenta al volver a correr el script
+                print(f"    se salta: {e}", flush=True)
+                continue
             for frase in respuesta.get("frases", []):
                 if not isinstance(frase, str) or not frase.strip():
                     continue

@@ -220,6 +220,11 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
   - Legibilidad (INFLESZ / Fernández-Huerta).
   - % de frases marcadas por el clasificador de la Fase 3.
   - Rúbrica humana sobre unos 50 casos.
+- [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
+  - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
+  - Curvas de pérdida de train y validación, para el análisis de sobreajuste.
+  - Pérdida solo sobre los tokens de la respuesta.
+  - Justificación de la tasa de aprendizaje.
 
 ## Fase 5: integración en la app ⬜
 
@@ -230,6 +235,32 @@ Mismas filas con **hit@3** (el generador recibirá los 3 primeros fragmentos):
 ## Fase 6: informe ⬜
 
 - [ ] Tablas y gráficas de cada experimento, README actualizado con la arquitectura nueva y una sección de limitaciones y alcance.
+- [x] `informe/fundamentos.md`: relaciona cada principio del curso con un resultado medido del proyecto. Se revisó contra el PDF del curso (*PTIA Principios NN*) y contra el código el 2026-10-18.
+
+### Cobertura de los temas del curso
+
+Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega su vínculo en `informe/fundamentos.md`, con un dato medido, antes de marcarse como terminada.
+
+| Tema del curso (diapositivas) | Dónde aparece en el proyecto | Sección de `fundamentos.md` |
+|---|---|---|
+| Asociacionismo, 4 leyes de Aristóteles (4-6) | Ajuste contrastivo del RAG | 1 |
+| Conexionismo: Hartley, Bain (7-11) | El conocimiento está en las conexiones (pesos) | 1 |
+| McCulloch y Pitts, sinapsis excitadora e inhibidora (12-13) | Filtro de palabras original | 2 |
+| Hebb y su inestabilidad (14-15) | Softmax, coseno acotado y weight decay | 1 |
+| Perceptrón, sesgo como peso, convergencia y separabilidad (16-41) | TF-IDF + regresión logística | 3 |
+| Funciones de activación: escalón, signo, sigmoide, tanh, ReLU (18, 42-44) | LSTM, cabezas, MrBERT | 4 |
+| Red neuronal y conteo de neuronas, pesos y parámetros (45-46) | Red propia BiLSTM | 5 |
+| Poder de representación, Cybenko, sobreajuste (47) | Red propia frente a MrBERT | 6 |
+| Función de pérdida: MSE, MAE, L1, L2, cero-uno, hinge (52-57) | Entropía cruzada para entrenar, F1 para evaluar | 7 |
+| Gradiente, descenso, tasa de aprendizaje, mínimos locales (58-68) | AdamW, recorte, 3 semillas | 8 |
+| Retropropagación y regla de la cadena, XOR (69-91) | GradCache, retropropagación a través del tiempo | 9 |
+| Curva de aprendizaje (92) | Tabla de épocas de la red propia | 6 |
+| Historia: aprendizaje profundo = algoritmos + cómputo + datos (3) | Preentrenamiento frente a red desde cero | 6 |
+
+**Pendiente teórico:**
+- Agregar weight decay al ajuste del RAG. Hoy vale 0, así que el problema de Hebb "sin reducción de pesos" queda sin resolver ahí.
+- La pérdida ponderada por clase en guardrails (sección 7).
+- Las curvas de aprendizaje como gráfica, no solo como tabla.
 
 ---
 

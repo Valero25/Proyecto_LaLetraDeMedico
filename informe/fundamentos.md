@@ -1,0 +1,185 @@
+# Fundamentos: de la neurona artificial a los modelos del proyecto
+
+Esta sección relaciona los principios de redes neuronales vistos en el curso (perceptrón, funciones de activación, función de pérdida, descenso del gradiente y retropropagación) con los componentes que el equipo entrenó en LetraDeMédico. Cada principio se ilustra con una decisión o un resultado medido del proyecto.
+
+## 1. Asociación y aprendizaje por contraste (RAG, Fase 2)
+
+El asociacionismo describe el aprendizaje como la formación de vínculos entre ideas. Aristóteles propuso cuatro leyes de asociación: contigüidad, frecuencia, similitud y contraste. El conexionismo de Bain (1873) ubicó ese conocimiento en las **conexiones** entre elementos, y Hebb (1949) lo llevó a las neuronas: las conexiones entre unidades que se activan juntas se refuerzan.
+
+El ajuste contrastivo del modelo de embeddings (`training/rag/ajustar_embeddings.py`) aplica las cuatro leyes:
+
+- **Contigüidad:** cada par de entrenamiento une una consulta con el fragmento del que se generó. Aparecen juntos en el mismo ejemplo y por eso quedan vinculados.
+- **Frecuencia:** cada fragmento tiene hasta 6 consultas distintas y el modelo las ve en 3 épocas. Cuanto más se repite el vínculo, más se fortalece.
+- **Similitud:** cada consulta se acerca a su fragmento correcto de MedlinePlus en el espacio vectorial (ej. "tengo el LDL por las nubes" con la página de colesterol).
+- **Contraste:** cada consulta se aleja de un **negativo difícil**, elegido entre las confusiones medidas (HbA1c frente a hemoglobina, ALT frente a AST, sangre frente a orina), y de los demás fragmentos del lote.
+
+El material del curso describe la regla de Hebb pura como fundamentalmente inestable, por tres razones. El ajuste contrastivo resuelve dos de ellas de forma directa:
+
+| Problema de la regla de Hebb | Cómo se trata en el proyecto |
+|---|---|
+| Sin noción de competencia | La pérdida (`MultipleNegativesRankingLoss`) es una softmax sobre las similitudes de la consulta con **todos** los fragmentos del lote. Lo que cuenta es la similitud con el positivo **en relación** con la de los negativos. Si todas suben por igual, la pérdida no cambia: un fragmento solo gana si le gana a los demás. |
+| El aprendizaje no tiene límites | La similitud es el coseno entre vectores, que siempre está entre −1 y 1, multiplicado por una escala fija de 20. Ninguna asociación puede crecer sin límite. Además, la pérdida deja de bajar cuando el positivo ya supera con holgura a los negativos. |
+| Sin reducción de pesos | **No se aplicó en el ajuste del RAG**: `SentenceTransformerTrainingArguments` usa por defecto un decaimiento de pesos (*weight decay*) de 0, y el script no lo cambió. Sí se aplica en los clasificadores de guardrails (0,01 en AdamW, sección 6), donde encoge en cada paso los pesos que no se necesitan. En el RAG, lo que evita que los pesos se alejen demasiado es la tasa de aprendizaje baja con pocas épocas (sección 8). Agregarlo es un experimento pendiente. |
+
+**Resultado:** en los 12 analitos que el modelo nunca vio, ALIA ajustado sube de 84,4 % a 91,2 % de acierto en el primer resultado (hit@1), y e5-small de 88,8 % a 96,2 %.
+
+## 2. La neurona de McCulloch y Pitts y el filtro de palabras
+
+El modelo de McCulloch y Pitts (1943) es una unidad de umbral con pesos fijos: suma entradas binarias y se activa si se supera un umbral, pero **no tiene mecanismo de aprendizaje**. Los pesos los pone quien la diseña.
+
+El filtro de guardrails original de la app es exactamente esa unidad: recibe como entradas la presencia de 4 palabras ("tienes", "diagnóstico", etc.), cada una con peso 1, y se activa si aparece al menos una (un OR lógico). Como nada se aprende de los datos, el filtro no se adapta al lenguaje real:
+
+- Deja pasar el **85 %** de las frases riesgosas (276 de 323 en test), como "Esto es una anemia".
+- Marca 60 frases informativas: 30 por usar "tienes" ("tienes el valor dentro del rango") y 30 por usar "diagnóstico".
+- F1 binario: **0,219**.
+
+El modelo de McCulloch y Pitts distingue además dos tipos de sinapsis. Las **excitadoras** transmiten la entrada ponderada. Las **inhibidoras** impiden la activación de la neurona, sin importar las demás entradas. El filtro solo tiene entradas excitadoras. Por eso no puede reconocer una negación ni un descargo de responsabilidad. De hecho, 30 de sus 60 falsos positivos son el propio aviso de seguridad que el asistente debe dar ("Solo tu médico puede hacer un diagnóstico preciso..."). Una entrada inhibidora para "solo tu médico" corregiría esos casos. Pero sería otra regla puesta a mano, y el problema volvería con la siguiente frase.
+
+Este resultado es la motivación de toda la Fase 3: sustituir pesos puestos a mano por pesos aprendidos.
+
+## 3. El perceptrón y la separabilidad lineal (baseline TF-IDF)
+
+El perceptrón de Rosenblatt calcula una suma ponderada de las entradas más un sesgo, $z = \mathbf{w}^\top \mathbf{x} + b$, y le aplica una función de activación. El sesgo reemplaza al umbral ($b = -t$) y se puede tratar como un peso más, conectado a una entrada fija igual a 1. Su teorema de convergencia garantiza que el algoritmo encuentra una frontera correcta **solo si las clases son linealmente separables**. Si no lo son, los pesos no dejan de cambiar. El ejemplo clásico es el XOR, que necesita al menos una capa oculta.
+
+El baseline clásico de la Fase 3 (TF-IDF de 1 y 2 palabras + regresión logística, en `evaluacion/evaluar_guardrails.py`) es un perceptrón de una sola capa con activación sigmoide, generalizada a 3 clases:
+
+- Las entradas $\mathbf{x}$ son los pesos TF-IDF de **2.723** palabras y pares de palabras. Solo se cuentan las que aparecen en al menos 2 frases de entrenamiento.
+- Hay un vector de pesos y un sesgo por clase: 2.723 × 3 + 3 = **8.172 parámetros**. La activación es una softmax, la generalización de la sigmoide a 3 clases.
+- Los pesos se ajustan minimizando la entropía cruzada más una penalización L2 sobre los pesos (C = 10), el mismo principio que el decaimiento de pesos de la sección 6. El optimizador es de segundo orden (L-BFGS), en lugar del descenso del gradiente simple.
+- A diferencia de las redes con capas ocultas, esta función de pérdida es **convexa**: tiene un único mínimo global y el resultado no depende de la inicialización (ver sección 8).
+
+**Lectura de los resultados a la luz del perceptrón:**
+
+| Tarea | F1 de TF-IDF (lineal) | F1 de MrBERT-biomed (no lineal, preentrenado) |
+|---|---|---|
+| Binaria: ¿frase riesgosa? | 0,977 | 0,991 |
+| 3 clases (F1 macro) | 0,929 | 0,973 |
+| Clase diagnóstica | 0,890 | 0,961 |
+
+La tarea binaria es **casi linealmente separable** en el espacio de palabras: un clasificador lineal ya acierta en casi todo. Lo que no se separa con una línea son los casos sutiles, que dependen del sentido de la frase y no de sus palabras sueltas: distinguir una frase diagnóstica de una alarmista, o reconocer como diagnóstica una frase que descarta una enfermedad con certeza ("como tu potasio está normal, no hay riesgo de arritmias"). Ahí es donde un modelo no lineal aporta más: 7 puntos en la clase diagnóstica.
+
+## 4. Funciones de activación
+
+Una función de activación decide cuándo se activa una neurona. Si fuera lineal, cualquier red, sin importar cuántas capas tenga, colapsaría en un clasificador lineal con la misma capacidad limitada de la sección anterior. Por eso las redes del proyecto usan activaciones no lineales, cada una elegida por una razón:
+
+| Dónde | Activación | Por qué |
+|---|---|---|
+| Compuertas de la LSTM (red propia) | Sigmoide | Su rango de 0 a 1 funciona como una compuerta: cuánto olvidar, cuánto escribir, cuánto leer de la memoria. Es continuamente diferenciable, pero no es simétrica en el origen. |
+| Estado de la LSTM | Tangente hiperbólica | Es una sigmoide escalada y simétrica en el origen (rango de −1 a 1). |
+| Cabeza de clasificación de la red propia | ReLU | Es lineal por tramos y fácil de calcular. Da representaciones dispersas y no satura para valores positivos, así que evita el desvanecimiento del gradiente. Su riesgo son las **neuronas muertas**: si una neurona queda siempre en la zona negativa, su gradiente es cero y deja de aprender. |
+| Capas internas de MrBERT (ModernBERT) | GeGLU, una variante con GELU | GELU es una versión suave de ReLU. En GeGLU, la capa proyecta a 2 × 1.152 dimensiones: una mitad pasa por GELU y multiplica a la otra, que actúa como compuerta, como en la LSTM. |
+| Cabeza de clasificación que se agregó a MrBERT | SiLU | `Linear(768→768) → SiLU → LayerNorm → Linear(768→3)`. SiLU ($x \cdot \sigma(x)$) también es una versión suave de ReLU. Como es distinta de cero para valores negativos pequeños, reduce el problema de las neuronas muertas. Es la única parte de MrBERT que empieza con pesos aleatorios (592.899 parámetros). |
+| Salida de todos los clasificadores | Softmax | Convierte las 3 puntuaciones en probabilidades de informativa, diagnóstica y alarmista. |
+
+La sigmoide y la tangente hiperbólica tienen derivadas cercanas a cero cuando se saturan, lo que produce el **desvanecimiento del gradiente** en secuencias largas. La LSTM existe para mitigar ese problema: su memoria se actualiza sumando, no multiplicando, y el gradiente sobrevive a lo largo de la frase.
+
+## 5. De perceptrones a redes: arquitectura y conteo de parámetros
+
+Una red neuronal es una colección de perceptrones conectados, y sus parámetros aprendibles son los pesos (las aristas) más los sesgos de cada neurona. El mismo ejercicio del curso aplicado a la red propia (`training/guardrails/red_propia.py`) da su tamaño exacto:
+
+| Capa | Cálculo | Parámetros |
+|---|---|---|
+| Embedding (vocabulario de 988 palabras, dimensión 128) | 988 × 128 | 126.464 |
+| BiLSTM, por dirección: 4 compuertas con pesos de entrada, pesos recurrentes y 2 sesgos | 4 × (128×128 + 128×128 + 128 + 128) = 132.096 | |
+| BiLSTM, 2 direcciones | 2 × 132.096 | 264.192 |
+| Linear 512 → 128 (la entrada es la media y el máximo de las dos direcciones: 4 × 128) | 512 × 128 + 128 | 65.664 |
+| Linear 128 → 3 | 128 × 3 + 3 | 387 |
+| **Total** | | **456.707** |
+
+El 58 % de los parámetros está en la BiLSTM y el 28 % en los embeddings, que la red debe aprender desde cero con solo 899 frases.
+
+La cabeza de clasificación (las dos capas `Linear`) es exactamente la red retroalimentada (*feed-forward*) del curso. Tiene 512 entradas, una capa oculta de 128 neuronas con ReLU y una capa de salida de 3 neuronas. Son 131 neuronas, 65.920 pesos (512 × 128 + 128 × 3) y 131 sesgos. La BiLSTM, en cambio, es una red **recurrente**: cada paso recibe la palabra actual y además su propio estado del paso anterior. Por eso los pesos recurrentes (128 × 128 por compuerta) se reutilizan en cada palabra de la frase. La retropropagación recorre esa cadena hacia atrás, palabra por palabra; se la llama retropropagación a través del tiempo.
+
+## 6. Poder de representación y sobreajuste
+
+El teorema de aproximación universal (Cybenko, 1989) dice que una red con una sola capa oculta puede aproximar cualquier función continua, y que el poder de representación crece con más capas y neuronas. El material del curso añade la advertencia: un gran poder conlleva un gran sobreajuste.
+
+La red propia lo muestra con claridad. Con unos 500 parámetros por frase de entrenamiento, memoriza el conjunto de entrenamiento mucho antes de generalizar (semilla 13):
+
+| Época | Pérdida en train | F1 macro en validación |
+|---|---|---|
+| 1 | 1,006 | 0,570 |
+| 4 | 0,180 | 0,889 |
+| 12 | 0,020 | **0,944** (mejor época) |
+| 17 | 0,007 | 0,930 (parada temprana) |
+
+Desde la época 4 la pérdida de entrenamiento sigue cayendo casi hasta cero, mientras que el F1 en validación oscila entre 0,86 y 0,94. En test, sobre analitos no vistos, baja a 0,902 ± 0,009 (3 semillas). Para contenerlo se usaron cuatro mecanismos:
+
+1. **Dropout** de 0,3 en los embeddings y en la cabeza.
+2. **Decaimiento de pesos** (weight decay de 0,01 en AdamW), que penaliza los pesos grandes.
+3. **Parada temprana:** se guarda la mejor época por F1 en validación y se detiene tras 5 épocas sin mejora.
+4. **Split por analito:** validar y evaluar sobre exámenes que el modelo no vio, para que la cifra reportada mida generalización y no memoria.
+
+El contraste con los transformers indica que el número de parámetros por sí solo no explica el rendimiento. MrBERT tiene 308 millones de parámetros, 675 veces más que la red propia, y también memoriza el entrenamiento: su pérdida en train llega a **0,0009**, más baja que la de la red propia (0,007). La diferencia está en la generalización. Con ese mismo nivel de memorización, su F1 en validación se mantiene en 0,99 y en test llega a 0,973. Esos parámetros ya llegan entrenados con millones de textos en español, y el ajuste fino solo los mueve un poco.
+
+La red propia, en cambio, queda **por debajo** del perceptrón lineal de TF-IDF (0,902 frente a 0,929): con tan pocos datos, más capacidad sin conocimiento previo es más riesgo de sobreajuste, no más acierto. Es la fórmula del curso para explicar el aprendizaje profundo: *algoritmos conocidos + potencia de cómputo + grandes datos*. La red propia tiene el algoritmo, pero no los datos. MrBERT recibe los datos a través de su preentrenamiento.
+
+## 7. La función de pérdida: el equipo la elige
+
+La función de pérdida define qué significa estar cerca de la solución correcta, y no hay una única opción válida: depende de la tarea. El proyecto usa dos:
+
+- **Entropía cruzada** en los tres clasificadores de guardrails (BiLSTM, MrBERT-biomed y MrBERT-es). El curso presenta el error cuadrático medio (MSE) como la pérdida típica de la regresión. Para clasificación con softmax se prefiere la entropía cruzada, porque su gradiente respecto a las puntuaciones es simplemente $\hat{p} - y$ (probabilidad predicha menos etiqueta real). Con MSE, ese gradiente se multiplica por la derivada de la softmax, que tiende a cero cuando el modelo se equivoca con mucha seguridad. Justo cuando más hay que corregir, aprendería más lento.
+- **Pérdida contrastiva de ranking** (`MultipleNegativesRankingLoss`) en el RAG. Es también una entropía cruzada, pero sobre las similitudes coseno entre una consulta y todos los fragmentos del lote: la "clase correcta" es su fragmento positivo y las demás son los negativos.
+
+**Pérdida de entrenamiento frente a métrica de evaluación.** El curso presenta también la pérdida cero-uno, que vale 1 si la predicción es incorrecta y 0 si es correcta. La exactitud y el F1 con que se reportan los resultados se basan en ella: cuentan aciertos. Pero la pérdida cero-uno es escalonada, y su derivada es cero en casi todas partes, así que no le dice al descenso del gradiente hacia dónde moverse. Por eso **se entrena con entropía cruzada**, una aproximación suave y diferenciable, y **se evalúa con F1**. La entropía cruzada sigue bajando aunque las predicciones ya sean correctas, porque premia la confianza. Por eso la pérdida en train de la red propia llega a 0,007 mientras su F1 en validación ya no mejora (sección 6).
+
+**Limitación y trabajo futuro:** la entropía cruzada usada penaliza igual todos los errores. En un guardrail, un falso negativo (dejar pasar una frase diagnóstica al paciente) es más grave que un falso positivo (reescribir una frase que estaba bien). Una pérdida ponderada por clase, o un umbral más bajo sobre la probabilidad de "riesgosa", favorecería la sensibilidad a cambio de algunos falsos positivos más.
+
+## 8. Descenso del gradiente y tasa de aprendizaje
+
+El gradiente de la pérdida indica, para cada peso, en qué dirección aumenta más la pérdida. El descenso del gradiente da un paso pequeño en la dirección contraria:
+
+$$\mathbf{w} \leftarrow \mathbf{w} - \eta \, \nabla_{\mathbf{w}} L$$
+
+donde $\eta$ es la tasa de aprendizaje. Todos los modelos del proyecto se entrenan así, por lotes (descenso del gradiente estocástico), con el optimizador AdamW, que adapta el paso de cada peso según la historia de sus gradientes. La tasa de aprendizaje es la decisión que más cambia entre modelos, y cada valor se justifica por el punto de partida:
+
+| Modelo | Tasa de aprendizaje | Punto de partida |
+|---|---|---|
+| BiLSTM propia | 2 × 10⁻³ | Pesos aleatorios: hay que recorrer mucha distancia. |
+| MrBERT-biomed y MrBERT-es | 3 × 10⁻⁵ | Pesos preentrenados: pasos grandes destruirían lo que ya saben (olvido catastrófico). Se usa un calentamiento del 10 % de los pasos, en que la tasa sube desde cero, para que la cabeza nueva, que parte de pesos aleatorios, no mande gradientes grandes al resto del modelo. |
+| ALIA y e5-small (RAG) | 2 × 10⁻⁵ | Igual que el anterior, también con un calentamiento del 10 %. |
+
+El curso compara el gradiente con las perillas de una máquina: indica cuánto cambia la salida al girar cada perilla. Cuando el gradiente es muy grande, un solo paso puede sacar al modelo de la zona buena. Por eso todos los entrenamientos **recortan la norma del gradiente** a 1: la red propia con `clip_grad_norm_` y los transformers con el valor por defecto de `Trainer`. El registro de MrBERT-biomed muestra cuándo actúa el recorte:
+
+| Paso | 20 | 80 | 120 | 140 | 160 | 200 |
+|---|---|---|---|---|---|---|
+| Norma del gradiente | 7,9 | 8,7 | 1,4 | 0,87 | 0,03 | 0,02 |
+| ¿Se recorta? | Sí | Sí | Sí | No | No | No |
+
+El recorte solo actúa en la primera mitad del ajuste. Después, el modelo ya está cerca de un mínimo, la pendiente es casi plana y los pasos son pequeños por sí solos.
+
+**Mínimos locales y semillas.** El descenso del gradiente garantiza bajar, pero no llegar al mínimo global: en una red con capas ocultas, la función de pérdida tiene muchos mínimos locales, y a cuál se llega depende del punto de partida. Por eso la red propia se entrenó con **3 semillas** (3 inicializaciones aleatorias distintas). En test, sus F1 son 0,895, 0,900 y 0,912, es decir, 0,902 ± 0,009. La regresión logística de la sección 3, que es convexa, da el mismo resultado siempre.
+
+## 9. Retropropagación y regla de la cadena
+
+Una red se puede escribir como una sola función compuesta, capa tras capa. La retropropagación calcula el gradiente de la pérdida respecto a cada peso con la regla de la cadena, empezando por la salida y **reutilizando** las derivadas ya calculadas en las capas posteriores, en lugar de recalcularlas para cada peso. En la práctica, PyTorch la ejecuta de forma automática (`perdida.backward()`).
+
+El proyecto tuvo que usar la regla de la cadena de forma explícita en un caso: el entrenamiento de ALIA en Colab. Con lotes de 32 tripletas de 384 tokens, ModernBERT no cabía en los 15 GB de la GPU T4. La solución fue `CachedMultipleNegativesRankingLoss` (GradCache), que separa el gradiente en dos factores:
+
+$$\frac{\partial L}{\partial \theta} = \sum_i \frac{\partial L}{\partial \mathbf{e}_i} \cdot \frac{\partial \mathbf{e}_i}{\partial \theta}$$
+
+1. Calcula los embeddings $\mathbf{e}_i$ de todo el lote sin guardar el grafo, y con ellos la pérdida y su gradiente respecto a cada embedding, $\partial L / \partial \mathbf{e}_i$. Es barato, porque los embeddings son vectores pequeños.
+2. Vuelve a pasar el lote en trozos de 8 y, para cada trozo, retropropaga ese gradiente guardado a través del modelo, $\partial \mathbf{e}_i / \partial \theta$.
+
+El resultado es el mismo gradiente que con el lote completo de 32, pero con la memoria de un lote de 8. Así ALIA y e5-small pudieron compararse con los mismos hiperparámetros.
+
+## 10. Aplicación prevista en la Fase 4 (QLoRA)
+
+El ajuste del generador seguirá el mismo esquema de pérdida, gradiente y retropropagación, con una restricción: no se actualizan los pesos $W$ del modelo base, que quedan congelados y cuantizados a 4 bits. Cada matriz ajustada se reemplaza por $W + BA$, donde $A$ y $B$ son matrices pequeñas (de rango bajo). La retropropagación atraviesa todo el modelo, pero solo $A$ y $B$ reciben la actualización del descenso del gradiente. La pérdida será la entropía cruzada sobre el siguiente token de las explicaciones de referencia: la misma función de la sección 7, aplicada a un vocabulario de más de cien mil clases (unos 152 mil tokens si el modelo base es Qwen2.5) en lugar de 3. Se calcula solo sobre los tokens de la respuesta, no sobre los del prompt, porque el modelo debe aprender a explicar, no a repetir los datos de entrada.
+
+Por cada matriz ajustada de tamaño $d \times k$, LoRA de rango $r$ agrega $r(d + k)$ parámetros entrenables, en lugar de los $d \cdot k$ de la matriz completa. Con $d = k = 2.048$ y $r = 16$, son 65.536 parámetros frente a 4,2 millones, un 1,6 %. Como $B$ empieza en cero, $W + BA = W$ al inicio: el modelo parte exactamente del base. Por eso la tasa de aprendizaje típica de LoRA (2 × 10⁻⁴) puede ser unas 10 veces mayor que la del ajuste fino completo de la sección 8.
+
+## Resumen
+
+| Principio del curso | Dónde aparece en LetraDeMédico | Evidencia |
+|---|---|---|
+| Asociacionismo (4 leyes de Aristóteles) | Ajuste contrastivo con negativos difíciles | hit@1 en no vistos: 84,4 % → 91,2 % (ALIA) |
+| Hebb y su inestabilidad | Softmax (competencia) y coseno acotado (límite) en el RAG; weight decay (reducción) solo en guardrails | 2 de los 3 problemas resueltos en el RAG; el tercero queda pendiente |
+| Neurona de McCulloch y Pitts (pesos fijos, sin aprendizaje, sin sinapsis inhibidoras) | Filtro de palabras original | F1 binario 0,219; 30 de 60 falsos positivos son el propio aviso de seguridad |
+| Perceptrón, sesgo y separabilidad lineal | TF-IDF + regresión logística (8.172 parámetros) | F1 binario 0,977; falla en los casos no lineales |
+| Funciones de activación | Sigmoide y tanh en la LSTM, ReLU en su cabeza, GeGLU y SiLU en MrBERT, softmax de salida | Elección justificada por capa |
+| Red retroalimentada y conteo de parámetros | Cabeza de la red propia (131 neuronas) y red completa | 456.707, desglosados por capa |
+| Poder de representación y sobreajuste | Red propia frente a transformers | Pérdida en train 0,007 con F1 en validación ≈ 0,93 |
+| Función de pérdida (MSE, cero-uno, entropía cruzada) | Entropía cruzada para entrenar, F1 para evaluar | Pérdida ponderada por clase como trabajo futuro |
+| Descenso del gradiente, tasa de aprendizaje y mínimos locales | AdamW con 2 × 10⁻³ desde cero y 2 a 3 × 10⁻⁵ en ajuste fino; 3 semillas | Recorte activo en los primeros ~130 de 228 pasos; F1 de 0,902 ± 0,009 entre semillas |
+| Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |

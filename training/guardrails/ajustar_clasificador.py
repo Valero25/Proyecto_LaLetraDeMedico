@@ -35,6 +35,8 @@ def main():
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--max-len", type=int, default=96)
     parser.add_argument("--pesos", help="Pesos de la entropía cruzada por clase, ej. 1,2,2 (por defecto, sin ponderar)")
+    parser.add_argument("--con-reales", action="store_true",
+                        help="Entrenar también con las oraciones reales de data/guardrails/reales.csv (guardrail v2)")
     parser.add_argument("--limite", type=int, help="Usar solo N frases de train (prueba rápida)")
     args = parser.parse_args()
 
@@ -47,8 +49,9 @@ def main():
 
     dataset, motivos = cargar_dataset()
     print(resumen(dataset, motivos), flush=True)
-    train = [d for d in dataset if d["split"] == "train"][:args.limite]
-    val = [d for d in dataset if d["split"] == "val"]
+    fuentes = {"sintetica", "real"} if args.con_reales else {"sintetica"}
+    train = [d for d in dataset if d["split"] == "train" and d["fuente"] in fuentes][:args.limite]
+    val = [d for d in dataset if d["split"] == "val" and d["fuente"] in fuentes]
 
     nombre = MODELOS[args.modelo]
     tokenizador = AutoTokenizer.from_pretrained(nombre)
@@ -66,7 +69,7 @@ def main():
         return {"accuracy": accuracy_score(y, p), "f1_macro": f1_score(y, p, average="macro")}
 
     pesos = parsear_pesos(args.pesos) if args.pesos else None
-    salida = SALIDA_DIR / (args.modelo + ("-ponderado" if pesos else ""))
+    salida = SALIDA_DIR / (args.modelo + ("-ponderado" if pesos else "") + ("-v2" if args.con_reales else ""))
     argumentos = TrainingArguments(
         output_dir=str(salida / "checkpoints"),
         num_train_epochs=args.epocas,
@@ -111,7 +114,7 @@ def main():
     tokenizador.save_pretrained(str(salida))
     with open(salida / "entrenamiento.json", "w", encoding="utf-8") as f:
         json.dump({"modelo_base": nombre, "frases_train": len(train), "frases_val": len(val),
-                   "epocas": args.epocas, "pesos_clase": pesos, "lr": args.lr, "batch": args.batch, "max_len": args.max_len,
+                   "epocas": args.epocas, "pesos_clase": pesos, "fuentes": sorted(fuentes), "lr": args.lr, "batch": args.batch, "max_len": args.max_len,
                    "minutos": round(minutos, 1), "val_mejor_epoca": final,
                    "historial": entrenador.state.log_history}, f, indent=2, ensure_ascii=False)
     print(f"Validación (mejor época): F1 macro {final['eval_f1_macro']:.3f}, accuracy {final['eval_accuracy']:.3f}")

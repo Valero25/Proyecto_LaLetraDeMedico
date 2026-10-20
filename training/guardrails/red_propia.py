@@ -112,8 +112,9 @@ def main():
     torch.manual_seed(args.seed)
     dataset, motivos = cargar_dataset()
     print(resumen(dataset, motivos), flush=True)
-    train = [d for d in dataset if d["split"] == "train"]
-    val = [d for d in dataset if d["split"] == "val"]
+    # La red propia se compara con el v1: solo frases sintéticas
+    train = [d for d in dataset if d["split"] == "train" and d["fuente"] == "sintetica"]
+    val = [d for d in dataset if d["split"] == "val" and d["fuente"] == "sintetica"]
 
     vocab = construir_vocabulario([d["frase"] for d in train])
     config = {"tam_vocab": len(vocab), "dim_embedding": 128, "dim_oculta": 128, "num_clases": len(CLASES), "dropout": 0.3}

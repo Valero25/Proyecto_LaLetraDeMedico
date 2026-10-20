@@ -116,6 +116,16 @@ def main():
     )
     entrenador = SFTTrainer(model=modelo, args=config, train_dataset=train, eval_dataset=val,
                             processing_class=tokenizador, peft_config=lora)
+    if gpu:
+        # La T4 no soporta bfloat16 y el escalador de fp16 no acepta gradientes en bfloat16: las matrices de
+        # LoRA (lo único que se entrena) van en float32 y el resto de pesos sin cuantizar, en float16
+        for p in entrenador.model.parameters():
+            if p.requires_grad:
+                p.data = p.data.float()
+            elif p.dtype == torch.bfloat16:
+                p.data = p.data.half()
+        tipos = {str(p.dtype) for p in entrenador.model.parameters() if p.requires_grad}
+        print(f"Tipo de los parámetros entrenables: {', '.join(sorted(tipos))}", flush=True)
 
     total = sum(p.numel() for p in entrenador.model.parameters())
     entrenables = sum(p.numel() for p in entrenador.model.parameters() if p.requires_grad)

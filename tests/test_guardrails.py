@@ -32,7 +32,8 @@ def _escribir(tmp_path, frases, juez, revision=None):
             w = csv.writer(f)
             w.writerow(["frase", "clase_profesor", "clase_juez", "clase_equipo"])
             w.writerows(revision)
-    return dict(frases_path=rutas["frases.jsonl"], juez_path=rutas["juez.jsonl"], revisar_path=rutas["revisar.csv"])
+    return dict(frases_path=rutas["frases.jsonl"], juez_path=rutas["juez.jsonl"], revisar_path=rutas["revisar.csv"],
+                reales_path=tmp_path / "no_existe.csv")
 
 
 def test_etiqueta_final_prioriza_equipo_y_exige_acuerdo(tmp_path):

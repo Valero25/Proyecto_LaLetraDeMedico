@@ -81,8 +81,10 @@ def metricas_binarias(y, p):
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--modelos", nargs="+", default=["palabras", "tfidf", "bilstm", "bilstm-ponderado", "mrbert-biomed", "mrbert-biomed-ponderado", "mrbert-es"])
+    parser.add_argument("--modelos", nargs="+", default=["palabras", "tfidf", "bilstm", "bilstm-ponderado", "mrbert-biomed", "mrbert-biomed-ponderado", "mrbert-es", "mrbert-biomed-v2"])
     parser.add_argument("--split", default="test")
+    parser.add_argument("--fuente", choices=["sintetica", "real"], default="sintetica",
+                        help="real: oraciones escritas por los generadores de la Fase 4 (data/guardrails/reales.csv)")
     parser.add_argument("--umbrales", nargs="+", type=float, default=[0.5, 0.3, 0.1],
                         help="Marcar riesgosa si P(diagnóstica) + P(alarmista) >= umbral")
     args = parser.parse_args()
@@ -91,7 +93,9 @@ def main():
 
     dataset, motivos = cargar_dataset()
     print(resumen(dataset, motivos) + "\n")
-    filas = [d for d in dataset if d["split"] == args.split]
+    filas = [d for d in dataset if d["split"] == args.split and d["fuente"] == args.fuente]
+    salida = SALIDA if args.fuente == "sintetica" else SALIDA.with_name("fase3_guardrails_real.json")
+    print(f"Evaluando {len(filas)} oraciones ({args.fuente}, {args.split})\n")
     frases = [d["frase"] for d in filas]
     y3 = [d["etiqueta"] for d in filas]
     y2 = [int(e != 0) for e in y3]  # 0 = informativa
@@ -103,7 +107,7 @@ def main():
             r = {"binaria": metricas_binarias(y2, p2)}
         else:
             if nombre == "tfidf":
-                probs = probabilidades_tfidf([d for d in dataset if d["split"] == "train"], frases)
+                probs = probabilidades_tfidf([d for d in dataset if d["split"] == "train" and d["fuente"] == "sintetica"], frases)
             elif not (RAIZ / "models" / "guardrails" / nombre / "config.json").exists():
                 print(f"== {nombre}: se omite, no existe models/guardrails/{nombre}\n")
                 continue
@@ -133,10 +137,10 @@ def main():
                         for f, a, q in zip(frases, y3, p2) if int(a != 0) != q]
         resultados[nombre] = r
 
-    SALIDA.parent.mkdir(parents=True, exist_ok=True)
-    with open(SALIDA, "w", encoding="utf-8") as f:
-        json.dump({"split": args.split, "n": len(filas), "resultados": resultados}, f, indent=2, ensure_ascii=False)
-    print(f"Resultados guardados en {SALIDA.relative_to(RAIZ)}")
+    salida.parent.mkdir(parents=True, exist_ok=True)
+    with open(salida, "w", encoding="utf-8") as f:
+        json.dump({"split": args.split, "fuente": args.fuente, "n": len(filas), "resultados": resultados}, f, indent=2, ensure_ascii=False)
+    print(f"Resultados guardados en {salida.relative_to(RAIZ)}")
 
 
 if __name__ == "__main__":

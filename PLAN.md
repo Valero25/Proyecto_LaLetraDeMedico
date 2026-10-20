@@ -248,7 +248,15 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Si un caso tiene respuestas de varios profesores, `dataset.py` se queda con la del más grande (Qwen3.8-27B > gpt-oss-120b > Qwen2.5-14B > Qwen2.5-7B).
   - Probado en CPU con SmolLM2-135M y el motor transformers.
 - [x] **Verificaciones automáticas** (`training/generador/verificacion.py`): JSON válido, un examen por analito, menciona el valor, estado consistente, número de preguntas e índice INFLESZ (con un contador de sílabas en español). Sirven para filtrar el dataset y para evaluar.
-- [x] **Dataset SFT** (`training/generador/dataset.py` → `sft_train.jsonl` y `sft_val.jsonl`): entran solo las respuestas que pasan las verificaciones **y** cuyas oraciones aprueba el guardrail MrBERT-biomed de la Fase 3.
+- [x] **Dataset SFT** (`training/generador/dataset.py` → `sft_train.jsonl` y `sft_val.jsonl`): **555 ejemplos de train y 97 de validación**, de 810 respuestas.
+  - Por profesor, en train: Qwen2.5-14B 273, gpt-oss-120b 177, Qwen3.8-27B 105. Validación: Qwen3.8-27B 50, gpt-oss 47.
+  - Descartes: falta un examen (113; casi todos del 14B, que se salta exámenes o los renombra), estado inconsistente (35), preguntas o exámenes extra (9), JSON inválido (1).
+  - **Se armó sin el filtro del guardrail** (`--sin-guardrails`), porque el guardrail marca de más en texto real (ver el hallazgo abajo). Con el filtro quedaban solo 376 de train.
+- [x] **Hallazgo: el guardrail no generaliza a texto real.** Al pasar las 6.240 oraciones de los profesores por MrBERT-biomed, marcó 301 oraciones (en 194 respuestas), con probabilidades altas: 0,96 para "Las plaquetas son pequeñas células de la sangre que ayudan a formar coágulos".
+  - En una muestra de 30 revisada a mano, solo 5 o 6 eran riesgosas según nuestras definiciones: descartar con certeza ("tu tiroides está funcionando correctamente") o sugerir un tratamiento ("considerar suplementos"). La precisión en texto real ronda el **20 %**, frente a 0,997 en el test sintético.
+  - Causa probable: **cambio de distribución**. MrBERT aprendió con frases que un solo profesor escribió por encargo, una clase a la vez. Los generadores reales escriben muchas definiciones ("X es una hormona que..."), casi ausentes en el entrenamiento. Además está sobreconfiado (sección 7.1 de `fundamentos.md`), así que subir el umbral no lo corrige.
+  - Las oraciones marcadas quedaron en `data/generador/descartadas_guardrail.jsonl`.
+  - Siguiente paso: **guardrail v2**. Se etiquetan unas 300 oraciones reales (equipo o juez), se suman al entrenamiento, se reentrena y se mide la precisión en texto real.
 - [x] **Entrenamiento** (`training/generador/ajustar_qlora.py` + `qlora_colab.ipynb`):
   - Qwen2.5-3B-Instruct cuantizado a 4 bits (NF4), con LoRA r = 16 y α = 32 en las 7 capas lineales de atención y MLP. lr de 2e-4 con calentamiento y caída coseno, lote efectivo de 16, 2 épocas.
   - Los checkpoints van a Drive y el entrenamiento se reanuda si Colab se desconecta.

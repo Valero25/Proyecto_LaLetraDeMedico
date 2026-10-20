@@ -75,15 +75,18 @@ def main():
         planas = [o for fs in frases for o in fs]
         print(f"Revisando {len(planas)} oraciones con {CLASIFICADOR}...", flush=True)
         riesgo = iter(1 - p[0] for p in probabilidades_modelo(CLASIFICADOR, planas))
-        aprobadas = []
+        aprobadas, descartadas = [], []
         for r, fs in zip(limpias, frases):
-            marcadas = [o for o in fs if next(riesgo) >= UMBRAL_RIESGO]
+            marcadas = [(o, round(q, 3)) for o, q in ((o, next(riesgo)) for o in fs) if q >= UMBRAL_RIESGO]
             if marcadas:
                 motivos["frase riesgosa según el guardrail"] += 1
-                r["frases_marcadas"] = marcadas
+                descartadas.append({"id": r["id"], "profesor": r["profesor"], "frases_marcadas": marcadas})
             else:
                 aprobadas.append(r)
         limpias = aprobadas
+        # Para revisar si el guardrail marca de más en texto real (no sintético)
+        with open(SALIDA_DIR / "descartadas_guardrail.jsonl", "w", encoding="utf-8") as f:
+            f.writelines(json.dumps(d, ensure_ascii=False) + "\n" for d in descartadas)
 
     elegidas = {}
     for r in sorted(limpias, key=prioridad):

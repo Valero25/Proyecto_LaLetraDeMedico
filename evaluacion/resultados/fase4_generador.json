@@ -1,0 +1,22 @@
+{
+  "qwen2.5-3b-ajustado": {
+    "n": 150,
+    "json_valido": 0.9933333333333333,
+    "cobertura": 0.9933333333333333,
+    "menciona_valor": 0.7072147651006712,
+    "estado_consistente": 0.9941754554170662,
+    "inflesz": 63.59657095200286,
+    "palabras_por_respuesta": 198.13422818791946,
+    "segundos_por_caso": 13.874666666666666
+  },
+  "qwen2.5-3b-base": {
+    "n": 150,
+    "json_valido": 0.9733333333333334,
+    "cobertura": 0.6870079365079365,
+    "menciona_valor": 0.10290280495759947,
+    "estado_consistente": 0.6968118069145467,
+    "inflesz": 65.20436592695268,
+    "palabras_por_respuesta": 122.61643835616438,
+    "segundos_por_caso": 8.364
+  }
+}

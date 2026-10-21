@@ -182,11 +182,41 @@ $$\frac{\partial L}{\partial \theta} = \sum_i \frac{\partial L}{\partial \mathbf
 
 El resultado es el mismo gradiente que con el lote completo de 32, pero con la memoria de un lote de 8. Así ALIA y e5-small pudieron compararse con los mismos hiperparámetros.
 
-## 10. Aplicación prevista en la Fase 4 (QLoRA)
+## 10. Fine-tuning QLoRA del generador (Fase 4)
 
-El ajuste del generador seguirá el mismo esquema de pérdida, gradiente y retropropagación, con una restricción: no se actualizan los pesos $W$ del modelo base, que quedan congelados y cuantizados a 4 bits. Cada matriz ajustada se reemplaza por $W + BA$, donde $A$ y $B$ son matrices pequeñas (de rango bajo). La retropropagación atraviesa todo el modelo, pero solo $A$ y $B$ reciben la actualización del descenso del gradiente. La pérdida será la entropía cruzada sobre el siguiente token de las explicaciones de referencia: la misma función de la sección 7, aplicada a un vocabulario de más de cien mil clases (unos 152 mil tokens si el modelo base es Qwen2.5) en lugar de 3. Se calcula solo sobre los tokens de la respuesta, no sobre los del prompt, porque el modelo debe aprender a explicar, no a repetir los datos de entrada.
+El ajuste del generador sigue el mismo esquema de pérdida, gradiente y retropropagación, con una restricción: no se actualizan los pesos $W$ del modelo base, que quedan congelados y cuantizados a 4 bits. Cada matriz ajustada se reemplaza por $W + BA$, donde $A$ y $B$ son matrices pequeñas (de rango bajo). La retropropagación atraviesa todo el modelo, pero solo $A$ y $B$ reciben la actualización del descenso del gradiente. La pérdida será la entropía cruzada sobre el siguiente token de las explicaciones de referencia: la misma función de la sección 7, aplicada a un vocabulario de más de cien mil clases (unos 152 mil tokens si el modelo base es Qwen2.5) en lugar de 3. Se calcula solo sobre los tokens de la respuesta, no sobre los del prompt, porque el modelo debe aprender a explicar, no a repetir los datos de entrada.
 
 Por cada matriz ajustada de tamaño $d \times k$, LoRA de rango $r$ agrega $r(d + k)$ parámetros entrenables, en lugar de los $d \cdot k$ de la matriz completa. Con $d = k = 2.048$ y $r = 16$, son 65.536 parámetros frente a 4,2 millones, un 1,6 %. Como $B$ empieza en cero, $W + BA = W$ al inicio: el modelo parte exactamente del base. Por eso la tasa de aprendizaje típica de LoRA (2 × 10⁻⁴) puede ser unas 10 veces mayor que la del ajuste fino completo de la sección 8.
+
+### 10.1 Resultado medido
+
+**Conteo de parámetros** (Qwen2.5-3B-Instruct, 36 capas, LoRA con r = 16 en las 7 matrices lineales de cada capa):
+
+| Matriz | Tamaño d × k | Matrices | LoRA: r(d + k) × matrices | Matriz completa: d·k × matrices |
+|---|---|---|---|---|
+| q_proj, o_proj | 2.048 × 2.048 | 36 cada una | 2.359.296 cada una | 150.994.944 cada una |
+| k_proj, v_proj | 256 × 2.048 | 36 cada una | 1.327.104 cada una | 18.874.368 cada una |
+| gate_proj, up_proj | 11.008 × 2.048 | 36 cada una | 7.520.256 cada una | 811.597.824 cada una |
+| down_proj | 2.048 × 11.008 | 36 | 7.520.256 | 811.597.824 |
+| **Total** | | 252 | **29.933.568** | 2.774.532.096 |
+
+Se entrena cerca del **1 %** de los ~3.090 millones de parámetros del modelo, y el 1,1 % de los de sus capas lineales. Las `k_proj` y `v_proj` son más chicas (256 filas) porque Qwen2.5 comparte las claves y valores entre grupos de cabezas de atención. Un detalle de medición: el total que imprime PyTorch (1.729 millones) está subestimado, porque cada par de pesos de 4 bits se guarda empaquetado en un solo byte.
+
+**Curva de aprendizaje** (555 ejemplos, 2 épocas, lote efectivo de 16, 70 pasos):
+
+| Paso | Época | Pérdida en train | Pérdida en validación | Exactitud por token (val) |
+|---|---|---|---|---|
+| 5 | 0,14 | 0,793 | — | — |
+| 25 | 0,72 | 0,561 | 0,607 | 82,4 % |
+| 50 | 1,43 | 0,439 | 0,547 | 83,8 % |
+| 70 | 2,00 | 0,423 | 0,538 | 84,0 % |
+
+Hay tres contrastes con los modelos anteriores:
+- **No hay sobreajuste visible.** La pérdida de validación baja en cada evaluación, aunque cada vez menos (−0,060 y luego −0,009). La red propia de la sección 6, en cambio, llevaba la pérdida de train casi a cero mientras la validación oscilaba. Aquí el modelo solo puede mover el 1 % de sus parámetros, y eso actúa como una regularización por sí misma.
+- **El recorte del gradiente nunca actuó:** la norma se mantuvo entre 0,24 y 0,39. En MrBERT llegaba a 8,7 al inicio (sección 8), porque la cabeza nueva empezaba aleatoria. Con LoRA, $B = 0$ al inicio, así que el primer paso parte de la solución del modelo base y los gradientes son pequeños.
+- **La pérdida de un modelo de lenguaje no llega a cero:** 0,42 en train equivale a una probabilidad media de ~0,66 para el token correcto ($e^{-0{,}42}$). Hay muchas formas válidas de escribir la misma explicación, y la entropía cruzada mide el acierto palabra por palabra contra una sola de ellas. Por eso el modelo se evalúa con métricas de la tarea (cobertura, fidelidad, legibilidad), igual que los clasificadores se entrenan con entropía cruzada y se evalúan con F1 (sección 7).
+
+**Resultado en la tarea** (150 casos de test): la cobertura de exámenes pasa de 68,7 % a 99,3 %, el estado consistente de 69,7 % a 99,4 % y mencionar el valor del paciente de 10,3 % a 70,7 %. El detalle está en `PLAN.md`. Este último número muestra algo del aprendizaje supervisado: **el estudiante aprende la distribución de sus datos, defectos incluidos.** El profesor que aportó la mitad del train (Qwen2.5-14B) menciona el valor solo en el 41,5 % de sus respuestas, y el promedio ponderado de los tres profesores (~66 %) predice casi exactamente lo que logra el estudiante.
 
 ## Resumen
 
@@ -201,4 +231,5 @@ Por cada matriz ajustada de tamaño $d \times k$, LoRA de rango $r$ agrega $r(d 
 | Poder de representación y sobreajuste | Red propia frente a transformers | Pérdida en train 0,007 con F1 en validación ≈ 0,93 |
 | Función de pérdida (MSE, cero-uno, entropía cruzada, ponderada) | Entropía cruzada para entrenar, F1 para evaluar; experimento de pérdida ponderada frente a umbral | Ponderar no cambia nada con train separable; el umbral solo funciona en el modelo calibrado (TF-IDF: FN 8 → 2) |
 | Descenso del gradiente, tasa de aprendizaje y mínimos locales | AdamW con 2 × 10⁻³ desde cero y 2 a 3 × 10⁻⁵ en ajuste fino; 3 semillas | Recorte activo en los primeros ~130 de 228 pasos; F1 de 0,902 ± 0,009 entre semillas |
+| Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; validación siempre a la baja |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |

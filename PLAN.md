@@ -262,6 +262,30 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Los checkpoints van a Drive y el entrenamiento se reanuda si Colab se desconecta.
   - Probado en CPU con SmolLM2-135M: el conteo de LoRA cuadra con r(d + k), se guardan las curvas de pérdida y **la pérdida cubre solo la respuesta**. En el ejemplo verificado, 832 de 2.743 tokens llevan pérdida, y el primero es el `{"explicaciones"` del asistente.
 - [x] **Respuestas del test** (`training/generador/generar_respuestas.py`), del modelo base y del ajustado, con decodificación voraz. **Evaluación** (`evaluacion/evaluar_generador.py`). Los dos están probados de punta a punta en CPU.
+- [x] **Entrenamiento en Colab (T4), 2026-10-20:**
+  - 555 ejemplos × 2 épocas = 70 pasos, en 50 min. Entrenables: 29,9 M, cerca del 1 % del modelo (Qwen2.5-3B tiene ~3.090 M; el total de 1.729 M que imprime el script cuenta los pesos de 4 bits empaquetados).
+  - Pérdida en train de 0,79 a 0,42. En validación: 0,607 (paso 25), 0,547 (paso 50) y 0,538 (paso 70), siempre bajando. La exactitud por token en validación pasa de 82,4 % a 84,0 %.
+  - La norma del gradiente se mantuvo entre 0,24 y 0,39: el recorte a 1 nunca actuó.
+  - Primer intento fallido: los pesos en bfloat16 no los soporta la T4. Se corrigió con LoRA en float32 y el resto en float16.
+- [x] **Resultados en test (150 casos no vistos, sin guardrail por ahora):**
+
+| Métrica | Qwen2.5-3B base | **Qwen2.5-3B ajustado (QLoRA)** |
+|---|---|---|
+| JSON válido | 97,3 % | **99,3 %** |
+| Cobertura (un examen por analito, con su nombre) | 68,7 % | **99,3 %** |
+| Estado consistente (alto, bajo, normal) | 69,7 % | **99,4 %** |
+| Menciona el valor del paciente | 10,3 % | **70,7 %** |
+| Legibilidad INFLESZ (55-65 normal, 65-80 bastante fácil) | 65,2 | 63,6 |
+| Palabras por respuesta | 123 | 198 |
+| Segundos por caso en la T4 | 8 | 14 |
+
+  **Lectura:**
+  1. **El ajuste cumple su función.** El base omite o renombra exámenes en un tercio de los casos, y escribe el estado en mayúsculas o lo inventa ("muestran niveles NATURALES"). El ajustado cubre todos los exámenes, respeta el estado y casi siempre menciona el valor y el rango.
+  2. **El base diagnostica:** "Esto indica que tu glucosa está controlada y que **no tienes diabetes ni prediabetes**". El ajustado, en el mismo caso: "tu resultado es 5.4%, lo cual está dentro del rango normal (<5.7%)...".
+  3. **El estudiante hereda los hábitos de sus profesores.** "Menciona el valor" queda en 70,7 % porque el 49 % del train viene del Qwen2.5-14B, que solo lo hace en el 41,5 % de sus respuestas (gpt-oss: 99,4 %; Qwen3.8-27B: 75,1 %). El promedio ponderado por profesor da ~66 %, casi lo mismo que logra el estudiante. Para una v2: exigir "menciona el valor" en el filtro del dataset.
+  4. La legibilidad casi no cambia (65 frente a 64, en el límite entre "normal" y "bastante fácil"). Las respuestas son más largas porque explican más: qué mide el examen, el valor, el rango y las posibles causas.
+  5. **Calidad del contenido:** aparecen explicaciones poco precisas ("tu cuerpo necesita más energía de la que está proporcionando" para una glucosa alta). Las métricas automáticas no detectan esto; hace falta la rúbrica humana.
+- [ ] Guardrail sobre las salidas del test (falta RAM libre para correr MrBERT). Se interpretará con cuidado, por el hallazgo de que marca de más en texto real.
 - [ ] Generar las respuestas de Gemini sobre el mismo test, como referencia, solo para evaluar. Sus salidas no se usan para entrenar, porque sus términos lo prohíben.
 - [ ] El equipo revisa una muestra de unos 30 ejemplos del dataset SFT.
 - [ ] Evaluar en el test set tres variantes (base, fine-tuneado, Gemini):

@@ -7,7 +7,7 @@ Lee cada archivo de data/generador/salidas/*.jsonl y mide, con training/generado
 - Menciona el valor y estado consistente: fidelidad a los datos del examen.
 - INFLESZ: legibilidad en español (más alto = más fácil; 55-65 es "normal", 65-80 "bastante fácil").
 - Guardrails: % de oraciones y de respuestas con al menos una oración marcada como riesgosa por el
-  clasificador de la Fase 3 (MrBERT-biomed, P(riesgosa) >= 0,5).
+  clasificador de la Fase 3 (por defecto MrBERT-biomed v2, P(riesgosa) >= 0,5).
 
 Uso:
     python evaluacion/evaluar_generador.py [--sin-guardrails]
@@ -66,6 +66,8 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("--sin-guardrails", action="store_true")
+    parser.add_argument("--clasificador", default="mrbert-biomed-v2",
+                        help="Guardrail de la Fase 3 (v2: entrenado también con texto real)")
     args = parser.parse_args()
 
     with open(CASOS, encoding="utf-8") as f:
@@ -73,7 +75,7 @@ def main():
     clasificar = None
     if not args.sin_guardrails:
         from evaluar_guardrails import probabilidades_modelo
-        clasificar = lambda frases: [1 - p[0] for p in probabilidades_modelo("mrbert-biomed", frases)]  # noqa: E731
+        clasificar = lambda frases: [1 - p[0] for p in probabilidades_modelo(args.clasificador, frases)]  # noqa: E731
 
     resultados = {}
     for archivo in sorted(SALIDAS.glob("*.jsonl")):
@@ -95,7 +97,8 @@ def main():
 
     RESULTADOS.parent.mkdir(parents=True, exist_ok=True)
     with open(RESULTADOS, "w", encoding="utf-8") as f:
-        json.dump(resultados, f, indent=2, ensure_ascii=False)
+        json.dump({"clasificador": None if args.sin_guardrails else args.clasificador, "resultados": resultados},
+                  f, indent=2, ensure_ascii=False)
     print(f"\nResultados guardados en {RESULTADOS.relative_to(RAIZ)}")
 
 

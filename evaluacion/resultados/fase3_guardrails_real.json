@@ -1,0 +1,910 @@
+{
+  "split": "test",
+  "fuente": "real",
+  "n": 168,
+  "resultados": {
+    "palabras": {
+      "binaria": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "falsos_positivos": 1,
+        "falsos_negativos": 2
+      },
+      "errores": [
+        {
+          "frase": "Consulta a tu médico si tienes dudas al respecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que no hay daño o inflamación significativa en tu hígado.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Esto puede deberse a que tu tiroides no está produciendo suficiente T4.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        }
+      ]
+    },
+    "tfidf": {
+      "binaria": {
+        "precision": 0.037037037037037035,
+        "recall": 1.0,
+        "f1": 0.07142857142857142,
+        "falsos_positivos": 52,
+        "falsos_negativos": 0
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 1.0,
+          "recall": 0.6867469879518072,
+          "f1-score": 0.8142857142857143,
+          "support": 166.0
+        },
+        "diagnostica": {
+          "precision": 0.07407407407407407,
+          "recall": 1.0,
+          "f1-score": 0.13793103448275862,
+          "support": 2.0
+        },
+        "alarmista": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 0.0
+        },
+        "accuracy": 0.6904761904761905,
+        "macro avg": {
+          "precision": 0.35802469135802467,
+          "recall": 0.5622489959839357,
+          "f1-score": 0.31740558292282434,
+          "support": 168.0
+        },
+        "weighted avg": {
+          "precision": 0.9889770723104057,
+          "recall": 0.6904761904761905,
+          "f1-score": 0.8062338728594887,
+          "support": 168.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          114,
+          25,
+          27
+        ],
+        [
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.029850746268656716,
+          "recall": 1.0,
+          "f1": 0.057971014492753624,
+          "falsos_positivos": 65,
+          "falsos_negativos": 0
+        },
+        "0.3": {
+          "precision": 0.021505376344086023,
+          "recall": 1.0,
+          "f1": 0.042105263157894736,
+          "falsos_positivos": 91,
+          "falsos_negativos": 0
+        },
+        "0.1": {
+          "precision": 0.015873015873015872,
+          "recall": 1.0,
+          "f1": 0.03125,
+          "falsos_positivos": 124,
+          "falsos_negativos": 0
+        }
+      },
+      "errores": [
+        {
+          "frase": "Los neutrófilos son importantes porque ayudan a tu cuerpo a combatir las infecciones.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu hígado está un poco estresado o dañado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a una afección en el hígado o en los riñones, o a una deficiencia nutricional.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La fosfatasa alcalina es una enzima presente en hígado, vías biliares y huesos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta prueba es útil para detectar problemas en las vías biliares o en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una prueba que ayuda a evaluar la salud de tu hígado y puede indicar si tu hígado está dañado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que tu tiroides produce.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que no hay signos de obstrucción biliar o problemas óseos evidentes según esta prueba.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu hígado y tus riñones están funcionando bien y que estás bien nutrida.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede significar que tu tiroides está produciendo más tiroxina de lo normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que la tiroides produce y que es muy importante para muchas funciones de tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Puede deberse a que tu tiroides no está produciendo suficiente hormona tiroidea o que hay otro factor que está afectando su funcionamiento.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto significa que tu tiroides está produciendo la cantidad correcta de esta hormona.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta baja puede estar relacionada con la sudoración intensa que produce tu rutina de ejercicios frecuentes.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los linfocitos son glóbulos blancos que forman parte clave de tu sistema inmunológico.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu tiroides está produciendo una cantidad adecuada de hormona tiroidea para tus necesidades corporales.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a diversas razones, como una deficiencia de vitamina D o una condición llamada pseudohipoparatiroidismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona producida por tu glándula tiroides.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que ayuda a indicar si el hígado está funcionando correctamente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Puede deberse a obstrucción biliar, enfermedad hepática o trastornos óseos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La fosfatasa alcalina es una enzima presente en el hígado, las vías biliares y los huesos que acelera ciertas reacciones químicas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es la hormona activa que tu tiroides produce para regular tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu albúmina (ALB) está un poco baja.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT evalúa la función hepática y la posible obstrucción de las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que, según esta prueba, su hígado y vías biliares se están comportando bien en este aspecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que ayudan a combatir infecciones bacterianas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que ayuda a diagnosticar problemas hepáticos o de las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una de las principales hormonas que produce la tiroides y es vital para tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Sin embargo, la prueba por sí sola no diagnostica la causa específica del daño.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta prueba se usa para evaluar si tu hígado está dañado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona que ayuda a regular muchos procesos en tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre (T4) es una de las hormonas que produce tu tiroides y que es esencial para muchas funciones de tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "El AST es una enzima que se encuentra en varios órganos, incluyendo el hígado, y su nivel puede indicar cómo está funcionando estos órganos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu aspartato aminotransferasa (AST) está un poco elevada.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre (T4) es una de las hormonas que produce tu tiroides.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La fosfatasa alcalina es una enzima que se encuentra en varios órganos de tu cuerpo, incluyendo tu hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La albúmina es una proteína que tu cuerpo necesita para mantenerse saludable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu glándula tiroides está produciendo demasiada tiroxina.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede indicar que tu tiroides está produciendo más tiroxina de la normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu porcentaje de neutrófilos está un poco bajo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los linfocitos son glóbulos blancos que ayudan a tu cuerpo a defenderse de virus y otras amenazas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que se usa para detectar problemas en el hígado o en las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Puede deberse a una inflamación del hígado, hepatitis, daño muscular o uso de ciertos medicamentos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La gamma glutamil transferasa (GGT) es una enzima que ayuda a diagnosticar enfermedades del hígado o bloqueos en las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que se usa para detectar enfermedades del hígado o revisar si las vías biliares están bloqueadas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de potasio es bajo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los linfocitos son glóbulos blancos que ayudan a proteger al cuerpo contra virus y otras amenazas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que produce tu tiroides y que es muy importante para tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu hígado está produciendo esta proteína de manera adecuada.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede indicar que tu tiroides está produciendo más hormonas de las necesarias.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu tiroides está produciendo más hormonas de las necesarias.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto sugiere que tu sistema inmunológico está funcionando de manera equilibrada en este aspecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        }
+      ]
+    },
+    "mrbert-biomed": {
+      "binaria": {
+        "precision": 0.028169014084507043,
+        "recall": 1.0,
+        "f1": 0.0547945205479452,
+        "falsos_positivos": 69,
+        "falsos_negativos": 0
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 1.0,
+          "recall": 0.5843373493975904,
+          "f1-score": 0.7376425855513308,
+          "support": 166.0
+        },
+        "diagnostica": {
+          "precision": 0.029850746268656716,
+          "recall": 1.0,
+          "f1-score": 0.057971014492753624,
+          "support": 2.0
+        },
+        "alarmista": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 0.0
+        },
+        "accuracy": 0.5892857142857143,
+        "macro avg": {
+          "precision": 0.3432835820895523,
+          "recall": 0.5281124497991968,
+          "f1-score": 0.2652045333480281,
+          "support": 168.0
+        },
+        "weighted avg": {
+          "precision": 0.9884506041222458,
+          "recall": 0.5892857142857144,
+          "f1-score": 0.7295512573244429,
+          "support": 168.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          97,
+          65,
+          4
+        ],
+        [
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.025,
+          "recall": 1.0,
+          "f1": 0.04878048780487805,
+          "falsos_positivos": 78,
+          "falsos_negativos": 0
+        },
+        "0.3": {
+          "precision": 0.024096385542168676,
+          "recall": 1.0,
+          "f1": 0.047058823529411764,
+          "falsos_positivos": 81,
+          "falsos_negativos": 0
+        },
+        "0.1": {
+          "precision": 0.022222222222222223,
+          "recall": 1.0,
+          "f1": 0.043478260869565216,
+          "falsos_positivos": 88,
+          "falsos_negativos": 0
+        }
+      },
+      "errores": [
+        {
+          "frase": "Los neutrófilos son importantes porque ayudan a tu cuerpo a combatir las infecciones.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu hígado está un poco estresado o dañado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a una afección en el hígado o en los riñones, o a una deficiencia nutricional.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La fosfatasa alcalina es una enzima presente en hígado, vías biliares y huesos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta prueba es útil para detectar problemas en las vías biliares o en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que tu tiroides produce.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que no hay signos de obstrucción biliar o problemas óseos evidentes según esta prueba.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "En tu caso, los niveles de albúmina están un poco bajos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu hígado y tus riñones están funcionando bien y que estás bien nutrida.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Otras causas pueden ser enfermedades biliares o uso de fármacos inductores de enzimas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede indicar que la cantidad de tiroxina disponible para tu cuerpo está reducida.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede significar que tu tiroides está produciendo más tiroxina de lo normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a una mala nutrición o a problemas en el hígado o los riñones.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que la tiroides produce y que es muy importante para muchas funciones de tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto significa que tu tiroides está produciendo la cantidad correcta de esta hormona.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona producida por la tiroides que tiene un papel importante en el metabolismo de tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta baja puede estar relacionada con la sudoración intensa que produce tu rutina de ejercicios frecuentes.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu tiroides está produciendo una cantidad adecuada de hormona tiroidea para tus necesidades corporales.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a diversas razones, como una deficiencia de vitamina D o una condición llamada pseudohipoparatiroidismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu resultado de albúmina está un poco alto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que no hay problemas significativos con la función de tus huesos o tu hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona producida por tu glándula tiroides.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La albúmina es una proteína importante que tu cuerpo necesita para mantener la salud.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La Aspartato aminotransferasa (AST) se encuentra un poco alta.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Puede deberse a obstrucción biliar, enfermedad hepática o trastornos óseos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona producida por tu tiroides y es importante para muchas funciones del cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a diversas razones, como una inflamación del hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es la hormona activa que tu tiroides produce para regular tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu albúmina (ALB) está un poco baja.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT evalúa la función hepática y la posible obstrucción de las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que, según esta prueba, su hígado y vías biliares se están comportando bien en este aspecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los neutrófilos son glóbulos blancos que ayudan a combatir infecciones bacterianas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que ayuda a diagnosticar problemas hepáticos o de las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una de las principales hormonas que produce la tiroides y es vital para tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta prueba se usa para evaluar si tu hígado está dañado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona que ayuda a regular muchos procesos en tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto significa que tu cuerpo está produciendo la cantidad adecuada de estos glóbulos rojos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Un aumento puede estar relacionado con consumo de alcohol, uso de ciertos fármacos o enfermedades hepáticas como colestasis.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu aspartato aminotransferasa (AST) está un poco elevada.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona producida por la glándula tiroides y es importante para el metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta enzima ayuda a detectar problemas hepáticos y del tracto biliar; también se eleva con consumo de alcohol.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La fosfatasa alcalina es una enzima que ayuda en diversos procesos del cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona que tu tiroides produce y que ayuda en el metabolismo de tu cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre (T4) es una de las hormonas que produce tu tiroides.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta enzima se encuentra principalmente en el hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La albúmina es una proteína que tu cuerpo necesita para mantenerse saludable.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu glándula tiroides está produciendo demasiada tiroxina.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede indicar que tu tiroides está produciendo más tiroxina de la normal.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Este aumento puede deberse a consumo de alcohol, uso de ciertos medicamentos, enfermedades hepáticas o problemas en las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te sugiero hablar con tu médico para revisar la causa y si es necesario algún suplemento o cambio alimentario.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu porcentaje de neutrófilos está un poco bajo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una de las hormonas producidas por tu tiroides y es importante para muchas funciones del cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona que tu tiroides produce y que es crucial para muchas funciones del cuerpo, incluyendo el metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Te sugiero hablar con tu médico al respecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Los linfocitos son glóbulos blancos que ayudan a tu cuerpo a defenderse de virus y otras amenazas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de albúmina en la sangre es bajo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de potasio es un poco alto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Puede deberse a una inflamación del hígado, hepatitis, daño muscular o uso de ciertos medicamentos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La gamma glutamil transferasa (GGT) es una enzima que ayuda a diagnosticar enfermedades del hígado o bloqueos en las vías biliares.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La GGT es una enzima que se usa para detectar enfermedades del hígado o revisar si las vías biliares están bloqueadas.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta disminución puede deberse a factores relacionados con la producción de células o a su descomposición más rápida.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina es una hormona producida por tu tiroides que ayuda en muchas funciones del cuerpo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Tu nivel de potasio es bajo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "La tiroxina libre es una hormona que produce tu tiroides y que es muy importante para tu metabolismo.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto indica que tu hígado está produciendo esta proteína de manera adecuada.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede indicar que tu tiroides está produciendo más hormonas de las necesarias.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu tiroides está produciendo más hormonas de las necesarias.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta prueba ayuda a identificar si hay algún problema con tu hígado.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto sugiere que tu sistema inmunológico está funcionando de manera equilibrada en este aspecto.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        }
+      ]
+    },
+    "mrbert-biomed-v2": {
+      "binaria": {
+        "precision": 0.25,
+        "recall": 0.5,
+        "f1": 0.3333333333333333,
+        "falsos_positivos": 3,
+        "falsos_negativos": 1
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9939024390243902,
+          "recall": 0.9819277108433735,
+          "f1-score": 0.9878787878787879,
+          "support": 166.0
+        },
+        "diagnostica": {
+          "precision": 0.25,
+          "recall": 0.5,
+          "f1-score": 0.3333333333333333,
+          "support": 2.0
+        },
+        "alarmista": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 0.0
+        },
+        "accuracy": 0.9761904761904762,
+        "macro avg": {
+          "precision": 0.4146341463414634,
+          "recall": 0.4939759036144578,
+          "f1-score": 0.4404040404040404,
+          "support": 168.0
+        },
+        "weighted avg": {
+          "precision": 0.9850464576074333,
+          "recall": 0.9761904761904762,
+          "f1-score": 0.9800865800865801,
+          "support": 168.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          163,
+          3,
+          0
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.25,
+          "recall": 0.5,
+          "f1": 0.3333333333333333,
+          "falsos_positivos": 3,
+          "falsos_negativos": 1
+        },
+        "0.3": {
+          "precision": 0.25,
+          "recall": 0.5,
+          "f1": 0.3333333333333333,
+          "falsos_positivos": 3,
+          "falsos_negativos": 1
+        },
+        "0.1": {
+          "precision": 0.125,
+          "recall": 0.5,
+          "f1": 0.2,
+          "falsos_positivos": 7,
+          "falsos_negativos": 1
+        }
+      },
+      "errores": [
+        {
+          "frase": "Esto indica que no hay signos de obstrucción biliar o problemas óseos evidentes según esta prueba.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "En tu caso, los niveles de albúmina están un poco bajos.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esta baja puede estar relacionada con la sudoración intensa que produce tu rutina de ejercicios frecuentes.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Esto puede deberse a que tu tiroides no está produciendo suficiente T4.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        }
+      ]
+    }
+  }
+}

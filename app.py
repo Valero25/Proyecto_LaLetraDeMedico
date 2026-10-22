@@ -1,12 +1,43 @@
+import os
 import streamlit as st
 import time
 from backend import LetraDeMedicoBackend
+import modelos_propios
 
 # Configuración de la página
 st.set_page_config(page_title="LetraDeMédico", page_icon="🩺", layout="wide")
 
-# Inicializar el backend
-backend = LetraDeMedicoBackend()
+MOTORES = {
+    "propio": "Modelos propios (entrenados por el equipo)",
+    "gemini": "Gemini (sistema original)",
+}
+
+
+@st.cache_resource(show_spinner=False)
+def obtener_backend(modo):
+    """Un backend por modo; en modo propio carga los tres modelos una sola vez."""
+    backend = LetraDeMedicoBackend(modo=modo)
+    if modo == "propio":
+        for nombre in ("rag", "guardrail", "generador"):
+            backend.modelo_propio(nombre)
+    return backend
+
+
+# --- SELECTOR DE MOTOR ---
+faltan = modelos_propios.faltantes()
+opciones = [m for m in MOTORES if m != "propio" or not faltan]
+modo_inicial = os.environ.get("MODO", "propio")
+with st.sidebar:
+    st.header("Motor de IA")
+    modo = st.radio("Elige quién explica tus resultados", opciones, format_func=MOTORES.get,
+                    index=opciones.index(modo_inicial) if modo_inicial in opciones else 0)
+    if faltan:
+        st.warning("Modelos propios no disponibles. Faltan: " + ", ".join(faltan) + ". Ver PLAN.md, Fase 5.")
+    st.caption("En ambos modos, la lectura del documento (OCR) la hace Gemini. El modo propio usa el RAG, "
+               "el generador y el guardrail entrenados en las Fases 2 a 4.")
+
+with st.spinner("Cargando los modelos propios (solo la primera vez)..." if modo == "propio" else "Preparando..."):
+    backend = obtener_backend(modo)
 
 # --- DATOS DEL MODO DEMOSTRACIÓN ---
 DEMO_ANALITOS = [
@@ -100,6 +131,8 @@ if not st.session_state.analisis_completado:
                         st.session_state.datos_extraidos = resultado["datos_extraidos"]
                         st.session_state.analisis_final = resultado["analisis_final"]
                         st.session_state.tipo_examen = resultado.get("tipo_examen", "Examen Médico")
+                        st.session_state.modo_usado = resultado.get("modo", modo)
+                        st.session_state.pasajes_rag = resultado.get("pasajes_rag")
                         st.session_state.es_demo = False
                         st.session_state.analisis_completado = True
                         st.rerun()
@@ -116,17 +149,29 @@ if not st.session_state.analisis_completado:
         else:
             st.warning("Por favor, sube un archivo primero.")
 
-    # Modo demostración: carga un análisis de ejemplo sin llamar a la IA
-    if st.button("Ver análisis de ejemplo (demo, sin IA)", use_container_width=True):
+    # Modo demostración: un examen de ejemplo, sin subir archivo ni usar el OCR de Gemini.
+    # Con los modelos propios, el ejemplo pasa de verdad por el RAG, el generador y el guardrail.
+    etiqueta_demo = ("Ver análisis de ejemplo con los modelos propios" if modo == "propio"
+                     else "Ver análisis de ejemplo (demo, sin IA)")
+    if st.button(etiqueta_demo, use_container_width=True):
         datos_demo = [dict(d) for d in DEMO_ANALITOS]
-        for d in datos_demo:
-            d["estado"] = backend.evaluar_estado_analito(d["valor"], d["rango_referencia"])
-        st.session_state.datos_extraidos = datos_demo
-        st.session_state.analisis_final = backend.step_4_validation({
-            "explicaciones": [dict(e) for e in DEMO_EXPLICACIONES],
-            "preguntas_sugeridas": list(DEMO_PREGUNTAS),
-        })
+        if modo == "propio":
+            with st.spinner("Los modelos propios están explicando el ejemplo (puede tardar alrededor de un minuto en CPU)..."):
+                resultado = backend.analizar_entidades(datos_demo, "Hemograma y Perfil Lipídico", contexto_paciente)
+            st.session_state.datos_extraidos = resultado["datos_extraidos"]
+            st.session_state.analisis_final = resultado["analisis_final"]
+            st.session_state.pasajes_rag = resultado["pasajes_rag"]
+        else:
+            for d in datos_demo:
+                d["estado"] = backend.evaluar_estado_analito(d["valor"], d["rango_referencia"])
+            st.session_state.datos_extraidos = datos_demo
+            st.session_state.analisis_final = backend.step_4_validation({
+                "explicaciones": [dict(e) for e in DEMO_EXPLICACIONES],
+                "preguntas_sugeridas": list(DEMO_PREGUNTAS),
+            })
+            st.session_state.pasajes_rag = None
         st.session_state.tipo_examen = "Hemograma y Perfil Lipídico"
+        st.session_state.modo_usado = modo
         st.session_state.es_demo = True
         st.session_state.analisis_completado = True
         st.rerun()
@@ -135,6 +180,7 @@ if not st.session_state.analisis_completado:
 else:
     if st.session_state.get("es_demo"):
         st.caption("Modo demostración: datos de ejemplo, no provienen de un examen real.")
+    st.caption(f"Explicado por: {MOTORES.get(st.session_state.get('modo_usado', modo), '')}")
 
     col_izq, col_der = st.columns([1.2, 1])
     
@@ -168,6 +214,17 @@ else:
                 <p>{exp['explicacion']}</p>
             </div>
             """, unsafe_allow_html=True)
+            # Guardrail propio: muestra exactamente qué oraciones revisar con el médico
+            for oracion in exp.get("oraciones_marcadas", []):
+                st.warning(f"Oración marcada por el guardrail (puede sonar a diagnóstico): «{oracion}»")
+
+        pasajes = st.session_state.get("pasajes_rag")
+        if pasajes:
+            with st.expander("Fuentes consultadas (MedlinePlus)"):
+                for p in pasajes:
+                    fuente = p.get("fuente") or ""
+                    enlace = f" — [{fuente}]({fuente})" if str(fuente).startswith("http") else ""
+                    st.markdown(f"- **{p['examen']}**: {p['titulo']}{enlace}")
             
     with col_der:
         st.subheader("Preguntas para tu médico")

@@ -15,15 +15,45 @@ load_dotenv()
 if "GEMINI_API_KEY" not in os.environ:
     print("Advertencia: No se encontró GEMINI_API_KEY en las variables de entorno.")
 
+MODOS = ("gemini", "propio")
+NOTA_GUARDRAIL = " (Nota del sistema: Este texto fue marcado preventivamente. Recuerda que solo un médico puede diagnosticar)."
+
+
 class LetraDeMedicoBackend:
-    def __init__(self, model_name=None):
+    def __init__(self, model_name=None, modo=None, modelos=None):
+        """
+        modo "gemini": el sistema original (RAG por subcadena, Gemini redacta, filtro de palabras).
+        modo "propio": los modelos entrenados por el equipo (ver modelos_propios.py). La lectura del
+        documento (OCR + NER) sigue siendo de Gemini en ambos modos.
+        `modelos` permite inyectar {"rag", "generador", "guardrail"} ya cargados (la app los cachea; los tests usan dobles).
+        """
+        self.modo = modo or os.environ.get("MODO", "gemini")
+        if self.modo not in MODOS:
+            raise ValueError(f"MODO debe ser uno de {MODOS}, no {self.modo!r}")
+        self._modelos = dict(modelos or {})
+        self._client = None
         # Usamos un modelo potente para el razonamiento médico y la extracción.
         # Se puede cambiar con la variable GEMINI_MODEL en .env (cada modelo tiene su propia cuota).
-        self.client = genai.Client()
         self.model_name = model_name or os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
         # Modelo de respaldo cuando el principal está saturado o sin cuota diaria.
         # Debe ser un modelo con cuota propia (gemini-3.5-flash comparte la de gemini-3.6-flash).
         self.fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash")
+
+    @property
+    def client(self):
+        # Se crea al primer uso: el modo demo y los tests no necesitan la API de Gemini
+        if self._client is None:
+            self._client = genai.Client()
+        return self._client
+
+    def modelo_propio(self, nombre):
+        """Carga (una vez) el modelo propio pedido: "rag", "generador" o "guardrail"."""
+        if nombre not in self._modelos:
+            import modelos_propios
+            clase = {"rag": modelos_propios.RecuperadorRAG, "generador": modelos_propios.GeneradorPropio,
+                     "guardrail": modelos_propios.Guardrail}[nombre]
+            self._modelos[nombre] = clase()
+        return self._modelos[nombre]
 
     def _generar(self, contents, intentos=3):
         """
@@ -115,14 +145,16 @@ class LetraDeMedicoBackend:
                 return "NORMAL"
                 
             cualitativos_sanos = ["negativo", "no reactivo", "ausente", "no se observan", "normal"]
-            cualitativos_enfermos = ["positivo", "reactivo", "presente", "anormal"]
-            
+            cualitativos_enfermos = ["positivo", "reactivo", "presente", "anormal", "traza"]
+
             # Si el paciente tiene negativo y lo normal era negativo
             if any(p in val_lower for p in cualitativos_sanos) and any(p in ref_lower for p in cualitativos_sanos):
                 return "NORMAL"
-            
-            # Si el paciente tiene positivo pero lo normal era negativo
-            if any(p in val_lower for p in cualitativos_enfermos) and any(p in ref_lower for p in cualitativos_sanos):
+
+            # Si el paciente tiene positivo pero lo normal era negativo.
+            # Las cruces ("1+", "++") también indican presencia en orina.
+            en_cruces = re.fullmatch(r'\d\s*\+|\++', val_lower) is not None
+            if (en_cruces or any(p in val_lower for p in cualitativos_enfermos)) and any(p in ref_lower for p in cualitativos_sanos):
                 return "ANORMAL"
 
             # Extraer el valor numérico del paciente
@@ -131,8 +163,14 @@ class LetraDeMedicoBackend:
                 return "DESCONOCIDO"
             valor = float(valor_match.group())
 
+            # Formatos en palabras que usan muchos laboratorios: "7 a 56", "Hasta 200", "Menor de 5.7", "Mayor de 50"
+            rango_str = str(rango_str).lower().replace(',', '.')
+            rango_str = re.sub(r'(\d)\s+a\s+(\d)', r'\1-\2', rango_str)
+            rango_str = re.sub(r'\bhasta\b', '<=', rango_str)
+            rango_str = re.sub(r'\bmenor\s+(de|que)\b', '<', rango_str)
+            rango_str = re.sub(r'\bmayor\s+(de|que)\b', '>', rango_str)
             # Limpiar el string del rango numérico
-            rango_str = str(rango_str).replace(' ', '').replace(',', '.')
+            rango_str = rango_str.replace(' ', '')
             # Muchos laboratorios escriben el rango con raya (–, —) o signo menos (−) en vez de guion
             rango_str = re.sub(r'[–—−‐‑‒]', '-', rango_str)
             
@@ -145,18 +183,18 @@ class LetraDeMedicoBackend:
                 if valor > max_val: return "ALTO"
                 return "NORMAL"
                 
-            # Caso 2: Menor que ej. "<200" o "<=200"
-            menor_match = re.search(r'<[=]?([\d\.]+)', rango_str)
+            # Caso 2: Menor que ej. "<200"; con "<=200" o "Hasta 200", el 200 todavía es normal
+            menor_match = re.search(r'<(=?)([\d\.]+)', rango_str)
             if menor_match:
-                max_val = float(menor_match.group(1))
-                if valor >= max_val: return "ALTO"
+                max_val = float(menor_match.group(2))
+                if valor > max_val or (valor == max_val and not menor_match.group(1)): return "ALTO"
                 return "NORMAL"
-                
-            # Caso 3: Mayor que ej. ">40" o ">=40"
-            mayor_match = re.search(r'>[=]?([\d\.]+)', rango_str)
+
+            # Caso 3: Mayor que ej. ">40"; con ">=40", el 40 todavía es normal
+            mayor_match = re.search(r'>(=?)([\d\.]+)', rango_str)
             if mayor_match:
-                min_val = float(mayor_match.group(1))
-                if valor <= min_val: return "BAJO"
+                min_val = float(mayor_match.group(2))
+                if valor < min_val or (valor == min_val and not mayor_match.group(1)): return "BAJO"
                 return "NORMAL"
                 
             return "DESCONOCIDO"
@@ -164,12 +202,15 @@ class LetraDeMedicoBackend:
             print(f"Error evaluando rango matemáticamente: {e}")
             return "DESCONOCIDO"
 
-    def recuperar_conocimiento_rag(self, entidades):
+    def recuperar_conocimiento_rag(self, entidades, tipo_examen="Examen de Laboratorio"):
         """
         Paso 2.8: Recuperación RAG.
         Busca información médica curada para los analitos, especialmente los que están fuera de rango.
+        En modo propio usa el recuperador ajustado de la Fase 2 sobre MedlinePlus (lista de pasajes).
         """
         print("--- Ejecutando Recuperación RAG ---")
+        if self.modo == "propio":
+            return self.modelo_propio("rag").recuperar(entidades, tipo_examen)
         pasajes_recuperados = {}
         kb_path = os.path.join(os.path.dirname(__file__), "mock_medical_kb.json")
         
@@ -196,7 +237,12 @@ class LetraDeMedicoBackend:
         en lenguaje claro y las preguntas para el médico.
         """
         print("--- Ejecutando LLM Generativo (Traducción a lenguaje claro) ---")
-        
+        if self.modo == "propio":
+            # El mismo formato con que se entrenó el generador (training/generador/prompt.py)
+            caso = {"tipo_de_examen": tipo_examen, "paciente": {}, "contexto_paciente": patient_context,
+                    "analitos": entidades}
+            return self.modelo_propio("generador").generar(caso, pasajes_rag or [])
+
         # Convertimos las entidades a un string legible para el prompt
         datos_laboratorio = json.dumps(entidades, indent=2, ensure_ascii=False)
         pasajes_str = json.dumps(pasajes_rag or {}, indent=2, ensure_ascii=False)
@@ -257,13 +303,20 @@ class LetraDeMedicoBackend:
         print("--- Ejecutando Capa de Validación y Guardrails ---")
         
         disclaimer = "⚠️ IMPORTANTE: Esta información es generada por IA para propósitos informativos y NO constituye un diagnóstico médico. Consulta siempre a tu médico."
-        
-        for exp in resultado_final.get("explicaciones", []):
-            texto = exp.get("explicacion", "")
-            # Filtro básico de palabras que suenan a diagnóstico
-            palabras_riesgo = ["diagnóstico", "tienes", "padeces", "sufres de"]
-            if any(palabra in texto.lower() for palabra in palabras_riesgo):
-                exp["explicacion"] = texto + " (Nota del sistema: Este texto fue marcado preventivamente. Recuerda que solo un médico puede diagnosticar)."
+
+        if self.modo == "propio":
+            # Clasificador MrBERT-biomed v2 (Fase 3): marca oraciones diagnósticas o alarmistas
+            self.modelo_propio("guardrail").revisar(resultado_final)
+            for exp in resultado_final.get("explicaciones", []):
+                if exp.get("oraciones_marcadas"):
+                    exp["explicacion"] = exp.get("explicacion", "") + NOTA_GUARDRAIL
+        else:
+            for exp in resultado_final.get("explicaciones", []):
+                texto = exp.get("explicacion", "")
+                # Filtro básico de palabras que suenan a diagnóstico
+                palabras_riesgo = ["diagnóstico", "tienes", "padeces", "sufres de"]
+                if any(palabra in texto.lower() for palabra in palabras_riesgo):
+                    exp["explicacion"] = texto + NOTA_GUARDRAIL
                 
         # Asegurarnos de que el JSON siempre devuelva un campo de disclaimer
         resultado_final["disclaimer"] = disclaimer
@@ -280,27 +333,28 @@ class LetraDeMedicoBackend:
             
         tipo_examen = resultado_multimodal.get("tipo_de_examen", "Examen Médico")
         entidades = resultado_multimodal.get("analitos", [])
-            
+        return self.analizar_entidades(entidades, tipo_examen, patient_context)
+
+    def analizar_entidades(self, entidades, tipo_examen, patient_context=""):
+        """Reglas -> RAG -> LLM Generativo -> Guardrails, a partir de los analitos ya extraídos."""
         # FASE 1: Evaluar los estados de forma determinista por reglas
         for entidad in entidades:
-            estado_calculado = self.evaluar_estado_analito(
-                entidad.get("valor", ""), 
-                entidad.get("rango_referencia", "")
-            )
-            entidad["estado"] = estado_calculado
-            
+            entidad["estado"] = self.evaluar_estado_analito(entidad.get("valor", ""), entidad.get("rango_referencia", ""))
+
         # FASE 3: Recuperación RAG
-        pasajes_rag = self.recuperar_conocimiento_rag(entidades)
-            
+        pasajes_rag = self.recuperar_conocimiento_rag(entidades, tipo_examen)
+
         resultado = self.step_3_generative_llm(entidades, patient_context, pasajes_rag, tipo_examen)
-        
+
         # FASE 2: Capa de Validación y Guardrails
         resultado = self.step_4_validation(resultado)
-        
+
         return {
             "datos_extraidos": entidades, # Devolvemos solo la lista para no romper el frontend
             "analisis_final": resultado,
-            "tipo_examen": tipo_examen
+            "tipo_examen": tipo_examen,
+            "modo": self.modo,
+            "pasajes_rag": pasajes_rag if self.modo == "propio" else None,
         }
 
 

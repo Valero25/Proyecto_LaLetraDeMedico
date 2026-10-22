@@ -118,11 +118,11 @@ def main():
             # Bajar el umbral sobre P(riesgosa) cambia la decisión sin reentrenar (ver sección 7 de fundamentos.md)
             riesgo = [1 - p[0] for p in probs]
             r = {"binaria": metricas_binarias(y2, p2),
-                 "tres_clases": classification_report(y3, p3, target_names=CLASES, output_dict=True, zero_division=0),
+                 "tres_clases": classification_report(y3, p3, labels=list(range(len(CLASES))), target_names=CLASES, output_dict=True, zero_division=0),
                  "matriz_confusion": confusion_matrix(y3, p3, labels=range(len(CLASES))).tolist(),
                  "umbrales": {str(u): metricas_binarias(y2, [int(q >= u) for q in riesgo]) for u in args.umbrales}}
             print(f"== {nombre}: 3 clases (filas = real, columnas = predicho)")
-            print(classification_report(y3, p3, target_names=CLASES, digits=3, zero_division=0))
+            print(classification_report(y3, p3, labels=list(range(len(CLASES))), target_names=CLASES, digits=3, zero_division=0))
             print(f"{'':>14}" + "".join(f"{c:>14}" for c in CLASES))
             for c, fila in zip(CLASES, r["matriz_confusion"]):
                 print(f"{c:>14}" + "".join(f"{v:>14}" for v in fila))

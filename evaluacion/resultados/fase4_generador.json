@@ -1,22 +1,61 @@
 {
-  "qwen2.5-3b-ajustado": {
-    "n": 150,
-    "json_valido": 0.9933333333333333,
-    "cobertura": 0.9933333333333333,
-    "menciona_valor": 0.7072147651006712,
-    "estado_consistente": 0.9941754554170662,
-    "inflesz": 63.59657095200286,
-    "palabras_por_respuesta": 198.13422818791946,
-    "segundos_por_caso": 13.874666666666666
-  },
-  "qwen2.5-3b-base": {
-    "n": 150,
-    "json_valido": 0.9733333333333334,
-    "cobertura": 0.6870079365079365,
-    "menciona_valor": 0.10290280495759947,
-    "estado_consistente": 0.6968118069145467,
-    "inflesz": 65.20436592695268,
-    "palabras_por_respuesta": 122.61643835616438,
-    "segundos_por_caso": 8.364
+  "clasificador": "mrbert-biomed-v2",
+  "resultados": {
+    "qwen2.5-3b-ajustado": {
+      "n": 150,
+      "json_valido": 0.9933333333333333,
+      "cobertura": 0.9933333333333333,
+      "menciona_valor": 0.7072147651006712,
+      "estado_consistente": 0.9941754554170662,
+      "inflesz": 63.59657095200286,
+      "palabras_por_respuesta": 198.13422818791946,
+      "segundos_por_caso": 13.874666666666666,
+      "oraciones_marcadas": 0.005249343832020997,
+      "respuestas_con_marca": 0.053691275167785234,
+      "ejemplos_marcados": [
+        "Este resultado indica que no hay evidencia de daño hepático en esta prueba.",
+        "Dado que tienes diabetes tipo 2 y estás tomando metformina, conviene comentarlo con tu médico para evaluar si esta situación está relacionada con tu perfil hepático.",
+        "Tu resultado es alto, lo que puede indicar inflamación o una infección en las vías urinarias o en los riñones.",
+        "Como tienes diabetes tipo 2, estás tomando metformina, una medicación que ayuda a controlar la glucosa en sangre.",
+        "Este resultado sugiere que puede haber una lesión hepática o un problema en el hígado que esté elevando la producción de esta enzima.",
+        "Tu resultado es alto, lo que indica que tus riñones no están eliminando este desecho de manera adecuada.",
+        "Este resultado puede indicar una anemia microcítica, lo que significa que los glóbulos rojos son pequeños debido a una menor producción de hemoglobina.",
+        "Tu resultado es alto, lo que puede indicar prediabetes o diabetes."
+      ]
+    },
+    "qwen2.5-3b-base": {
+      "n": 150,
+      "json_valido": 0.9733333333333334,
+      "cobertura": 0.6870079365079365,
+      "menciona_valor": 0.10290280495759947,
+      "estado_consistente": 0.6968118069145467,
+      "inflesz": 65.20436592695268,
+      "palabras_por_respuesta": 122.61643835616438,
+      "segundos_por_caso": 8.364,
+      "oraciones_marcadas": 0.06401137980085349,
+      "respuestas_con_marca": 0.4178082191780822,
+      "ejemplos_marcados": [
+        "Esto indica que tu glucosa está controlada y que no tienes diabetes ni prediabetes.",
+        "Tu nivel es bajo, lo que podría indicar una anemia.",
+        "Esto significa que tu tiroides no está produciendo suficiente hormona tiroidea.",
+        "Esto sugiere que tu hígado probablemente no está dañado.",
+        "Esto indica que tu tiroides está funcionando correctamente y no hay evidencia de hipotiroidismo.",
+        "Esto puede indicar que tu riñón está perdiendo demasiada proteína emulsionada.",
+        "Este resultado sugiere que podría haber algún problema con tu hígado o huesos.",
+        "Nivel bajo.",
+        "Nivel bajo.",
+        "No sugieren necesariamente un problema hepático.",
+        "No hay evidencia de prediabetes o diabetes.",
+        "Esto indica que su función hepática y renal está funcionando correctamente.",
+        "Esto puede indicar una posible enfermedad hepática o renal.",
+        "No hay signos de hiperglucemia (glucemia alta).",
+        "Su glicemia basal está en el rango ALTO, lo que sugiere que podría tener diabetes o estar en una fase pre-diabética.",
+        "Esto puede indicar que su tiroides está funcionando demasiado rápido, lo que se llama hipertiroidismo.",
+        "Esto puede confirmar que tiene hipertiroidismo.",
+        "No hay señales de infección o reacción inflamatoria.",
+        "No hay necesidad de intervención médica adicional.",
+        "Esto puede indicar deshidratación, diabéticos mal controlados o problemas con el sistema renal."
+      ]
+    }
   }
 }

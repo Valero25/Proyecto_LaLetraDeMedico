@@ -31,11 +31,13 @@ def formatear_resultado(a):
 
 def construir_usuario(caso, pasajes):
     """`pasajes` es una lista de {"examen", "titulo", "texto"}, uno por examen."""
-    paciente = caso["paciente"]
-    sexo = {"M": "hombre", "F": "mujer"}.get(paciente.get("sexo"), "no indicado")
+    paciente = caso.get("paciente") or {}
+    sexo = {"M": "hombre", "F": "mujer"}.get(paciente.get("sexo"), "sexo no indicado")
+    # En la app la edad y el sexo pueden faltar: el documento no siempre los trae
+    edad = f"{paciente['edad']} años" if paciente.get("edad") else "edad no indicada"
     lineas = [
         f"Tipo de examen: {caso['tipo_de_examen']}",
-        f"Paciente: {sexo}, {paciente.get('edad', 'edad no indicada')} años.",
+        f"Paciente: {sexo}, {edad}.",
         f"Contexto que escribió el paciente: {caso.get('contexto_paciente') or 'No proporcionado.'}",
         "",
         "Resultados:",

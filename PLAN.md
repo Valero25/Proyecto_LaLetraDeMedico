@@ -23,7 +23,7 @@
 | 2. RAG con embeddings | ✅ Terminada |
 | 3. Clasificador de guardrails | ✅ Terminada (falta la revisión del equipo) |
 | 4. Fine-tuning QLoRA del generador | 🟡 En curso |
-| 5. Integración en la app | ⬜ Pendiente |
+| 5. Integración en la app | 🟡 En curso |
 | 6. Informe | ⬜ Pendiente |
 
 Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
@@ -257,6 +257,25 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Causa probable: **cambio de distribución**. MrBERT aprendió con frases que un solo profesor escribió por encargo, una clase a la vez. Los generadores reales escriben muchas definiciones ("X es una hormona que..."), casi ausentes en el entrenamiento. Además está sobreconfiado (sección 7.1 de `fundamentos.md`), así que subir el umbral no lo corrige.
   - Las oraciones marcadas quedaron en `data/generador/descartadas_guardrail.jsonl`.
   - Siguiente paso: **guardrail v2**. Se etiquetan unas 300 oraciones reales (equipo o juez), se suman al entrenamiento, se reentrena y se mide la precisión en texto real.
+- [x] **Guardrail v2** (`training/guardrails/muestra_reales.py` y `ajustar_clasificador.py --con-reales` → `models/guardrails/mrbert-biomed-v2`):
+  - Muestra de **574 oraciones reales**, sin repetidas: las 287 que el v1 marcó y 287 que no marcó. El juez gpt-oss-120b las etiquetó sin ver la predicción del v1 (`data/guardrails/reales.csv`, con la columna `clase_equipo` para que el equipo corrija).
+  - Según el juez, de las 287 marcadas por el v1 solo **9 (3 %) son riesgosas**. De las no marcadas, 2 (1 %).
+  - El v2 se entrenó con 899 frases sintéticas y 345 reales del split de train (mismos hiperparámetros, 50 min en CPU). Las reales de los 12 analitos de test (168) quedan como **test real**.
+
+| Test | Métrica | v1 (solo sintético) | **v2 (sintético + real)** |
+|---|---|---|---|
+| Sintético (506) | F1 binaria | 0,991 | 0,989 |
+| | F1 macro (3 clases) | 0,973 | 0,967 |
+| | F1 diagnóstica | 0,961 | 0,950 |
+| | FN / FP | 5 / 1 | 6 / 1 |
+| **Real (168: 166 informativas, 2 diagnósticas)** | **Falsos positivos** | **69 (42 % de las informativas)** | **3 (1,8 %)** |
+| | Riesgosas detectadas | 2 de 2 | 1 de 2 |
+
+  **Lectura:**
+  1. **El v2 corrige casi por completo el cambio de distribución.** Los falsos positivos en texto real bajan de 69 a 3, y en el test sintético pierde muy poco (F1 binaria de 0,991 a 0,989). TF-IDF tampoco sirve en texto real: 52 falsos positivos.
+  2. La pequeña caída en la clase diagnóstica sintética (0,961 → 0,950) es coherente con el **sesgo del juez**: gpt-oss tiende a ver como informativas las frases que descartan algo con certeza, que nuestra definición considera diagnósticas, y el v2 aprendió un poco de esa tendencia.
+  3. **Limitación:** el test real tiene solo 2 frases riesgosas, así que el recall en texto real no se puede medir con confianza. La riesgosa que el v2 deja pasar es dudosa: "Esto puede deberse a que tu tiroides no está produciendo suficiente T4" está en condicional. Las etiquetas reales vienen del juez y no de humanos; la revisión del equipo de `reales.csv` daría la cifra definitiva.
+  4. **Decisión:** la app usará **MrBERT-biomed v2**. La evaluación del generador también se rehízo con el v2.
 - [x] **Entrenamiento** (`training/generador/ajustar_qlora.py` + `qlora_colab.ipynb`):
   - Qwen2.5-3B-Instruct cuantizado a 4 bits (NF4), con LoRA r = 16 y α = 32 en las 7 capas lineales de atención y MLP. lr de 2e-4 con calentamiento y caída coseno, lote efectivo de 16, 2 épocas.
   - Los checkpoints van a Drive y el entrenamiento se reanuda si Colab se desconecta.
@@ -285,7 +304,16 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   3. **El estudiante hereda los hábitos de sus profesores.** "Menciona el valor" queda en 70,7 % porque el 49 % del train viene del Qwen2.5-14B, que solo lo hace en el 41,5 % de sus respuestas (gpt-oss: 99,4 %; Qwen3.8-27B: 75,1 %). El promedio ponderado por profesor da ~66 %, casi lo mismo que logra el estudiante. Para una v2: exigir "menciona el valor" en el filtro del dataset.
   4. La legibilidad casi no cambia (65 frente a 64, en el límite entre "normal" y "bastante fácil"). Las respuestas son más largas porque explican más: qué mide el examen, el valor, el rango y las posibles causas.
   5. **Calidad del contenido:** aparecen explicaciones poco precisas ("tu cuerpo necesita más energía de la que está proporcionando" para una glucosa alta). Las métricas automáticas no detectan esto; hace falta la rúbrica humana.
-- [ ] Guardrail sobre las salidas del test (falta RAM libre para correr MrBERT). Se interpretará con cuidado, por el hallazgo de que marca de más en texto real.
+- [x] **Guardrail sobre las salidas del test** (P(riesgosa) ≥ 0,5):
+
+| | Base, con v1 | Ajustado, con v1 | **Base, con v2** | **Ajustado, con v2** |
+|---|---|---|---|---|
+| Oraciones marcadas como riesgosas | 19,6 % | 4,6 % | **6,4 %** | **0,5 %** |
+| Respuestas con al menos una oración marcada | 74,0 % | 29,5 % | **41,8 %** | **5,4 %** |
+
+  - Con el **v2**, que confunde mucho menos en texto real, la diferencia se agranda: el ajustado escribe **13 veces menos** oraciones riesgosas que el base (0,5 % frente a 6,4 %), y solo 1 de cada 20 respuestas tiene alguna.
+  - Lo que el v2 marca en el **base** son riesgos reales: "no tienes diabetes ni prediabetes", "tu tiroides no está produciendo suficiente hormona tiroidea", "tu tiroides está funcionando correctamente y no hay evidencia de hipotiroidismo".
+  - En el **ajustado** marca afirmaciones con certeza ("indica que tus riñones no están eliminando este desecho de manera adecuada", "no hay evidencia de daño hepático") y otras ya en condicional ("puede indicar prediabetes o diabetes"). En la app (Fase 5), el guardrail v2 revisará cada respuesta y señalará esas oraciones.
 - [ ] Generar las respuestas de Gemini sobre el mismo test, como referencia, solo para evaluar. Sus salidas no se usan para entrenar, porque sus términos lo prohíben.
 - [ ] El equipo revisa una muestra de unos 30 ejemplos del dataset SFT.
 - [ ] Evaluar en el test set tres variantes (base, fine-tuneado, Gemini):
@@ -300,11 +328,32 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Pérdida solo sobre los tokens de la respuesta.
   - Justificación de la tasa de aprendizaje.
 
-## Fase 5: integración en la app ⬜
+## Fase 5: integración en la app 🟡
 
-- [ ] Selector `MODO=gemini|propio` en `backend.py` y switch en Streamlit para comparar en la demo.
-- [ ] Ampliar `evaluar_estado_analito` a los formatos variantes de la Fase 1. Cuando esté, quitar el `xfail` de `test_regla_del_backend_entiende_formatos_variantes`.
-- [ ] Reemplazar `recuperar_conocimiento_rag` por el índice FAISS y el filtro de `step_4_validation` por el clasificador.
+- [x] **Regla de estados ampliada** (`evaluar_estado_analito`):
+  - Entiende "7 a 56", "Hasta 200" (incluye el límite), "Menor de 5.7", "Mayor de 50", "<=" y ">=", y cruces o trazas en orina ("1+", "++", "Trazas").
+  - Exactitud sobre los 10.604 analitos sintéticos: **83,4 % → 100 %**, sin ningún estado equivocado (`evaluacion/resultados/fase5_reglas.json`; el de la Fase 1 se conserva).
+  - Se quitó el `xfail`, que ahora pasa, y se agregaron 11 tests de casos límite.
+- [x] **Selector de modo** (`backend.py`): `LetraDeMedicoBackend(modo="gemini" | "propio")`, o la variable `MODO`.
+  - **gemini**: el sistema original intacto, como línea base: RAG por subcadena, Gemini redacta y filtro de palabras.
+  - **propio**: los tres modelos del equipo (`modelos_propios.py`). En ambos modos, la lectura del documento (OCR + NER) sigue en Gemini.
+  - Los modelos se cargan una sola vez y se pueden inyectar; los tests usan dobles.
+  - Nuevo `analizar_entidades()`: corre el pipeline desde los analitos, sin OCR. Lo usa la demo.
+- [x] **`modelos_propios.py`:**
+  - `RecuperadorRAG`: ALIA ajustado + FAISS, con el índice guardado en `models/rag/indice-alia-ajustado/`. Carga en ~27 s; la primera vez lo construye en ~4 min. Agrega un **reordenamiento por alias**: entre los 5 primeros resultados, prefiere el fragmento que el catálogo asocia al nombre exacto del examen. En las 182 consultas del set del generador sube el acierto de **97,8 % a 99,5 %** y corrige "Glucosa" → página de HbA1c, que salía en la propia demo.
+  - `Guardrail`: MrBERT-biomed v2. Devuelve las oraciones marcadas de cada explicación y carga en ~12 s.
+  - `GeneradorPropio`: el GGUF del generador con `llama-cpp-python`, decodificación voraz y salida restringida a JSON con una gramática.
+  - RAM medida del RAG más el guardrail: 2,3 GB.
+- [x] **App (`app.py`):**
+  - Selector de motor en la barra lateral. El modo propio solo se ofrece si sus modelos están en disco (`modelos_propios.faltantes()`).
+  - Los modelos se cachean con `st.cache_resource`.
+  - El botón de ejemplo, en modo propio, pasa por el RAG, el generador y el guardrail **de verdad**, sin OCR ni Gemini.
+  - Las oraciones marcadas por el guardrail se muestran una por una, y hay una sección con las fuentes de MedlinePlus de cada examen.
+- [x] Tests de integración (`tests/test_integracion.py`), sin modelos ni Gemini. **51 passed.**
+- [x] `llama-cpp-python` 0.3.36 instalado con ruedas precompiladas para CPU (`requirements-propio.txt`).
+- [ ] **Pendiente del equipo:** correr `training/generador/exportar_gguf_colab.ipynb`, que fusiona LoRA con el modelo base y lo convierte a GGUF Q4_K_M (~2 GB). Descargar el `.gguf` de Drive a `models/generador/`.
+- [ ] Probar la app de punta a punta en modo propio y medir el tiempo por examen en CPU.
+- [ ] Opcional: comparar contra el MODO gemini en los mismos exámenes de ejemplo.
 
 ## Fase 6: informe ⬜
 
@@ -370,7 +419,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 33 passed, 1 xfailed)
+# Pruebas (esperado: 51 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

@@ -122,7 +122,6 @@ def test_regla_del_backend_nunca_inventa_un_estado_en_formatos_variantes(casos):
     assert not equivocados, f"{len(equivocados)} estados equivocados, ej.: {equivocados[:5]}"
 
 
-@pytest.mark.xfail(reason="Brecha conocida de la regla: no entiende 'a', 'Hasta', 'Menor de' ni cruces. Se corrige en la Fase 5.", strict=True)
 def test_regla_del_backend_entiende_formatos_variantes(casos):
     for _, a in _analitos(casos):
         if not a["formato_canonico"]:
@@ -134,3 +133,20 @@ def test_comas_decimales_consistentes_en_cada_caso(casos):
         numericos = [a for a in caso["analitos"] if re.fullmatch(r"\d+[.,]\d+", a["valor"])]
         separadores = {"," if "," in a["valor"] else "." for a in numericos}
         assert len(separadores) <= 1, caso["id"]
+
+
+@pytest.mark.parametrize("valor, rango, esperado", [
+    ("200", "Hasta 200", "NORMAL"),      # "hasta" incluye el límite
+    ("201", "Hasta 200", "ALTO"),
+    ("5.7", "Menor de 5.7", "ALTO"),     # "menor de" no lo incluye
+    ("50", "Mayor de 50", "BAJO"),
+    ("150", "<= 150", "NORMAL"),
+    ("40", ">= 40", "NORMAL"),
+    ("3,5", "3,5 a 5,1", "NORMAL"),
+    ("2+", "Negativo", "ANORMAL"),
+    ("++", "Negativo", "ANORMAL"),
+    ("Trazas", "Negativo", "ANORMAL"),
+    ("Negativo", "Negativo", "NORMAL"),
+])
+def test_regla_casos_limite(valor, rango, esperado):
+    assert LetraDeMedicoBackend.evaluar_estado_analito(valor, rango) == esperado

@@ -144,6 +144,12 @@ En test hay 323 frases riesgosas y 183 informativas.
 
 **Conclusión:** se mantiene MrBERT-biomed sin ponderar y con τ = 0,5. Para mejorar la sensibilidad, lo que falta son datos de los casos difíciles: los 200 desacuerdos que revisará el equipo. Calibrar el modelo, por ejemplo con *temperature scaling* sobre validación, haría útil el umbral y queda como trabajo futuro.
 
+
+### 7.2 Cambio de distribución: el mismo modelo en texto real
+
+Un clasificador minimiza la pérdida sobre **la distribución de sus datos de entrenamiento**. Nada garantiza que funcione igual sobre datos que vienen de otra distribución. El guardrail v1 lo muestra: con F1 de 0,991 en el test sintético, marcó como riesgosas el **42 %** de las oraciones informativas que escribieron los generadores reales de la Fase 4 (69 de 166). Por ejemplo, "Las plaquetas son pequeñas células de la sangre que ayudan a formar coágulos" recibió P(riesgosa) = 0,96. Las frases sintéticas que vio al entrenar las escribió un solo profesor, a pedido y por clase; los generadores reales escriben muchas definiciones con otro estilo. Por la sobreconfianza de la sección 7.1, ni siquiera bajar o subir el umbral lo corrige.
+
+La solución es la de siempre en aprendizaje automático: **llevar al entrenamiento datos de la distribución en la que se va a usar el modelo.** El v2 suma 345 oraciones reales a las 899 sintéticas y baja los falsos positivos en texto real de 69 a 3, perdiendo solo 0,002 de F1 en el test sintético. Las etiquetas de esas oraciones las puso un juez (gpt-oss-120b) con un sesgo conocido, y el v2 lo hereda un poco: la clase diagnóstica sintética baja de 0,961 a 0,950. Es la misma lección de la sección 10.1: el modelo aprende la distribución de sus datos, sesgos de etiquetado incluidos.
 ## 8. Descenso del gradiente y tasa de aprendizaje
 
 El gradiente de la pérdida indica, para cada peso, en qué dirección aumenta más la pérdida. El descenso del gradiente da un paso pequeño en la dirección contraria:
@@ -216,7 +222,7 @@ Hay tres contrastes con los modelos anteriores:
 - **El recorte del gradiente nunca actuó:** la norma se mantuvo entre 0,24 y 0,39. En MrBERT llegaba a 8,7 al inicio (sección 8), porque la cabeza nueva empezaba aleatoria. Con LoRA, $B = 0$ al inicio, así que el primer paso parte de la solución del modelo base y los gradientes son pequeños.
 - **La pérdida de un modelo de lenguaje no llega a cero:** 0,42 en train equivale a una probabilidad media de ~0,66 para el token correcto ($e^{-0{,}42}$). Hay muchas formas válidas de escribir la misma explicación, y la entropía cruzada mide el acierto palabra por palabra contra una sola de ellas. Por eso el modelo se evalúa con métricas de la tarea (cobertura, fidelidad, legibilidad), igual que los clasificadores se entrenan con entropía cruzada y se evalúan con F1 (sección 7).
 
-**Resultado en la tarea** (150 casos de test): la cobertura de exámenes pasa de 68,7 % a 99,3 %, el estado consistente de 69,7 % a 99,4 % y mencionar el valor del paciente de 10,3 % a 70,7 %. El detalle está en `PLAN.md`. Este último número muestra algo del aprendizaje supervisado: **el estudiante aprende la distribución de sus datos, defectos incluidos.** El profesor que aportó la mitad del train (Qwen2.5-14B) menciona el valor solo en el 41,5 % de sus respuestas, y el promedio ponderado de los tres profesores (~66 %) predice casi exactamente lo que logra el estudiante.
+**Resultado en la tarea** (150 casos de test): la cobertura de exámenes pasa de 68,7 % a 99,3 %, el estado consistente de 69,7 % a 99,4 % y mencionar el valor del paciente de 10,3 % a 70,7 %. Las oraciones que el guardrail v2 de la Fase 3 (sección 7.2) marca como riesgosas bajan de 6,4 % a 0,5 %, y las respuestas con alguna oración marcada, de 41,8 % a 5,4 %. El detalle está en `PLAN.md`. Este último número muestra algo del aprendizaje supervisado: **el estudiante aprende la distribución de sus datos, defectos incluidos.** El profesor que aportó la mitad del train (Qwen2.5-14B) menciona el valor solo en el 41,5 % de sus respuestas, y el promedio ponderado de los tres profesores (~66 %) predice casi exactamente lo que logra el estudiante.
 
 ## Resumen
 
@@ -230,6 +236,7 @@ Hay tres contrastes con los modelos anteriores:
 | Red retroalimentada y conteo de parámetros | Cabeza de la red propia (131 neuronas) y red completa | 456.707, desglosados por capa |
 | Poder de representación y sobreajuste | Red propia frente a transformers | Pérdida en train 0,007 con F1 en validación ≈ 0,93 |
 | Función de pérdida (MSE, cero-uno, entropía cruzada, ponderada) | Entropía cruzada para entrenar, F1 para evaluar; experimento de pérdida ponderada frente a umbral | Ponderar no cambia nada con train separable; el umbral solo funciona en el modelo calibrado (TF-IDF: FN 8 → 2) |
+| Generalización y cambio de distribución | Guardrail v1 frente a v2 en texto real de los generadores | Falsos positivos en texto real: 69 → 3 (de 166 informativas); F1 sintético: 0,991 → 0,989 |
 | Descenso del gradiente, tasa de aprendizaje y mínimos locales | AdamW con 2 × 10⁻³ desde cero y 2 a 3 × 10⁻⁵ en ajuste fino; 3 semillas | Recorte activo en los primeros ~130 de 228 pasos; F1 de 0,902 ± 0,009 entre semillas |
-| Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; validación siempre a la baja |
+| Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; oraciones riesgosas 6,4 % → 0,5 %; validación siempre a la baja |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |

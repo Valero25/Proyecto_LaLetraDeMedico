@@ -1,0 +1,10 @@
+# Dependencias del MODO=propio de la app (los modelos entrenados por el equipo). El modo Gemini solo necesita requirements.txt.
+#
+# llama-cpp-python se instala desde su índice de ruedas precompiladas para CPU (así no hay que compilar en Windows):
+#   pip install -r requirements-propio.txt --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+-r requirements.txt
+sentence-transformers
+faiss-cpu
+transformers
+torch
+llama-cpp-python

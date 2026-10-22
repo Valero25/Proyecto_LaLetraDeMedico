@@ -1,5 +1,6 @@
 {
   "split": "test",
+  "fuente": "sintetica",
   "n": 506,
   "resultados": {
     "palabras": {
@@ -2579,6 +2580,125 @@
           "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
           "real": "informativa",
           "riesgosa_predicha": true
+        }
+      ]
+    },
+    "mrbert-biomed-v2": {
+      "binaria": {
+        "precision": 0.9968553459119497,
+        "recall": 0.9814241486068112,
+        "f1": 0.9890795631825273,
+        "falsos_positivos": 1,
+        "falsos_negativos": 6
+      },
+      "tres_clases": {
+        "informativa": {
+          "precision": 0.9680851063829787,
+          "recall": 0.994535519125683,
+          "f1-score": 0.9811320754716981,
+          "support": 183.0
+        },
+        "diagnostica": {
+          "precision": 0.9779411764705882,
+          "recall": 0.9236111111111112,
+          "f1-score": 0.95,
+          "support": 144.0
+        },
+        "alarmista": {
+          "precision": 0.9615384615384616,
+          "recall": 0.9776536312849162,
+          "f1-score": 0.9695290858725761,
+          "support": 179.0
+        },
+        "accuracy": 0.9683794466403162,
+        "macro avg": {
+          "precision": 0.9691882481306763,
+          "recall": 0.9652667538405701,
+          "f1-score": 0.9668870537814248,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.9685740879352458,
+          "recall": 0.9683794466403162,
+          "f1-score": 0.9681677394911301,
+          "support": 506.0
+        }
+      },
+      "matriz_confusion": [
+        [
+          182,
+          1,
+          0
+        ],
+        [
+          4,
+          133,
+          7
+        ],
+        [
+          2,
+          2,
+          175
+        ]
+      ],
+      "umbrales": {
+        "0.5": {
+          "precision": 0.9968553459119497,
+          "recall": 0.9814241486068112,
+          "f1": 0.9890795631825273,
+          "falsos_positivos": 1,
+          "falsos_negativos": 6
+        },
+        "0.3": {
+          "precision": 0.996875,
+          "recall": 0.9876160990712074,
+          "f1": 0.9922239502332815,
+          "falsos_positivos": 1,
+          "falsos_negativos": 4
+        },
+        "0.1": {
+          "precision": 0.9787234042553191,
+          "recall": 0.9969040247678018,
+          "f1": 0.9877300613496932,
+          "falsos_positivos": 7,
+          "falsos_negativos": 1
+        }
+      },
+      "errores": [
+        {
+          "frase": "No es normal que tu GGT esté por debajo del rango, lo cual suele ser un signo de deterioro hepático avanzado.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Este valor anormal sugiere que tu cuerpo está fallando para regular la energía y los azúcares.",
+          "real": "alarmista",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu cuerpo absorbe el hierro perfectamente, por lo que el estado actual de tus glóbulos es óptimo.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "El examen confirma que no hay ninguna alteración en la producción de tus glóbulos rojos.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Tu salud sanguínea está bien gestionada con los suplementos que tomas actualmente, sin riesgo alguno.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
+        },
+        {
+          "frase": "Aunque mencionas diabetes, tu T4 libre normal sugiere que no hay un problema tiroideo evidente.",
+          "real": "informativa",
+          "riesgosa_predicha": true
+        },
+        {
+          "frase": "Como tu potasio está normal, tu corazón está funcionando bien y no hay riesgo de arritmias.",
+          "real": "diagnostica",
+          "riesgosa_predicha": false
         }
       ]
     }

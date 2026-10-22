@@ -351,9 +351,12 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Las oraciones marcadas por el guardrail se muestran una por una, y hay una sección con las fuentes de MedlinePlus de cada examen.
 - [x] Tests de integración (`tests/test_integracion.py`), sin modelos ni Gemini. **51 passed.**
 - [x] `llama-cpp-python` 0.3.36 instalado con ruedas precompiladas para CPU (`requirements-propio.txt`).
-- [ ] **Pendiente del equipo:** correr `training/generador/exportar_gguf_colab.ipynb`, que fusiona LoRA con el modelo base y lo convierte a GGUF Q4_K_M (~2 GB). Descargar el `.gguf` de Drive a `models/generador/`.
-- [ ] Probar la app de punta a punta en modo propio y medir el tiempo por examen en CPU.
-- [ ] Opcional: comparar contra el MODO gemini en los mismos exámenes de ejemplo.
+- [x] **Exportación a GGUF** (`training/generador/exportar_gguf_colab.ipynb`, 2026-10-22): LoRA fusionado con el modelo base en float16 y cuantizado a Q4_K_M. Pasa de 5,9 GB a **1,8 GB** (4,99 bits por peso). En Colab hubo que desinstalar `torchao` 0.10, que la versión actual de peft rechaza.
+- [x] **Prueba de punta a punta en CPU** (12 hilos lógicos, 8 núcleos físicos):
+  - Generador solo: carga en 4 s; un caso de 4 analitos tarda **69 s con 8 hilos** (75 s con 12). JSON válido, cobertura completa y valores mencionados.
+  - Pipeline completo con el examen de ejemplo (6 analitos): los modelos cargan en 28 s y el examen se explica en **98 s**. 6 de 6 estados correctos, 6 de 6 páginas de RAG correctas y 0 oraciones marcadas. Usa 5,5 GB de RAM.
+  - App en Streamlit, probada sin navegador con `streamlit.testing.AppTest`: arranca en 31 s sin excepciones, ofrece los dos motores y la demo en modo propio tarda 85 s.
+- [ ] Probar en el navegador con un PDF real (el OCR necesita Gemini) y comparar contra el MODO gemini en los mismos exámenes.
 
 ## Fase 6: informe ⬜
 

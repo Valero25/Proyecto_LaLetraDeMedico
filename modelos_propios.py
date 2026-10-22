@@ -91,8 +91,15 @@ class GeneradorPropio:
 
     def __init__(self, hilos=None):
         from llama_cpp import Llama
-        self.llm = Llama(model_path=str(RUTAS["generador"]), n_ctx=4096, n_threads=hilos or os.cpu_count(),
-                         verbose=False)
+        if hilos is None:
+            # llama.cpp rinde mejor con los núcleos físicos que con todos los hilos lógicos (69 s frente a 75 s por caso)
+            try:
+                import psutil
+                hilos = psutil.cpu_count(logical=False)
+            except ImportError:
+                hilos = None
+            hilos = hilos or os.cpu_count()
+        self.llm = Llama(model_path=str(RUTAS["generador"]), n_ctx=4096, n_threads=hilos, verbose=False)
 
     def generar(self, caso, pasajes, max_tokens=1200):
         respuesta = self.llm.create_chat_completion(

@@ -54,7 +54,7 @@ class GeneradorQueOmite:
             raise ValueError("contexto desbordado")
         # Solo omite en la primera llamada: en el reintento (lote distinto) sí responde
         omitir = self.omitir if len(self.lotes) == 1 else set()
-        return {"explicaciones": [{"examen": n, "explicacion": f"Explicación de {n}."} for n in nombres if n not in omitir],
+        return {"explicaciones": [{"examen": n, "explicacion": f"Explicación de {n}: está dentro del rango."} for n in nombres if n not in omitir],
                 "preguntas_sugeridas": ["¿Debo repetir el examen?", f"¿Qué significa {nombres[0]}?"]}
 
 
@@ -194,7 +194,7 @@ def test_si_el_rag_falla_el_generador_sigue_sin_pasajes():
 def test_guardrail_cuenta_las_oraciones_marcadas():
     class GeneradorDiagnostica(GeneradorQueOmite):
         def generar(self, caso, pasajes):
-            return {"explicaciones": [{"examen": a["examen"], "explicacion": "Esto confirma una anemia. Consulta."}
+            return {"explicaciones": [{"examen": a["examen"], "explicacion": "Tu valor está dentro del rango. Esto confirma una anemia."}
                                       for a in caso["analitos"]]}
 
     salida = backend_propio(GeneradorDiagnostica()).analizar_entidades(analitos(2), "X")

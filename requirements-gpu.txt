@@ -1,0 +1,14 @@
+# Opcional: generador propio en una GPU NVIDIA (CUDA 12). Reemplaza el llama-cpp-python de CPU.
+# Medido el 2026-11-02 (examen real de 8 analitos, RTX 4050 Laptop de 6 GB): 85 s en CPU -> unos 28 s en GPU.
+# El generador usa unos 2,3 GB de VRAM. La app detecta sola si hay GPU (si no, sigue en CPU); LDM_GPU_CAPAS=0 la desactiva.
+#
+# Instalación (después de requirements-propio.txt):
+#   pip install -r requirements-gpu.txt --force-reinstall --no-deps --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
+#
+# Volver a la versión de CPU:
+#   pip install llama-cpp-python==0.3.36 --force-reinstall --no-deps --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python==0.3.36
+# La rueda CUDA no trae cudart ni cublas: estos paquetes los traen sin instalar el CUDA Toolkit
+# (modelos_propios.registrar_dlls_cuda los registra al arrancar)
+nvidia-cuda-runtime-cu12==12.4.127
+nvidia-cublas-cu12==12.4.5.8

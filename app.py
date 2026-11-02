@@ -3,6 +3,7 @@ import os
 import re
 import streamlit as st
 from backend import NOTA_GUARDRAIL, LetraDeMedicoBackend, alinear_explicaciones
+import ficha_consulta
 import modelos_propios
 from ui_components import (
     ESTILOS_CSS,
@@ -22,6 +23,12 @@ st.set_page_config(
 
 # Inyección de estilos CSS modernos
 st.html(ESTILOS_CSS)
+
+FORMATOS_FICHA = {
+    "PDF": ("pdf", "application/pdf", "Para imprimir y llevar a la cita, con casillas y espacio para notas."),
+    "Imagen": ("png", "image/png", "Una imagen vertical para guardar o compartir desde el celular."),
+    "Texto": ("txt", "text/plain", "Texto plano, para copiar y pegar."),
+}
 
 MOTORES = {
     "propio": "Modelos propios (entrenados por el equipo)",
@@ -79,6 +86,10 @@ with st.sidebar:
 
 with st.spinner("Cargando los modelos propios (solo la primera vez)..." if modo == "propio" else "Preparando..."):
     backend = obtener_backend(modo)
+if modo == "propio":
+    dispositivo = getattr(backend.modelo_propio("generador"), "dispositivo", "CPU")
+    st.sidebar.caption(f"⚡ Generador propio en **{dispositivo}**"
+                       + ("" if dispositivo == "GPU" else " (con GPU NVIDIA es ~5 veces más rápido: ver requirements-gpu.txt)"))
 
 # --- INICIALIZACIÓN DE ESTADO DE SESIÓN ---
 if "analisis_completado" not in st.session_state:
@@ -461,7 +472,8 @@ else:
                 for p in pasajes:
                     fuente = p.get("fuente") or ""
                     enlace = f" — [{fuente}]({fuente})" if str(fuente).startswith("http") else ""
-                    st.markdown(f"- **{p.get('examen', '')}**: {p.get('titulo', '')}{enlace}")
+                    titulo = p.get("titulo") or "*sin guía en nuestra base: la explicación es más general*"
+                    st.markdown(f"- **{p.get('examen', '')}**: {titulo}{enlace}")
 
     # ==========================
     # COLUMNA DERECHA: KIT DE PREPARACIÓN MÉDICA & PREGUNTAS
@@ -508,20 +520,46 @@ else:
 
         st.session_state.preguntas_seleccionadas = preguntas_actualmente_seleccionadas
 
-        # Botón para descargar la Ficha Médica lista para imprimir
-        texto_ficha = generar_ficha_medica_txt(
-            tipo_examen=tipo_ex,
-            analitos=datos_ner,
-            preguntas_seleccionadas=st.session_state.preguntas_seleccionadas,
-            contexto_paciente=st.session_state.get("contexto_paciente", "")
+        # Ficha resumen para la consulta: PDF para imprimir, imagen para el celular o texto plano
+        st.markdown("##### 📥 Ficha resumen para tu consulta")
+        formato_ficha = st.radio(
+            "Formato de la ficha:",
+            list(FORMATOS_FICHA),
+            horizontal=True,
+            label_visibility="collapsed",
+            key="formato_ficha",
         )
+        extension, mime_ficha, ayuda_ficha = FORMATOS_FICHA[formato_ficha]
+        st.caption(ayuda_ficha)
+        # El tipo de examen viene del documento: se quitan "/", ":" y demás caracteres no válidos en un nombre de archivo
+        nombre_base = re.sub(r'[^0-9A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+', '_', tipo_ex).strip('_') or 'Examen'
+        args_ficha = dict(tipo_examen=tipo_ex, analitos=datos_ner, explicaciones=explicaciones,
+                          preguntas=st.session_state.preguntas_seleccionadas,
+                          contexto_paciente=st.session_state.get("contexto_paciente", ""))
+        try:
+            if extension == "pdf":
+                datos_ficha = ficha_consulta.ficha_pdf(**args_ficha)
+            elif extension == "png":
+                datos_ficha = ficha_consulta.ficha_png(**args_ficha)
+            else:
+                datos_ficha = generar_ficha_medica_txt(
+                    tipo_examen=tipo_ex, analitos=datos_ner,
+                    preguntas_seleccionadas=st.session_state.preguntas_seleccionadas,
+                    contexto_paciente=st.session_state.get("contexto_paciente", ""))
+        except Exception as e:
+            # Si falla el PDF o la imagen, el texto plano siempre está disponible
+            st.warning(f"No se pudo generar la ficha en {formato_ficha} ({e}); se ofrece en texto.")
+            extension, mime_ficha = "txt", "text/plain"
+            datos_ficha = generar_ficha_medica_txt(
+                tipo_examen=tipo_ex, analitos=datos_ner,
+                preguntas_seleccionadas=st.session_state.preguntas_seleccionadas,
+                contexto_paciente=st.session_state.get("contexto_paciente", ""))
 
         st.download_button(
-            label="📥 Descargar Ficha Resumen para la Consulta (.txt)",
-            data=texto_ficha,
-            # El tipo de examen viene del documento: se quitan "/", ":" y demás caracteres no válidos en un nombre de archivo
-            file_name=f"Guia_Consulta_{re.sub(r'[^0-9A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+', '_', tipo_ex).strip('_') or 'Examen'}.txt",
-            mime="text/plain",
+            label=f"📥 Descargar ficha ({extension.upper()})",
+            data=datos_ficha,
+            file_name=f"Guia_Consulta_{nombre_base}.{extension}",
+            mime=mime_ficha,
             use_container_width=True,
             type="primary"
         )

@@ -66,6 +66,102 @@ def limpiar_entidades(entidades):
     return limpias
 
 
+FRASE_ESTADO = {"ALTO": "por encima del", "BAJO": "por debajo del", "NORMAL": "dentro del"}
+PALABRAS_SUBE = {"alto", "alta", "altos", "altas", "elevado", "elevada", "elevados", "elevadas", "aumentado", "aumentada"}
+PALABRAS_BAJA = {"bajo", "baja", "bajos", "bajas", "disminuido", "disminuida", "reducido", "reducida"}
+# Alias de una palabra que también son palabras comunes en una pregunta ("¿azúcar en la sangre?")
+ALIAS_COMUNES = {("sangre",), ("proteinas",), ("densidad",), ("ph",)}
+PREGUNTAS_RESPALDO = ["¿Qué significan estos resultados en mi caso particular?",
+                      "¿Necesito repetir algún examen o hacer un control más adelante?"]
+
+
+def explicacion_plantilla(analito):
+    """Explicación determinista con el valor, el rango y el estado: la red de seguridad cuando el texto
+    generado contradice el estado calculado por la regla."""
+    valor = f"{analito.get('valor', '')} {analito.get('unidad', '')}".strip()
+    rango = analito.get("rango_referencia", "")
+    estado = analito.get("estado", "")
+    if estado in FRASE_ESTADO:
+        base = f"Tu resultado de {analito.get('examen', '')} es {valor}, {FRASE_ESTADO[estado]} rango de referencia ({rango})."
+    else:
+        base = f"Tu resultado de {analito.get('examen', '')} es {valor}; lo esperado es {rango}, así que está fuera de lo esperado."
+    return base + " Coméntalo con tu médico: puede interpretarlo junto con tus síntomas y tu historia clínica."
+
+
+def _catalogo_alias():
+    """Índice de alias del catálogo (lo comparte el RAG); se carga una vez."""
+    global _ALIAS_CACHE
+    if _ALIAS_CACHE is None:
+        import modelos_propios
+        ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "training", "sintetico", "catalogo_analitos.json")
+        with open(ruta, encoding="utf-8") as f:
+            catalogo = json.load(f)
+        _ALIAS_CACHE = (modelos_propios, modelos_propios.indice_alias(catalogo),
+                        set(catalogo["paneles"].get("Análisis de Orina Completo", [])))
+    return _ALIAS_CACHE
+
+
+_ALIAS_CACHE = None
+
+
+def revisar_coherencia(entidades, resultado, tipo_examen=""):
+    """
+    Revisa la salida ya alineada contra los estados de la regla y devuelve avisos para el paciente.
+
+    - Una explicación que no menciona su estado (verificacion.estado_consistente, la métrica de la Fase 4)
+      se cambia por explicacion_plantilla. Caso real: IGF-1 ALTA explicada como "Un resultado normal...".
+    - Se quitan las preguntas que dicen "alto" o "bajo" de un analito que no lo está, y las que nombran un
+      examen del catálogo que el paciente no se hizo. Caso real: "¿Qué significa un resultado alto en la
+      hormona estimulante del tiroides?" con la TSH normal.
+    """
+    mp, alias, claves_orina = _catalogo_alias()
+    from verificacion import estado_consistente
+    avisos = []
+
+    corregidas = 0
+    for analito, exp in zip(entidades, resultado.get("explicaciones", [])):
+        if exp.get("sin_explicacion") or analito.get("estado") not in ("ALTO", "BAJO", "NORMAL", "ANORMAL"):
+            continue
+        if not estado_consistente(exp.get("explicacion", ""), analito):
+            exp["explicacion"] = explicacion_plantilla(analito)
+            exp["explicacion_plantilla"] = True
+            corregidas += 1
+    if corregidas:
+        avisos.append(f"{corregidas} explicación(es) contradecían el estado calculado y se reemplazaron por un "
+                      "resumen con tu valor y el rango de referencia.")
+
+    # Qué analitos del catálogo tiene este examen y con qué estado
+    estado_por_clave = {}
+    for analito in entidades:
+        for clave in mp.analitos_del_nombre(analito.get("examen", ""), alias, claves_orina, tipo_examen):
+            estado_por_clave[clave] = analito.get("estado")
+
+    def claves_mencionadas(pregunta):
+        palabras = mp.tokens(pregunta)
+        largos = [(t, c) for t, c in alias if mp.contiene(palabras, t)]
+        # Se queda con los alias más específicos: "colesterol de alta densidad" antes que "colesterol"
+        return {c for t, c in largos if t not in ALIAS_COMUNES
+                and not any(len(o) > len(t) and mp.contiene(list(o), t) for o, _ in largos)}
+
+    validas, quitadas = [], 0
+    for pregunta in resultado.get("preguntas_sugeridas", []):
+        mencionadas = claves_mencionadas(pregunta)
+        palabras = set(mp.tokens(pregunta))
+        ajenas = mencionadas and not mencionadas & set(estado_por_clave)
+        propias = [estado_por_clave[c] for c in mencionadas if c in estado_por_clave]
+        contradice = propias and (
+            (palabras & PALABRAS_SUBE and all(e != "ALTO" for e in propias))
+            or (palabras & PALABRAS_BAJA and all(e != "BAJO" for e in propias)))
+        if ajenas or contradice:
+            quitadas += 1
+        else:
+            validas.append(pregunta)
+    if quitadas:
+        print(f"Se quitaron {quitadas} preguntas incoherentes con los resultados", flush=True)
+    resultado["preguntas_sugeridas"] = validas or list(PREGUNTAS_RESPALDO)
+    return avisos
+
+
 def alinear_explicaciones(entidades, resultado):
     """
     Deja exactamente una explicación por analito, en el mismo orden y con el mismo nombre que `entidades`.
@@ -210,6 +306,11 @@ class LetraDeMedicoBackend:
 
         No deduzcas ni infieras nada, extrae los datos numéricos y cualitativos tal cual aparecen en el documento.
         Si hay tablas, lee cada fila cuidadosamente.
+
+        Rango de referencia con niveles de riesgo: si un examen NO tiene un intervalo único y en su lugar el
+        laboratorio lista niveles (ej. "Sin riesgo: Mayor de 55 mg/dl. Riesgo moderado: 35 - 55. Alto riesgo: Menor
+        de 35"), usa como "rango_referencia" el nivel deseable o sin riesgo, copiado tal cual (ej. "Mayor de 55").
+        Si el examen tiene un intervalo único además de los niveles, usa el intervalo único.
         
         Responde ÚNICAMENTE con el JSON válido, sin texto adicional (ni siquiera bloques de código ```json).
         """
@@ -400,6 +501,8 @@ class LetraDeMedicoBackend:
             caso = {"tipo_de_examen": tipo_examen, "paciente": {}, "contexto_paciente": patient_context,
                     "analitos": [entidades[i] for i in indices]}
             lote_pasajes = [pasajes[i] for i in indices] if alineados else pasajes
+            # Un examen que no está en la base va sin pasaje: mejor eso que la guía de otro examen
+            lote_pasajes = [p for p in lote_pasajes if isinstance(p, dict) and p.get("texto")]
             try:
                 salida = generador.generar(caso, lote_pasajes)
             except Exception as e:  # p. ej. el contexto de llama.cpp se desborda con un pasaje inesperadamente largo
@@ -513,6 +616,15 @@ class LetraDeMedicoBackend:
         faltantes = sum(1 for e in resultado["explicaciones"] if e.get("sin_explicacion"))
         if faltantes:
             avisos.append(f"{faltantes} de {len(entidades)} exámenes quedaron sin explicación automática.")
+        try:
+            avisos += revisar_coherencia(entidades, resultado, tipo_examen)
+        except Exception as e:  # la revisión es una red de seguridad: si falla, no debe tumbar el análisis
+            print(f"La revisión de coherencia falló: {e}", flush=True)
+        sin_guia = [p.get("examen") for p in pasajes_rag if isinstance(p, dict) and p.get("sin_cobertura")] \
+            if isinstance(pasajes_rag, list) else []
+        if sin_guia:
+            avisos.append("Sin guía de MedlinePlus en nuestra base para: " + ", ".join(sin_guia)
+                          + ". Su explicación es más general; consúltala con tu médico.")
 
         # FASE 2: Capa de Validación y Guardrails
         resultado = self.step_4_validation(resultado)

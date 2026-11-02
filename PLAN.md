@@ -382,7 +382,36 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - Análisis: 249 s. Carga de los modelos: 130 s (en frío).
     - Antes de este cambio, un examen así superaba lo visto en el entrenamiento y el contexto de 4.096 tokens.
   - **Hallazgo de calidad (no lo detecta ninguna métrica automática):** el generador inventa expansiones de siglas, como "VCM (Volumen de Célula Móvil)" o "HCM (Hidrógeno de la Célula Móvil)". Para una v2: incluir las expansiones correctas en los pasajes o en el dataset, y revisarlo en la rúbrica humana.
-- [ ] Probar en el navegador con un PDF real (el OCR necesita Gemini) y comparar contra el MODO gemini en los mismos exámenes.
+- [x] **Primer PDF real (laboratorio Compensar, 8 analitos, 2026-11-02).** El equipo lo probó en el navegador y se verificó contra el documento.
+  - **Bien:**
+    - Gemini extrajo los 8 valores, unidades y rangos.
+    - La regla acertó los 8 estados (la IGF-1 ALTA, que el PDF marca con "*").
+  - **Errores encontrados y corregidos:**
+    1. **RAG:** "GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A ORINA" recuperaba *glucosa en orina*. La SOMATOMEDINA C (IGF-1), que no está en la base, recibía *creatinina*, y el generador la explicó como creatinina y como "normal".
+       - Corrección: alias del catálogo como palabras completas dentro del nombre (gana el más largo; un empate sangre/orina se resuelve por el contexto), más alias reales de laboratorio en `ALIAS_EXTRA` (no en el catálogo, para no cambiar la Fase 1).
+       - Sin alias, se exige similitud ≥ 0,55: el máximo de 37 exámenes no cubiertos × 2 tipos fue 0,54. Por debajo, el analito va **sin guía** y la app avisa.
+       - En las 182 consultas del set del generador: **99,5 % → 100 %**, ninguna sin guía.
+    2. **Preguntas incoherentes:** "¿Qué significa un resultado alto en la hormona estimulante del tiroides?" con la TSH normal. `revisar_coherencia` quita las que dicen alto o bajo de un analito que no lo está, o que nombran un examen que el paciente no se hizo.
+    3. **Explicación contra el estado:** si un texto no menciona su estado (`estado_consistente`, la métrica de la Fase 4), se reemplaza por una plantilla con valor, rango y estado, y se avisa.
+    4. **HDL sin rango:** el PDF solo da niveles de riesgo. El prompt de extracción ahora toma el nivel "sin riesgo" ("Mayor de 55") → NORMAL. Gemini también tomó ese nivel en el colesterol total y el LDL, aunque había intervalo; el estado no cambia.
+  - **Velocidad del generador** (mismo examen de 8 analitos; i5-13420H y RTX 4050 Laptop de 6 GB):
+
+    | Configuración | Leer el prompt (~1.640 tokens) | Escribir (~710 tokens) | Total |
+    |---|---|---|---|
+    | CPU con gramática JSON (antes) | 32 s | 5,6 tok/s | 159 s |
+    | CPU sin gramática | 31 s | 13,2 tok/s | **85 s** |
+    | CPU + prompt lookup decoding | 34 s | 3,4 tok/s | 282 s (descartado) |
+    | GPU con gramática | 2,4 s | 4,1 tok/s | 175 s |
+    | **GPU sin gramática** | **2,1 s** | **27,6 tok/s** | **28 s** |
+
+    - **La gramática JSON era el cuello de botella:** llama.cpp la evalúa en CPU sobre los ~151 mil tokens del vocabulario en cada paso.
+    - El modelo ajustado ya escribe JSON válido (99,3 % en la Fase 4), y en CPU la salida es idéntica con y sin gramática. Ahora se genera sin ella y solo se reintenta con ella si el JSON sale inválido.
+    - La GPU se detecta sola (`requirements-gpu.txt`; `LDM_GPU_CAPAS=0` la desactiva). Si no hay GPU, sigue en CPU.
+    - De punta a punta con el PDF: lectura con Gemini en 25 s (con dos reintentos por un 503) y el resto en **27 s**.
+  - **Ficha descargable en PDF** (A4, texto seleccionable, casillas y espacio para notas) **e imagen PNG** (vertical, para el celular), además del texto (`ficha_consulta.py`, fuentes DejaVu en `assets/fuentes`).
+  - Calidad que queda: "ultraseñalada" en lugar de "ultrasensible", y causas posibles algo especulativas para la IGF-1 ("dieta alta en proteínas"). Van a la rúbrica humana y al generador v2.
+  - `tests/test_pdf_real.py`: 18 pruebas de regresión con ese documento. **95 passed.**
+- [ ] Comparar contra el MODO gemini en los mismos exámenes (rúbrica humana).
 
 ## Fase 6: informe ⬜
 
@@ -448,7 +477,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 77 passed)
+# Pruebas (esperado: 95 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

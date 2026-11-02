@@ -2,3 +2,4 @@
 google-genai==2.19.0
 streamlit==1.63.0
 python-dotenv==1.2.3
+fpdf2==2.9.0

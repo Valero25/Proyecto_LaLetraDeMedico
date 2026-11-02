@@ -28,6 +28,8 @@ RUTAS = {
 }
 MAX_CARACTERES_PASAJE = 700  # igual que en el entrenamiento (training/generador/preparar_casos.py)
 UMBRAL_RIESGO = 0.5
+N_CTX_GENERADOR = 4096
+MIN_TOKENS_RESPUESTA = 900  # un lote de 8 analitos ocupa unos 400 a 700 tokens de respuesta
 
 
 def faltantes():
@@ -99,11 +101,30 @@ class GeneradorPropio:
             except ImportError:
                 hilos = None
             hilos = hilos or os.cpu_count()
-        self.llm = Llama(model_path=str(RUTAS["generador"]), n_ctx=4096, n_threads=hilos, verbose=False)
+        self.n_ctx = N_CTX_GENERADOR
+        self.llm = Llama(model_path=str(RUTAS["generador"]), n_ctx=self.n_ctx, n_threads=hilos, verbose=False)
+
+    def tokens_prompt(self, mensajes):
+        # Cuenta el contenido más un margen por las marcas de la plantilla de chat (<|im_start|>, roles...)
+        texto = "\n".join(m["content"] for m in mensajes)
+        return len(self.llm.tokenize(texto.encode("utf-8"), add_bos=False)) + 16 * len(mensajes)
 
     def generar(self, caso, pasajes, max_tokens=1200):
+        """
+        Si el prompt más la respuesta no caben en el contexto, se acortan los pasajes (primero a la mitad,
+        luego sin pasajes) en vez de dejar que llama.cpp falle o corte el JSON a la mitad.
+        """
+        mensajes = None
+        for limite in (MAX_CARACTERES_PASAJE, MAX_CARACTERES_PASAJE // 2, 0):
+            cortos = [{**p, "texto": recortar(p["texto"], limite)} for p in pasajes] if limite else []
+            mensajes = mensajes_estudiante(caso, cortos)
+            disponibles = self.n_ctx - self.tokens_prompt(mensajes)
+            if disponibles >= MIN_TOKENS_RESPUESTA:
+                break
+        else:
+            raise ValueError(f"El caso no cabe en el contexto de {self.n_ctx} tokens ni siquiera sin pasajes")
         respuesta = self.llm.create_chat_completion(
-            messages=mensajes_estudiante(caso, pasajes), temperature=0, max_tokens=max_tokens,
+            messages=mensajes, temperature=0, max_tokens=min(max_tokens, disponibles),
             response_format={"type": "json_object"})
         texto = respuesta["choices"][0]["message"]["content"]
         return parsear(texto) or {}
@@ -118,14 +139,17 @@ class Guardrail:
         self.modelo = AutoModelForSequenceClassification.from_pretrained(RUTAS["guardrail"]).eval()
         self.clases = [self.modelo.config.id2label[i] for i in range(self.modelo.config.num_labels)]
 
-    def riesgo(self, oraciones):
+    def riesgo(self, oraciones, lote_max=32):
+        """P(riesgosa) por oración. En lotes de `lote_max` para que un examen largo no dispare la RAM."""
         import torch
-        if not oraciones:
-            return []
+        riesgos = []
         with torch.no_grad():
-            lote = self.tokenizador(oraciones, truncation=True, max_length=96, padding=True, return_tensors="pt")
-            probs = self.modelo(**lote).logits.softmax(-1)
-        return (1 - probs[:, self.clases.index("informativa")]).tolist()
+            for i in range(0, len(oraciones), lote_max):
+                lote = self.tokenizador(oraciones[i:i + lote_max], truncation=True, max_length=96,
+                                        padding=True, return_tensors="pt")
+                probs = self.modelo(**lote).logits.softmax(-1)
+                riesgos += (1 - probs[:, self.clases.index("informativa")]).tolist()
+        return riesgos
 
     def revisar(self, resultado):
         """Agrega a cada explicación la lista de oraciones marcadas (vacía si no hay)."""

@@ -356,6 +356,32 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Generador solo: carga en 4 s; un caso de 4 analitos tarda **69 s con 8 hilos** (75 s con 12). JSON válido, cobertura completa y valores mencionados.
   - Pipeline completo con el examen de ejemplo (6 analitos): los modelos cargan en 28 s y el examen se explica en **98 s**. 6 de 6 estados correctos, 6 de 6 páginas de RAG correctas y 0 oraciones marcadas. Usa 5,5 GB de RAM.
   - App en Streamlit, probada sin navegador con `streamlit.testing.AppTest`: arranca en 31 s sin excepciones, ofrece los dos motores y la demo en modo propio tarda 85 s.
+- [x] **Robustez del pipeline y de la app (2026-11-02):**
+  - **Una explicación por analito, siempre** (`alinear_explicaciones` en `backend.py`): se empareja por nombre normalizado, luego por inclusión y luego por posición (solo si las cantidades coinciden). Antes, si el generador renombraba un examen, la app lo mostraba como **NORMAL por defecto**, y si lo omitía, desaparecía de la pantalla. Ahora conserva su estado real y, si no hay explicación, muestra un aviso.
+  - **Generación por lotes de 8 analitos**, el máximo visto en el entrenamiento. Un lote que falla no tumba a los demás. Los analitos omitidos se piden una vez más en un lote distinto (con decodificación voraz, repetir el mismo prompt daría la misma salida).
+  - **El prompt nunca desborda el contexto:** `GeneradorPropio` cuenta los tokens y, si no queda sitio para la respuesta, acorta los pasajes a la mitad o los quita.
+  - **Fallos aislados:**
+    - Si el RAG falla, se genera sin pasajes y se avisa.
+    - Si el guardrail falla, la app dice "No verificado" en vez de "Guardrail activo".
+    - Las salidas raras de Gemini (lista suelta, texto nulo, números en vez de cadenas) se limpian con `limpiar_entidades`.
+  - **App:**
+    - El HTML que viene del documento o del generador se escapa.
+    - La tarjeta del guardrail muestra lo que marcó de verdad.
+    - Nuevo estado "SIN EVALUAR" en gris, que también aparece en la ficha descargable.
+    - El indicador gráfico usa la misma normalización de rangos que la regla, así que ya entiende "Hasta", "Menor de" y "7 a 56".
+    - La nota del guardrail ya no sale duplicada.
+    - El archivo se lee con `getvalue()`.
+    - Los presets del modo Gemini se rotulan como muestra escrita.
+  - **Chat de dudas:**
+    - En modo propio responde con el fragmento de MedlinePlus que recupera el RAG, sin las oraciones que marca el guardrail y con su fuente. Antes devolvía siempre el mismo texto fijo.
+    - En modo Gemini usa los reintentos y el modelo de respaldo.
+  - Versiones de la app fijadas en `requirements.txt` y `requirements-propio.txt`.
+  - `tests/test_robustez.py`: 21 pruebas nuevas. **77 passed.**
+  - **Prueba real en CPU, hemograma y química de 14 analitos:**
+    - 2 lotes (8 + 6), 14 de 14 explicaciones, estados correctos y 0 oraciones marcadas.
+    - Análisis: 249 s. Carga de los modelos: 130 s (en frío).
+    - Antes de este cambio, un examen así superaba lo visto en el entrenamiento y el contexto de 4.096 tokens.
+  - **Hallazgo de calidad (no lo detecta ninguna métrica automática):** el generador inventa expansiones de siglas, como "VCM (Volumen de Célula Móvil)" o "HCM (Hidrógeno de la Célula Móvil)". Para una v2: incluir las expansiones correctas en los pasajes o en el dataset, y revisarlo en la rúbrica humana.
 - [ ] Probar en el navegador con un PDF real (el OCR necesita Gemini) y comparar contra el MODO gemini en los mismos exámenes.
 
 ## Fase 6: informe ⬜
@@ -422,7 +448,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 51 passed)
+# Pruebas (esperado: 77 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

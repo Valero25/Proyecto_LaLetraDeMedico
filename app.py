@@ -73,7 +73,7 @@ with st.sidebar:
     st.markdown(
         """
         - **Ayuno correcto:** Las pruebas de glucosa y lípidos requieren de 8 a 12 horas de ayuno.
-        - **Hidratación:** Beber agua facilita la extracción sanguínea y la muestra de orina.
+        - **Hidratación:** Beber agua antes de la toma facilita la extracción de sangre.
         - **Medicamentos:** Informa siempre a tu médico si tomaste medicamentos antes de la toma.
         """
     )
@@ -150,11 +150,13 @@ if not st.session_state.analisis_completado:
 
     # --- PESTAÑA 1: SUBIR ARCHIVO PROPIO ---
     with tab_subir:
-        st.subheader("1. Sube tu resultado de Laboratorio")
+        st.subheader("1. Sube tu resultado de laboratorio de sangre")
         st.markdown(
-            "Carga una fotografía clara o archivo PDF de tu orden o informe de laboratorio. "
-            "Nuestra IA extraerá automáticamente cada analito con su valor y rango."
+            "Carga una fotografía clara o archivo PDF de tu informe de **exámenes de sangre** (hemograma, química, "
+            "perfil lipídico, tiroides...). Nuestra IA extraerá automáticamente cada analito con su valor y rango."
         )
+        st.caption("LetraDeMédico está pensado solo para exámenes de sangre: si el documento trae resultados de orina "
+                   "u otras muestras, se muestran con su estado, pero no se explican.")
 
         col_up_izq, col_up_der = st.columns([1.2, 1])
 
@@ -206,6 +208,7 @@ if not st.session_state.analisis_completado:
                             st.session_state.modo_usado = resultado.get("modo", modo)
                             st.session_state.pasajes_rag = resultado.get("pasajes_rag")
                             st.session_state.contexto_paciente = contexto_paciente
+                            st.session_state.paciente = resultado.get("paciente") or {}
                             st.session_state.es_demo = False
                             st.session_state.preguntas_seleccionadas = list(resultado["analisis_final"].get("preguntas_sugeridas", []))
                             st.session_state.preguntas_personalizadas = []
@@ -268,6 +271,9 @@ if not st.session_state.analisis_completado:
                         except Exception as e:
                             st.error(f"⚠️ Los modelos propios no pudieron analizar el ejemplo: {e}")
                             st.stop()
+                        if "error" in resultado:
+                            st.error(f"⚠️ {resultado['error']}")
+                            st.stop()
                         st.session_state.datos_extraidos = resultado["datos_extraidos"]
                         st.session_state.analisis_final = resultado["analisis_final"]
                         st.session_state.pasajes_rag = resultado["pasajes_rag"]
@@ -284,6 +290,7 @@ if not st.session_state.analisis_completado:
                         st.session_state.pasajes_rag = None
 
                     st.session_state.tipo_examen = preset["tipo_examen"]
+                    st.session_state.paciente = {}
                     st.session_state.contexto_paciente = preset["contexto_paciente"]
                     st.session_state.modo_usado = modo
                     st.session_state.es_demo = True
@@ -313,6 +320,12 @@ else:
         fuente_motor = MOTORES.get(modo_usado, modo_usado)
         demo_tag = " • Modo Demostración interactiva" if st.session_state.get("es_demo") else " • Examen cargado por usuario"
         st.caption(f"🧠 Motor: **{fuente_motor}**{demo_tag}")
+        paciente_doc = st.session_state.get("paciente") or {}
+        if paciente_doc:
+            partes = [{"M": "hombre", "F": "mujer"}.get(paciente_doc.get("sexo"), ""),
+                      f"{paciente_doc['edad']} años" if paciente_doc.get("edad") is not None else ""]
+            st.caption("👤 Según el documento: " + ", ".join(p for p in partes if p)
+                       + ". Se usa para elegir el rango por sexo cuando el laboratorio da uno distinto para hombres y mujeres.")
         if analisis.get("muestra_escrita"):
             st.caption("ℹ️ En este ejemplo, las explicaciones son una muestra escrita por el equipo: "
                        "no las generó Gemini. Elige el motor propio para ver una explicación generada en vivo.")
@@ -426,7 +439,8 @@ else:
             estado = str(dato_crudo.get("estado") or "DESCONOCIDO").upper()
             valor = dato_crudo.get("valor", "")
             unidad = dato_crudo.get("unidad", "")
-            rango = dato_crudo.get("rango_referencia", "")
+            # El segmento del rango que aplicó la regla ("Mayor de 55" de "Sin riesgo: Mayor de 55. Riesgo moderado...")
+            rango = dato_crudo.get("rango_aplicado") or dato_crudo.get("rango_referencia", "")
 
             # Aplicar filtro de estado
             if filtro_clave == "NORMAL" and estado != "NORMAL":

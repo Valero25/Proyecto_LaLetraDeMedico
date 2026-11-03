@@ -457,23 +457,23 @@ PRESETS = {
         ]
     },
     "renal_urolisis": {
-        "nombre": "🫘 Función Renal & Uroanálisis",
-        "descripcion": "Evaluación del filtrado renal, hidratación y estado del tracto urinario.",
-        "tipo_examen": "Función Renal y Uroanálisis",
+        "nombre": "🫘 Función Renal & Electrolitos",
+        "descripcion": "Evaluación en sangre del filtrado renal, el ácido úrico y los electrolitos.",
+        "tipo_examen": "Función Renal y Electrolitos",
         "contexto_paciente": "Chequeo médico tras haber iniciado ejercicio de fuerza y aumentado el consumo de agua.",
         "analitos": [
             {"examen": "Creatinina en sangre", "valor": "0.95", "unidad": "mg/dL", "rango_referencia": "0.70 - 1.30"},
             {"examen": "Nitrógeno Ureico (BUN)", "valor": "15.0", "unidad": "mg/dL", "rango_referencia": "7.0 - 20.0"},
             {"examen": "Ácido Úrico", "valor": "7.8", "unidad": "mg/dL", "rango_referencia": "3.5 - 7.2"},
             {"examen": "Tasa de Filtración Glomerular (eGFR)", "valor": "96", "unidad": "mL/min/1.73m²", "rango_referencia": "> 90"},
-            {"examen": "Proteínas en orina", "valor": "Negativo", "unidad": "", "rango_referencia": "Negativo"},
+            {"examen": "Potasio", "valor": "4.2", "unidad": "mmol/L", "rango_referencia": "3.5 - 5.1"},
         ],
         "explicaciones": [
             {"examen": "Creatinina en sangre", "explicacion": "La creatinina es un residuo de la actividad muscular filtrado exclusivamente por los riñones. Tu cifra de 0.95 mg/dL indica que tus riñones están depurando la sangre con total normalidad."},
             {"examen": "Nitrógeno Ureico (BUN)", "explicacion": "El BUN mide la cantidad de nitrógeno proveniente de la degradación proteica. Con 15.0 mg/dL dentro del rango (7.0 - 20.0), tu hidratación y procesamiento proteico se encuentran estables."},
             {"examen": "Ácido Úrico", "explicacion": "El ácido úrico proviene de la digestión de purinas presentes en ciertos alimentos y células. Tu nivel de 7.8 mg/dL está ligeramente por encima de la referencia (3.5 - 7.2). Mantener una hidratación generosa y moderar carnes rojas y bebidas azucaradas suele ser muy útil."},
             {"examen": "Tasa de Filtración Glomerular (eGFR)", "explicacion": "El eGFR estima el porcentaje y velocidad de filtrado de tus riñones. Un valor de 96 (> 90) refleja una función renal excelente y robusta."},
-            {"examen": "Proteínas en orina", "explicacion": "Los riñones sanos retienen las proteínas en la sangre. El resultado 'Negativo' confirma que no hay fuga de proteínas en la orina."}
+            {"examen": "Potasio", "explicacion": "El potasio es un electrolito que ayuda a que los músculos y el corazón funcionen bien, y los riñones regulan su nivel. Tu valor de 4.2 mmol/L está dentro del rango normal (3.5 - 5.1)."}
         ],
         "preguntas": [
             "Mi ácido úrico está en 7.8 mg/dL; ¿qué ajustes en mi dieta o hidratación me sugiere para normalizarlo?",
@@ -489,6 +489,9 @@ def calcular_gauge_html(valor_str, rango_str, estado):
     Calcula las posiciones porcentuales y genera el HTML del indicador gráfico de rango.
     Si el examen es cualitativo ('Negativo', 'Normal'), retorna None para renderizar badge simple.
     """
+    # Un rango que todavía trae etiquetas ("Hombres: ... / Mujeres: ...") no se puede dibujar sin elegir una
+    if ":" in str(rango_str):
+        return None
     val_clean = str(valor_str).replace(',', '.').strip()
     # La misma normalización que la regla de estados: "7 a 56", "Hasta 200", "Menor de 5,7"...
     rng_clean = normalizar_rango(rango_str)

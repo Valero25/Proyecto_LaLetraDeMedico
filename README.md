@@ -1,73 +1,169 @@
 # 🩺 LetraDeMédico
 
-> **Traductor inteligente de resultados médicos para pacientes.**
+> **Traductor de resultados de exámenes de sangre a lenguaje claro, con modelos entrenados por el equipo.**
 
-![Estado](https://img.shields.io/badge/Estado-Prototipo_Activo-brightgreen)
-![Versión](https://img.shields.io/badge/Versi%C3%B3n-1.0.0-blue)
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
+![Pruebas](https://img.shields.io/badge/pruebas-133%20passed-brightgreen)
 
-En muchos sistemas de salud, las consultas médicas tienen una duración limitada (a veces de solo 15 minutos). Esto dificulta que los pacientes comprendan completamente su diagnóstico o los resultados de sus exámenes de laboratorio.
+Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
 
-**LetraDeMédico** es una herramienta de Inteligencia Artificial capaz de traducir resultados de laboratorio e información médica a un lenguaje claro, coloquial y comprensible. Su objetivo es empoderar al paciente, reducir su ansiedad y prepararlo con preguntas relevantes para su próxima consulta.
+⚠️ **No diagnostica ni reemplaza al médico.** Su trabajo es informar y preparar al paciente para la consulta.
 
-⚠️ *El objetivo NO es diagnosticar ni reemplazar al profesional de la salud.*
-
----
-
-## ✨ Características Principales
-
-- **Lectura de Exámenes (Simulada/OCR):** Capacidad de procesar texto extraído de PDFs o imágenes de resultados de laboratorio.
-- **Traducción a Lenguaje Claro:** Explica si un valor es Alto, Bajo o Normal de forma sencilla.
-- **Generación de Preguntas:** Prepara automáticamente una lista de preguntas sugeridas para que el paciente hable con su médico.
-- **Interfaz Intuitiva:** Desarrollado con Streamlit para ofrecer una experiencia limpia y fácil de usar, inspirada en diseño centrado en el usuario.
-
-## 🏗️ Arquitectura del Sistema
-
-El flujo de trabajo (Pipeline) de la Inteligencia Artificial consta de tres pasos principales:
-
-1. **OCR (Optical Character Recognition):** Extracción del texto en bruto del examen médico.
-2. **NER (Named Entity Recognition):** Un modelo de IA extrae datos estructurados (Nombre del examen, valor, unidad, rango, estado) en formato JSON estricto.
-3. **LLM Generativo:** Traduce el JSON a lenguaje natural considerando el contexto reportado por el paciente.
-
-*Próximamente:* **RAG (Retrieval-Augmented Generation)** para anclar las respuestas a bases de datos y diccionarios médicos oficiales, evitando "alucinaciones" de la IA.
+**Alcance: solo exámenes de sangre** (hemograma, química sanguínea, perfil lipídico, perfil hepático, tiroides, electrolitos). Si un documento trae resultados de orina u otras muestras, la app los muestra con su estado, pero no los explica.
 
 ---
 
-## 🚀 Instalación y Uso
+## ✨ Qué hace
 
-Sigue estos pasos para correr el proyecto en tu entorno local.
+- **Lee el documento** (PDF o imagen) y extrae cada examen con su valor, unidad y rango de referencia, además del sexo y la edad del paciente si aparecen. No extrae el nombre ni otros datos personales.
+- **Calcula el estado con reglas deterministas** (ALTO, BAJO, NORMAL o ANORMAL). Entiende rangos como "70 a 99", "Menor a 200" o "Hasta 40", y también rangos por sexo ("Hombres: … Mujeres: …") y por categorías ("Normal: < 5.7 Prediabetes: …").
+- **Explica cada resultado** con un generador propio (Qwen2.5-3B ajustado con QLoRA), apoyado en fragmentos de **MedlinePlus en español** que recupera un RAG propio.
+- **Revisa cada oración** con un clasificador propio (MrBERT-biomed) que marca frases diagnósticas o alarmistas.
+- **Corrige sus propios errores:**
+  - reemplaza una explicación que contradiga el estado calculado;
+  - quita las preguntas que digan "alto" de un valor normal, que nombren un examen que el paciente no se hizo o que se repitan.
+- **Genera una ficha para la consulta** en **PDF** (para imprimir, con casillas y espacio para notas), **imagen PNG** (para el celular) o texto.
+- **Responde dudas** con el fragmento de MedlinePlus que corresponde y su fuente.
 
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/tu-usuario/Proyecto_LaLetraDeMedico.git
-cd Proyecto_LaLetraDeMedico
+## 🏗️ Arquitectura
+
+```mermaid
+flowchart LR
+    A[PDF o foto] --> B["Extracción<br/>(Gemini multimodal)"]
+    B --> C["Reglas de estado<br/>(deterministas)"]
+    C --> D{"¿Muestra<br/>de sangre?"}
+    D -- no --> X[Se muestra el estado,<br/>sin explicación]
+    D -- sí --> E["RAG propio<br/>ALIA-MrBERT ajustado + FAISS<br/>sobre MedlinePlus"]
+    E --> F["Generador propio<br/>Qwen2.5-3B + QLoRA (GGUF)"]
+    F --> G["Revisión de coherencia<br/>(estado, preguntas)"]
+    G --> H["Guardrail propio<br/>MrBERT-biomed v2"]
+    H --> I[App Streamlit<br/>+ ficha PDF / PNG]
 ```
 
-### 2. Instalar dependencias
-Asegúrate de tener Python instalado. Luego ejecuta:
+La app tiene dos motores:
+
+- **Modelos propios** (`MODO=propio`): RAG, generador y guardrail entrenados por el equipo, que corren en local.
+- **Gemini** (`MODO=gemini`): el sistema original, que se conserva como **línea base** de comparación.
+
+En ambos modos, la lectura del documento (OCR + extracción) la hace Gemini.
+
+| Componente | Modelo | Entrenamiento | Código |
+|---|---|---|---|
+| Estado del analito | Reglas | No aplica: se mide y se corrige | `backend.py` (`evaluar_con_rango`) |
+| RAG | `SINAI/ALIA-MrBERT-es-biomedical-embeddings` + FAISS | Ajuste contrastivo con negativos difíciles | `training/rag/` |
+| Guardrail | `BSC-LT/MrBERT-biomed` | Fine-tuning de clasificación en 3 clases | `training/guardrails/` |
+| Generador | `Qwen2.5-3B-Instruct` | QLoRA (4 bits, r = 16), exportado a GGUF Q4_K_M | `training/generador/` |
+
+## 📊 Resultados
+
+Todos los números salen de `evaluacion/resultados/*.json`. Las figuras se regeneran con `python informe/figuras.py`.
+
+| | Sistema original | **Modelos propios** |
+|---|---|---|
+| Regla de estados: formatos del dataset sintético (10.604 analitos) | 83,4 % | **100 %** |
+| Regla de estados: formatos reales de sangre sondeados (33) | 22 / 33 | **33 / 33** |
+| RAG: acierto en el primer resultado, consultas coloquiales (40) | 5,0 % | **92,5 %** |
+| RAG: acierto en analitos que el modelo nunca vio (`split`) | 0,0 % | **91,2 %** |
+| Guardrail: F1 binaria en frases de analitos no vistos | 0,219 | **0,991** |
+| Guardrail: falsos positivos en texto real (166 informativas) | 1 (pero no detecta ninguna riesgosa) | **3** (v2) |
+| Generador: respeta el estado calculado (150 casos) | 69,7 % (Qwen base) | **99,4 %** |
+| Generador: respuestas con alguna oración riesgosa | 41,8 % (Qwen base) | **5,4 %** |
+| Tiempo por examen de 8 analitos | — | **28 s** en GPU, 85 s en CPU |
+
+![RAG](informe/figuras/fig1_rag.png)
+![Guardrail](informe/figuras/fig2_guardrail.png)
+![Generador](informe/figuras/fig3_generador.png)
+![Curvas de aprendizaje](informe/figuras/fig4_curvas.png)
+![Velocidad](informe/figuras/fig5_velocidad.png)
+
+El detalle de cada experimento, sus decisiones y hallazgos está en [`PLAN.md`](PLAN.md). El vínculo con la teoría del curso (perceptrón, funciones de pérdida, descenso del gradiente, retropropagación, sobreajuste) está en [`informe/fundamentos.md`](informe/fundamentos.md).
+
+---
+
+## 🚀 Instalación y uso
+
+Probado con Python 3.11 en Windows 11.
+
+### 1. Dependencias
+
 ```bash
+# Solo la app con el motor Gemini
 pip install -r requirements.txt
+
+# Modelos propios en CPU (llama-cpp-python desde ruedas precompiladas, sin compilar)
+pip install -r requirements-propio.txt --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
+# Opcional: generador en una GPU NVIDIA (unas 3 veces más rápido que en CPU)
+pip install -r requirements-gpu.txt --force-reinstall --no-deps --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
 ```
 
-### 3. Configurar variables de entorno
-Crea un archivo llamado `.env` en la raíz del proyecto y agrega tu llave de la API de Google Gemini:
+La app detecta sola si hay GPU; si no la hay, sigue en CPU. `LDM_GPU_CAPAS=0` obliga a usar la CPU.
+
+### 2. Clave de Gemini
+
+Crea un archivo `.env` en la raíz:
+
 ```env
 GEMINI_API_KEY=tu_clave_api_aqui
 ```
 
-### 4. Ejecutar la aplicación web
-Arranca el servidor local de Streamlit:
+### 3. Modelos propios
+
+Los pesos no se versionan, por tamaño. Van en `models/`:
+
+```
+models/rag/alia-ajustado-completo/          # embeddings del RAG
+models/rag/indice-alia-ajustado/            # índice FAISS (se construye solo la primera vez)
+models/guardrails/mrbert-biomed-v2/         # clasificador del guardrail
+models/generador/letrademedico-qwen2.5-3b-q4_k_m.gguf
+```
+
+Si falta alguno, la app ofrece solo el motor Gemini y dice cuál falta. Cómo entrenarlos (con notebooks para Colab T4) está en `PLAN.md`.
+
+### 4. Ejecutar
+
 ```bash
 streamlit run app.py
 ```
-Abre tu navegador en `http://localhost:8501`.
+
+Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin subir archivos.
+
+### 5. Pruebas
+
+```bash
+python -m pytest tests -q      # esperado: 133 passed (sin modelos ni Gemini)
+```
+
+## 📁 Estructura
+
+```
+app.py, ui_components.py     # interfaz Streamlit
+backend.py                   # pipeline: extracción, reglas, RAG, generador, revisión y guardrail
+modelos_propios.py           # carga y uso de los tres modelos del equipo
+ficha_consulta.py            # ficha para la consulta en PDF e imagen
+training/                    # datos sintéticos, RAG, guardrails y generador (scripts y notebooks de Colab)
+evaluacion/                  # scripts de métricas y resultados en JSON
+informe/                     # fundamentos teóricos y figuras
+tests/                       # pruebas con pytest
+```
+
+## ⚠️ Limitaciones
+
+- **No es un dispositivo médico.** Las explicaciones son informativas y la app siempre remite al médico.
+- **La lectura del documento depende de Gemini**, una API externa con cuotas. Una foto borrosa o un formato muy raro puede extraerse mal.
+- **Solo sangre y solo los analitos de la base.** El RAG cubre 41 analitos con páginas de MedlinePlus. Un examen que no está (por ejemplo, IGF-1) se explica sin guía y la app lo avisa.
+- **Los rangos de entrenamiento son de adultos.** La app usa siempre el rango que trae el laboratorio, pero el generador se entrenó con casos de 18 a 85 años.
+- **El generador todavía se equivoca a veces:**
+  - inventa el significado de algunas siglas ("VCM = Volumen de Célula Móvil");
+  - sugiere causas algo especulativas;
+  - repite preguntas o dice "alto" de un valor normal.
+
+  La revisión de coherencia y el guardrail atrapan una parte; el resto queda para la revisión humana.
+- **Las etiquetas del guardrail en texto real vienen de un LLM juez**, no de humanos, y el test real tiene solo 2 frases riesgosas. Su cifra de detección es indicativa.
 
 ---
 
 ## 👨‍💻 Autor
 
-- **Rubiano Valero** - Idea original y desarrollo inicial.
-
----
-
-*“Cerrando la brecha de comunicación entre el resultado técnico y la persona que necesita entenderlo.”*
+- **Rubiano Valero** - Idea original y desarrollo.

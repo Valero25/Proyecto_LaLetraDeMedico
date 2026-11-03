@@ -40,15 +40,72 @@ def normalizar_rango(rango_str):
     "Menor de 5,7" -> "<5.7", "Mayor de 40" -> ">40", rayas tipográficas -> guion, sin espacios.
     La usan la regla de estados y el indicador gráfico de la app, para que nunca se contradigan.
     """
-    rango = str(rango_str or "").lower().replace(',', '.')
+    rango = str(rango_str or "").replace('≤', '<=').replace('≥', '>=')
+    rango = unicodedata.normalize("NFD", rango.lower())
+    rango = "".join(c for c in rango if unicodedata.category(c) != "Mn").replace(',', '.')
     rango = re.sub(r'(\d)\s+a\s+(\d)', r'\1-\2', rango)
-    rango = re.sub(r'\bhasta\b', '<=', rango)
-    rango = re.sub(r'\bmenor\s+(de|que)\b', '<', rango)
-    rango = re.sub(r'\bmayor\s+(de|que)\b', '>', rango)
+    # Comparaciones en palabras. "o igual" incluye el límite: "Menor o igual a 200" -> "<=200"
+    rango = re.sub(r'\b(?:igual\s+o\s+(?:menor|inferior)|(?:menor|inferior)\s+o\s+igual)\s+(?:de|que|a)\b', '<=', rango)
+    rango = re.sub(r'\b(?:igual\s+o\s+(?:mayor|superior)|(?:mayor|superior)\s+o\s+igual)\s+(?:de|que|a)\b', '>=', rango)
+    rango = re.sub(r'\b(?:menor|inferior)\s+(?:de|que|a)\b', '<', rango)
+    rango = re.sub(r'\b(?:mayor|superior)\s+(?:de|que|a)\b', '>', rango)
+    rango = re.sub(r'\b(?:hasta|maximo)\b', '<=', rango)
+    rango = re.sub(r'\bminimo\b', '>=', rango)
+    rango = re.sub(r'([<>])\s*o\s*=|=\s*([<>])', lambda m: (m.group(1) or m.group(2)) + '=', rango)  # "< o =", "=<"
     # Muchos laboratorios escriben el rango con raya (–, —) o signo menos (−) en vez de guion
     rango = re.sub(r'[–—−‐‑‒]', '-', rango)
-    rango = rango.replace('≤', '<=').replace('≥', '>=')
     return rango.replace(' ', '')
+
+
+# Etiquetas de los rangos con categorías ("Normal: < 5.7 Prediabetes: 5.7 - 6.4 ..."), sin tildes
+ETIQUETAS_NORMAL = ("normal", "deseable", "optimo", "sin riesgo", "adecuado", "recomendado", "referencia",
+                    "valor de referencia", "valores de referencia", "rango normal", "no diabetico", "no diabeticos")
+UNIDADES = {"mg", "dl", "g", "ml", "l", "ul", "u", "ui", "mui", "uui", "mmol", "umol", "nmol", "pmol", "ng", "pg",
+            "fl", "meq", "mm", "seg", "min", "x", "kg", "mcg", "ug", "iu", "mu", "cel", "celulas", "por", "campo"}
+PALABRAS_RIESGO = {"riesgo", "alto", "alta", "limitrofe", "limite", "elevado", "elevada", "moderado", "moderada",
+                   "prediabetes", "diabetes", "bajo", "baja", "intermedio", "deficiencia", "insuficiencia", "toxico",
+                   "critico", "muy"}
+ETIQUETAS_HOMBRE = {"hombre", "hombres", "masculino", "varon", "varones", "h", "hombres adultos"}
+ETIQUETAS_MUJER = {"mujer", "mujeres", "femenino", "f", "mujeres adultas"}
+
+
+def segmentos_rango(rango_str):
+    """
+    "Hombres: 13.5 - 17.5 Mujeres: 12.0 - 15.5" -> ("", [("hombres", "13.5 - 17.5"), ("mujeres", "12.0 - 15.5")]).
+    Devuelve el texto antes de la primera etiqueta y los pares (etiqueta, contenido), sin tildes y en minúsculas.
+    Las etiquetas son palabras seguidas de dos puntos: un título "1:40" no cuenta como etiqueta.
+    """
+    texto = unicodedata.normalize("NFD", str(rango_str or "").lower())
+    texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
+    partes = re.split(r"([a-zñ][a-zñ ]*?)\s*:", texto)
+    contenidos = [partes[0]] + partes[2::2]
+    etiquetas = []
+    for i, etiqueta in enumerate(partes[1::2]):
+        # La unidad del segmento anterior queda pegada a la etiqueta ("17.5 g/dL Mujeres:" -> "dl mujeres"):
+        # se le quita y vuelve al final del segmento anterior
+        palabras = etiqueta.split()
+        sobrante = []
+        while len(palabras) > 1 and palabras[0] in UNIDADES:
+            sobrante.append(palabras.pop(0))
+        if sobrante:
+            contenidos[i] = contenidos[i].rstrip() + ("" if contenidos[i].rstrip().endswith("/") else " ") + " ".join(sobrante)
+        etiquetas.append(" ".join(palabras))
+    limpiar = lambda c: c.strip(" /;,.")  # noqa: E731
+    return limpiar(contenidos[0]), [(e, limpiar(c)) for e, c in zip(etiquetas, contenidos[1:])]
+
+
+def sexo_de_etiqueta(etiqueta, etiquetas):
+    """"M" es Mujer si el rango también trae "H" (Hombre/Mujer) y Masculino si trae "F" (Masculino/Femenino)."""
+    if etiqueta in ETIQUETAS_HOMBRE:
+        return "M"
+    if etiqueta in ETIQUETAS_MUJER:
+        return "F"
+    if etiqueta == "m":
+        if "h" in etiquetas:
+            return "F"
+        if "f" in etiquetas:
+            return "M"
+    return None
 
 
 def limpiar_entidades(entidades):
@@ -75,11 +132,58 @@ PREGUNTAS_RESPALDO = ["¿Qué significan estos resultados en mi caso particular?
                       "¿Necesito repetir algún examen o hacer un control más adelante?"]
 
 
+FUERA_DE_ALCANCE = ("LetraDeMédico está pensado solo para exámenes de sangre, así que este resultado no se explica "
+                    "automáticamente. Tu valor y su estado se muestran arriba; pídele a tu médico que te lo explique.")
+# Palabras del nombre, la muestra o el tipo de examen que indican otra muestra (sin tildes)
+PALABRAS_FUERA = {"orina", "urinario", "urinaria", "uroanalisis", "urianalisis", "sedimento", "heces", "coprologico",
+                  "coproscopico", "semen", "espermograma", "esputo", "cefalorraquideo", "lcr", "frotis"}
+PALABRAS_MUESTRA_SANGRE = {"sangre", "suero", "plasma", "serico", "serica", "sanguineo", "sanguinea", "hemograma",
+                           "venosa", "capilar", "arterial"}
+
+
+def limpiar_paciente(paciente):
+    """{"sexo": "M"/"F", "edad": entero} con lo que haya; nada más (ni nombre ni documento)."""
+    paciente = paciente if isinstance(paciente, dict) else {}
+    limpio = {}
+    sexo = normalizar_nombre(paciente.get("sexo"))
+    if sexo in ("m", "masculino", "hombre", "h", "varon"):
+        limpio["sexo"] = "M"
+    elif sexo in ("f", "femenino", "mujer"):
+        limpio["sexo"] = "F"
+    try:
+        edad = int(float(str(paciente.get("edad")).split()[0].replace(",", ".")))
+        if 0 <= edad <= 120:
+            limpio["edad"] = edad
+    except (TypeError, ValueError, IndexError):
+        pass
+    return limpio
+
+
+def es_fuera_de_alcance(entidad, tipo_examen=""):
+    """
+    LetraDeMédico es solo para exámenes de sangre. Un analito queda fuera si la muestra que extrajo Gemini no es
+    sangre, o, sin ese dato, si su nombre (o un tipo de examen que no habla de sangre) dice orina, heces, etc.
+    "GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A ORINA" queda dentro: la palabra de sangre se mira primero.
+    """
+    muestra = set(normalizar_nombre(entidad.get("muestra")).split())
+    if muestra & PALABRAS_MUESTRA_SANGRE:
+        return False
+    if muestra & (PALABRAS_FUERA | {"otra", "otro"}):
+        return True
+    nombre = set(normalizar_nombre(entidad.get("examen")).split())
+    if nombre & PALABRAS_MUESTRA_SANGRE:
+        return False
+    if nombre & PALABRAS_FUERA:
+        return True
+    tipo = set(normalizar_nombre(tipo_examen).split())
+    return bool(tipo & PALABRAS_FUERA) and not tipo & PALABRAS_MUESTRA_SANGRE
+
+
 def explicacion_plantilla(analito):
     """Explicación determinista con el valor, el rango y el estado: la red de seguridad cuando el texto
     generado contradice el estado calculado por la regla."""
     valor = f"{analito.get('valor', '')} {analito.get('unidad', '')}".strip()
-    rango = analito.get("rango_referencia", "")
+    rango = analito.get("rango_aplicado") or analito.get("rango_referencia", "")
     estado = analito.get("estado", "")
     if estado in FRASE_ESTADO:
         base = f"Tu resultado de {analito.get('examen', '')} es {valor}, {FRASE_ESTADO[estado]} rango de referencia ({rango})."
@@ -152,8 +256,18 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
         contradice = propias and (
             (palabras & PALABRAS_SUBE and all(e != "ALTO" for e in propias))
             or (palabras & PALABRAS_BAJA and all(e != "BAJO" for e in propias)))
-        if ajenas or contradice:
+        # El generador a veces repite la misma pregunta alargándola ("...para un paciente de 15 años", "...y cómo se
+        # relaciona con mi salud general"): se descarta si comparte el 70 % de sus palabras con una ya aceptada
+        repetida = any(len(palabras & set(mp.tokens(v))) >= 0.7 * min(len(palabras), len(set(mp.tokens(v))))
+                       for v in validas)
+        if repetida:
             quitadas += 1
+            print(f"Pregunta quitada (casi igual a otra): {pregunta}", flush=True)
+        elif ajenas or contradice:
+            quitadas += 1
+            motivo = f"nombra {sorted(mencionadas)}, que no está en el examen" if ajenas else \
+                f"dice alto/bajo de {sorted(c for c in mencionadas if c in estado_por_clave)}, que no lo está"
+            print(f"Pregunta quitada ({motivo}): {pregunta}", flush=True)
         else:
             validas.append(pregunta)
     if quitadas:
@@ -296,21 +410,24 @@ class LetraDeMedicoBackend:
         Eres un experto en extracción de datos médicos.
         Analiza el documento de resultados de laboratorio adjunto y extrae la información en formato JSON.
         
-        El JSON debe ser estrictamente un OBJETO con las siguientes dos claves:
-        - "tipo_de_examen": Identifica el tipo general de examen (ej. "Análisis de Orina Completo", "Perfil Lipídico", "Hemograma", "Bioquímica Sanguínea", etc.).
+        El JSON debe ser estrictamente un OBJETO con las siguientes claves:
+        - "tipo_de_examen": Identifica el tipo general de examen (ej. "Perfil Lipídico", "Hemograma", "Bioquímica Sanguínea", etc.).
+        - "paciente": {"sexo": "M" (masculino), "F" (femenino) o null, "edad": número de años o null}, solo si el
+          documento los indica. NO incluyas el nombre, documento de identidad ni ningún otro dato personal.
         - "analitos": Una lista de objetos, donde cada objeto represente un examen individual con las claves:
             - "examen": Nombre del examen.
-            - "valor": El valor numérico o cualitativo (ej. "Negativo", "1.015") reportado.
+            - "valor": El valor numérico o cualitativo (ej. "Negativo", "14.2") reportado.
             - "unidad": La unidad de medida (si aplica, si no dejar vacío).
             - "rango_referencia": El rango normal indicado en el examen (ej. "70 - 99", "Negativo", "< 200").
+            - "muestra": "sangre" (incluye suero y plasma), "orina" u "otra", según la sección o el nombre del examen.
 
         No deduzcas ni infieras nada, extrae los datos numéricos y cualitativos tal cual aparecen en el documento.
         Si hay tablas, lee cada fila cuidadosamente.
 
-        Rango de referencia con niveles de riesgo: si un examen NO tiene un intervalo único y en su lugar el
-        laboratorio lista niveles (ej. "Sin riesgo: Mayor de 55 mg/dl. Riesgo moderado: 35 - 55. Alto riesgo: Menor
-        de 35"), usa como "rango_referencia" el nivel deseable o sin riesgo, copiado tal cual (ej. "Mayor de 55").
-        Si el examen tiene un intervalo único además de los niveles, usa el intervalo único.
+        Rangos con etiquetas: si el rango depende del sexo o de la edad, o el laboratorio lista niveles o categorías
+        (ej. "Hombres: 13.5 - 17.5 Mujeres: 12.0 - 15.5", "Sin riesgo: Mayor de 55 mg/dl. Riesgo moderado: 35 - 55",
+        "Normal: < 5.7 Prediabetes: 5.7 - 6.4"), copia en "rango_referencia" el texto COMPLETO con sus etiquetas,
+        separando cada nivel con un punto. Si además hay un intervalo único, ponlo primero. No elijas tú un nivel.
         
         Responde ÚNICAMENTE con el JSON válido, sin texto adicional (ni siquiera bloques de código ```json).
         """
@@ -331,12 +448,77 @@ class LetraDeMedicoBackend:
         return entidades if isinstance(entidades, dict) else {}
 
     @staticmethod
-    def evaluar_estado_analito(valor_str, rango_str):
+    def evaluar_estado_analito(valor_str, rango_str, sexo=None):
         """
         Paso 2.5: Reglas deterministas para evaluar el estado.
         Evalúa si un valor numérico o cualitativo está dentro del rango.
         Retorna "NORMAL", "ALTO", "BAJO", "ANORMAL" o "DESCONOCIDO".
+
+        Rangos con etiquetas (ver _estado_con_categorias): por sexo ("Hombres: ... Mujeres: ...") se usa el del
+        `sexo` del paciente ("M" o "F"); por categorías ("Normal: < 5.7 Prediabetes: ...") se usa la normal.
         """
+        return LetraDeMedicoBackend.evaluar_con_rango(valor_str, rango_str, sexo)[0]
+
+    @staticmethod
+    def evaluar_con_rango(valor_str, rango_str, sexo=None):
+        """
+        (estado, rango aplicado). El rango aplicado es el segmento que decidió el estado ("Mayor de 55" dentro de
+        "Sin riesgo: Mayor de 55. Riesgo moderado: 35 - 55..."), o "" si no se pudo decidir. La app lo usa en el
+        indicador gráfico y la ficha, y el generador lo recibe en vez del texto completo, para que nada contradiga
+        a la regla.
+        """
+        try:
+            pre, pares = segmentos_rango(rango_str)
+            if pares and re.search(r'\d', str(valor_str)):
+                return LetraDeMedicoBackend._estado_con_categorias(valor_str, pre, pares, sexo)
+        except Exception as e:
+            print(f"Error evaluando un rango con categorías: {e}")
+            return "DESCONOCIDO", ""
+        return LetraDeMedicoBackend._estado_simple(valor_str, rango_str), str(rango_str or "").strip()
+
+    @staticmethod
+    def _estado_con_categorias(valor_str, pre, pares, sexo=None):
+        """
+        Medido con formatos reales (2026-11-02): antes se usaba el primer intervalo del texto, así que una mujer
+        con hemoglobina 13,0 salía BAJO con el rango de hombres, una HbA1c de 5,9 % salía NORMAL con el rango de
+        prediabetes y un colesterol de 110 salía BAJO con el de "limítrofe".
+
+        Orden: 1) segmentos por sexo, con el del paciente o, si no se sabe, solo si ambos dan el mismo estado;
+        2) un intervalo sin etiqueta antes de las categorías (el intervalo único del laboratorio);
+        3) el segmento "normal", "deseable", "sin riesgo"...; 4) con categorías de riesgo y sin una normal,
+        DESCONOCIDO; 5) con etiquetas de población ("Adultos:", "Ayunas:"), solo si todas dan el mismo estado.
+        """
+        evaluar = LetraDeMedicoBackend._estado_simple
+        etiquetas = [e for e, _ in pares]
+        por_sexo = {}
+        for etiqueta, contenido in pares:
+            s = sexo_de_etiqueta(etiqueta, etiquetas)
+            if s and s not in por_sexo:
+                por_sexo[s] = contenido
+        if por_sexo:
+            if sexo in por_sexo:
+                return evaluar(valor_str, por_sexo[sexo]), por_sexo[sexo]
+            estados = {evaluar(valor_str, c) for c in por_sexo.values()}
+            if len(por_sexo) == 2 and len(estados) == 1:
+                return estados.pop(), " / ".join(f"{'Hombres' if s == 'M' else 'Mujeres'}: {c}" for s, c in sorted(por_sexo.items()))
+            return "DESCONOCIDO", ""
+        if re.search(r'\d', pre):
+            return evaluar(valor_str, pre), pre
+        normales = [c for e, c in pares if e in ETIQUETAS_NORMAL] or \
+                   [c for e, c in pares if any(e.startswith(n) for n in ETIQUETAS_NORMAL)]
+        if normales:
+            return evaluar(valor_str, normales[0]), normales[0]
+        if any(set(e.split()) & PALABRAS_RIESGO for e in etiquetas):
+            return "DESCONOCIDO", ""
+        con_numeros = [c for _, c in pares if re.search(r'\d', c)]
+        estados = {evaluar(valor_str, c) for c in con_numeros}
+        if len(estados) == 1 and len(con_numeros) == 1:
+            return estados.pop(), con_numeros[0]
+        return (estados.pop(), "") if len(estados) == 1 else ("DESCONOCIDO", "")
+
+    @staticmethod
+    def _estado_simple(valor_str, rango_str):
+        """Un valor contra un rango sin categorías (la regla original de la Fase 5)."""
         try:
             val_lower = str(valor_str).lower().strip()
             ref_lower = str(rango_str).lower().strip()
@@ -423,7 +605,8 @@ class LetraDeMedicoBackend:
             
         return pasajes_recuperados
 
-    def step_3_generative_llm(self, entidades, patient_context="", pasajes_rag=None, tipo_examen="Examen de Laboratorio"):
+    def step_3_generative_llm(self, entidades, patient_context="", pasajes_rag=None, tipo_examen="Examen de Laboratorio",
+                              paciente=None):
         """
         Paso 3: LLM Generativo (Traducción + Preguntas)
         Toma las entidades estructuradas y el contexto del paciente para generar la explicación
@@ -431,7 +614,7 @@ class LetraDeMedicoBackend:
         """
         print("--- Ejecutando LLM Generativo (Traducción a lenguaje claro) ---")
         if self.modo == "propio":
-            return self._generar_propio(entidades, patient_context, pasajes_rag, tipo_examen)
+            return self._generar_propio(entidades, patient_context, pasajes_rag, tipo_examen, paciente)
 
         # Convertimos las entidades a un string legible para el prompt
         datos_laboratorio = json.dumps(entidades, indent=2, ensure_ascii=False)
@@ -485,7 +668,7 @@ class LetraDeMedicoBackend:
             print("Error al decodificar el JSON del LLM Generativo.")
             return {}
 
-    def _generar_propio(self, entidades, patient_context, pasajes_rag, tipo_examen):
+    def _generar_propio(self, entidades, patient_context, pasajes_rag, tipo_examen, paciente=None):
         """
         Generador propio por lotes de LOTE_GENERADOR analitos, el tamaño máximo visto en el entrenamiento.
         Un lote que falla (excepción o JSON inválido) no tumba a los demás, y los analitos que el modelo
@@ -498,8 +681,11 @@ class LetraDeMedicoBackend:
 
         def generar_lote(indices):
             # El mismo formato con que se entrenó el generador (training/generador/prompt.py)
-            caso = {"tipo_de_examen": tipo_examen, "paciente": {}, "contexto_paciente": patient_context,
-                    "analitos": [entidades[i] for i in indices]}
+            # El generador ve el rango que aplicó la regla (no el texto con todas las categorías), como en su
+            # entrenamiento, y el sexo y la edad si el documento los trae
+            caso = {"tipo_de_examen": tipo_examen, "paciente": dict(paciente or {}), "contexto_paciente": patient_context,
+                    "analitos": [{**entidades[i], "rango_referencia": entidades[i].get("rango_aplicado")
+                                  or entidades[i].get("rango_referencia", "")} for i in indices]}
             lote_pasajes = [pasajes[i] for i in indices] if alineados else pasajes
             # Un examen que no está en la base va sin pasaje: mejor eso que la guía de otro examen
             lote_pasajes = [p for p in lote_pasajes if isinstance(p, dict) and p.get("texto")]
@@ -592,32 +778,51 @@ class LetraDeMedicoBackend:
         if not entidades:
             return {"error": "No se encontraron exámenes con nombre y valor en el documento. "
                              "Prueba con una foto más nítida o con el PDF original del laboratorio."}
-        return self.analizar_entidades(entidades, tipo_examen, patient_context)
+        return self.analizar_entidades(entidades, tipo_examen, patient_context,
+                                       paciente=limpiar_paciente(resultado_multimodal.get("paciente")))
 
-    def analizar_entidades(self, entidades, tipo_examen, patient_context=""):
-        """Reglas -> RAG -> LLM Generativo -> Guardrails, a partir de los analitos ya extraídos."""
+    def analizar_entidades(self, entidades, tipo_examen, patient_context="", paciente=None):
+        """
+        Reglas -> RAG -> LLM Generativo -> Guardrails, a partir de los analitos ya extraídos.
+
+        `paciente` ({"sexo": "M"/"F", "edad": n}, puede faltar) decide los rangos por sexo y llega al generador,
+        que se entrenó con ese dato. LetraDeMédico es solo para exámenes de sangre: los analitos de orina u otras
+        muestras conservan su estado calculado, pero no pasan por el RAG ni por el generador.
+        """
         entidades = limpiar_entidades(entidades)
+        paciente = limpiar_paciente(paciente)
         avisos = []
         # FASE 1: Evaluar los estados de forma determinista por reglas
         for entidad in entidades:
-            entidad["estado"] = self.evaluar_estado_analito(entidad.get("valor", ""), entidad.get("rango_referencia", ""))
+            entidad["estado"], entidad["rango_aplicado"] = self.evaluar_con_rango(
+                entidad.get("valor", ""), entidad.get("rango_referencia", ""), paciente.get("sexo"))
+            entidad["fuera_de_alcance"] = es_fuera_de_alcance(entidad, tipo_examen)
+
+        dentro = [e for e in entidades if not e["fuera_de_alcance"]]
+        fuera = [e["examen"] for e in entidades if e["fuera_de_alcance"]]
+        if not dentro:
+            return {"error": "Este documento no parece ser un examen de sangre. LetraDeMédico está pensado solo para "
+                             "exámenes de sangre (hemograma, química, perfil lipídico, tiroides...)."}
+        if fuera:
+            avisos.append("LetraDeMédico es solo para exámenes de sangre. No se explican automáticamente: "
+                          + ", ".join(fuera) + ".")
 
         # FASE 3: Recuperación RAG. Si falla, el generador sigue sin pasajes en vez de tumbar el análisis
         try:
-            pasajes_rag = self.recuperar_conocimiento_rag(entidades, tipo_examen)
+            pasajes_rag = self.recuperar_conocimiento_rag(dentro, tipo_examen)
         except Exception as e:
             print(f"La recuperación RAG falló: {e}", flush=True)
             pasajes_rag = [] if self.modo == "propio" else {}
             avisos.append("No se pudieron consultar las guías médicas; las explicaciones se generaron sin ellas.")
 
-        resultado = self.step_3_generative_llm(entidades, patient_context, pasajes_rag, tipo_examen)
+        resultado = self.step_3_generative_llm(dentro, patient_context, pasajes_rag, tipo_examen, paciente=paciente)
         # Una explicación por analito, en su orden y con su nombre (el generador puede renombrar u omitir)
-        resultado = alinear_explicaciones(entidades, resultado)
+        resultado = alinear_explicaciones(dentro, resultado)
         faltantes = sum(1 for e in resultado["explicaciones"] if e.get("sin_explicacion"))
         if faltantes:
-            avisos.append(f"{faltantes} de {len(entidades)} exámenes quedaron sin explicación automática.")
+            avisos.append(f"{faltantes} de {len(dentro)} exámenes quedaron sin explicación automática.")
         try:
-            avisos += revisar_coherencia(entidades, resultado, tipo_examen)
+            avisos += revisar_coherencia(dentro, resultado, tipo_examen)
         except Exception as e:  # la revisión es una red de seguridad: si falla, no debe tumbar el análisis
             print(f"La revisión de coherencia falló: {e}", flush=True)
         sin_guia = [p.get("examen") for p in pasajes_rag if isinstance(p, dict) and p.get("sin_cobertura")] \
@@ -625,6 +830,17 @@ class LetraDeMedicoBackend:
         if sin_guia:
             avisos.append("Sin guía de MedlinePlus en nuestra base para: " + ", ".join(sin_guia)
                           + ". Su explicación es más general; consúltala con tu médico.")
+
+        # Se vuelven a intercalar los analitos fuera de alcance, para que todo quede en el orden del documento
+        if fuera:
+            explicaciones = iter(resultado["explicaciones"])
+            resultado["explicaciones"] = [
+                {"examen": e["examen"], "explicacion": FUERA_DE_ALCANCE, "fuera_de_alcance": True}
+                if e["fuera_de_alcance"] else next(explicaciones) for e in entidades]
+            if isinstance(pasajes_rag, list) and len(pasajes_rag) == len(dentro):
+                pasajes = iter(pasajes_rag)
+                pasajes_rag = [{"examen": e["examen"], "titulo": "", "texto": "", "fuera_de_alcance": True}
+                               if e["fuera_de_alcance"] else next(pasajes) for e in entidades]
 
         # FASE 2: Capa de Validación y Guardrails
         resultado = self.step_4_validation(resultado)
@@ -634,6 +850,7 @@ class LetraDeMedicoBackend:
             "datos_extraidos": entidades, # Devolvemos solo la lista para no romper el frontend
             "analisis_final": resultado,
             "tipo_examen": tipo_examen,
+            "paciente": paciente,
             "modo": self.modo,
             "pasajes_rag": pasajes_rag if self.modo == "propio" else None,
         }

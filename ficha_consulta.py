@@ -62,10 +62,14 @@ def contenido_ficha(tipo_examen, analitos, explicaciones, preguntas, contexto_pa
     filas = []
     for a, e in zip(analitos, explicaciones):
         texto = "" if e.get("sin_explicacion") else NOTA_GUARDRAIL_RE.sub("", e.get("explicacion", ""))
+        # El rango aplicado sale en minúsculas de la regla ("mayor de 55 mg/dl"): solo se capitaliza la primera letra
+        if a.get("rango_aplicado"):
+            a = {**a, "rango_aplicado": a["rango_aplicado"][:1].upper() + a["rango_aplicado"][1:]}
         filas.append({
             "examen": limpiar(a.get("examen")),
             "resultado": limpiar(f"{a.get('valor', '')} {a.get('unidad', '')}") or "No reportado",
-            "referencia": limpiar(a.get("rango_referencia")) or "No indicada",
+            # El segmento que aplicó la regla, si el laboratorio dio categorías o rangos por sexo
+            "referencia": limpiar(a.get("rango_aplicado") or a.get("rango_referencia")) or "No indicada",
             "estado": str(a.get("estado") or "").upper(),
             "explicacion": limpiar(texto),
         })
@@ -199,8 +203,13 @@ def ficha_pdf(tipo_examen, analitos, explicaciones, preguntas, contexto_paciente
         pdf.multi_cell(ancho, 5.5, "No seleccionaste preguntas. Puedes escribirlas en las notas.",
                        new_x="LMARGIN", new_y="NEXT")
 
-    # Aviso (antes de las notas, para que nunca quede solo en otra página)
+    # Aviso (antes de las notas, para que nunca quede solo en otra página). Si no cabe entero, va completo a la
+    # siguiente: partido entre dos páginas, la segunda mitad pierde el contexto
     pdf.ln(4)
+    pdf.set_font("DejaVu", size=9)
+    lineas_aviso = len(pdf.multi_cell(ancho - 6, 5, AVISO, dry_run=True, output="LINES"))
+    if pdf.get_y() + 5 * (lineas_aviso + 1) + 6 > pdf.h - pdf.b_margin:
+        pdf.add_page()
     pdf.set_fill_color(255, 251, 235)
     pdf.set_draw_color(245, 158, 11)
     pdf.set_text_color(120, 53, 15)

@@ -166,6 +166,17 @@ def test_preguntas_incoherentes_se_quitan():
     assert resultado["preguntas_sugeridas"] == buenas
 
 
+def test_preguntas_casi_repetidas_se_quitan():
+    # Salida real del generador con el PDF de prueba (2026-11-02): la misma pregunta, cada vez más larga
+    analitos = analitos_pdf()
+    base = "¿Qué factores podrían estar influyendo en este resultado de la somatomedin C?"
+    resultado = {"explicaciones": [{"examen": a["examen"], "explicacion": "dentro del rango"} for a in analitos],
+                 "preguntas_sugeridas": [base, base[:-1] + " en un paciente de 15 años?",
+                                         "¿Es necesario repetir el análisis o hacer algún estudio adicional?"]}
+    revisar_coherencia(analitos, resultado)
+    assert resultado["preguntas_sugeridas"] == [base, "¿Es necesario repetir el análisis o hacer algún estudio adicional?"]
+
+
 def test_si_no_queda_ninguna_pregunta_se_dan_las_de_respaldo():
     analitos = analitos_pdf()[:1]
     resultado = {"explicaciones": [{"examen": analitos[0]["examen"], "explicacion": "normal"}],

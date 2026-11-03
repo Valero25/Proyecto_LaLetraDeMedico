@@ -103,6 +103,8 @@ La red propia lo muestra con claridad. Con unos 500 parámetros por frase de ent
 | 12 | 0,020 | **0,944** (mejor época) |
 | 17 | 0,007 | 0,930 (parada temprana) |
 
+La curva completa, época por época, está en `informe/figuras/fig4_curvas.png` (panel derecho; se regenera con `python informe/figuras.py`).
+
 Desde la época 4 la pérdida de entrenamiento sigue cayendo casi hasta cero, mientras que el F1 en validación oscila entre 0,86 y 0,94. En test, sobre analitos no vistos, baja a 0,902 ± 0,009 (3 semillas). Para contenerlo se usaron cuatro mecanismos:
 
 1. **Dropout** de 0,3 en los embeddings y en la cabeza.
@@ -216,6 +218,8 @@ Se entrena cerca del **1 %** de los ~3.090 millones de parámetros del modelo, y
 | 25 | 0,72 | 0,561 | 0,607 | 82,4 % |
 | 50 | 1,43 | 0,439 | 0,547 | 83,8 % |
 | 70 | 2,00 | 0,423 | 0,538 | 84,0 % |
+
+La curva con los 14 registros de train y los 3 de validación está en `informe/figuras/fig4_curvas.png` (panel izquierdo).
 
 Hay tres contrastes con los modelos anteriores:
 - **No hay sobreajuste visible.** La pérdida de validación baja en cada evaluación, aunque cada vez menos (−0,060 y luego −0,009). La red propia de la sección 6, en cambio, llevaba la pérdida de train casi a cero mientras la validación oscilaba. Aquí el modelo solo puede mover el 1 % de sus parámetros, y eso actúa como una regularización por sí misma.

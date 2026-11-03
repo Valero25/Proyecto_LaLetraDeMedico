@@ -14,7 +14,7 @@
 
 ## Estado actual
 
-**Fase en curso:** Fase 4. Los scripts y el notebook de QLoRA están listos y probados en CPU; los profesores están generando las respuestas de referencia en Groq. Modelos elegidos: `alia-ajustado-completo` + alias para el RAG (Fase 2) y `mrbert-biomed` sin ponderar para los guardrails (Fase 3).
+**Fase en curso:** Fase 6 (informe). La app funciona de punta a punta con los tres modelos propios, verificada con un PDF real; el generador corre en GPU en ~28 s por examen. Modelos en la app: `alia-ajustado-completo` + alias (RAG), `mrbert-biomed-v2` (guardrail) y Qwen2.5-3B + QLoRA en GGUF (generador). Alcance: solo exámenes de sangre.
 
 | Fase | Estado |
 |---|---|
@@ -22,9 +22,9 @@
 | 1. Generador de exámenes sintéticos | ✅ Terminada |
 | 2. RAG con embeddings | ✅ Terminada |
 | 3. Clasificador de guardrails | ✅ Terminada (falta la revisión del equipo) |
-| 4. Fine-tuning QLoRA del generador | 🟡 En curso |
-| 5. Integración en la app | 🟡 En curso |
-| 6. Informe | ⬜ Pendiente |
+| 4. Fine-tuning QLoRA del generador | ✅ Terminada (falta la línea base de Gemini y la revisión del equipo) |
+| 5. Integración en la app | ✅ Terminada (falta la rúbrica humana contra el modo Gemini) |
+| 6. Informe | 🟡 En curso |
 
 Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
 
@@ -226,7 +226,7 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
 5. **Limitación importante para el informe:** el test solo tiene frases en que los dos LLM coinciden, que son las más claras, así que el 0,99 es optimista. Los 200 desacuerdos son el set difícil. Sobre ellos, MrBERT suele dar la razón al profesor: en 57 de los 89 casos "diagnóstica vs. informativa" dice diagnóstica. Cuando el equipo los revise, entran al dataset con su etiqueta y se reevalúa. Ese número es el más honesto.
 6. Las frases de entrenamiento y de test las escribió el mismo profesor (Qwen). En la Fase 4 se mide el clasificador sobre las salidas reales del generador.
 
-## Fase 4: fine-tuning QLoRA del generador 🟡
+## Fase 4: fine-tuning QLoRA del generador ✅
 
 - [x] **Formato** (`training/generador/prompt.py`):
   - El estudiante ve un prompt de sistema corto con las reglas, más los datos del caso y los pasajes. Es el mismo formato que usará la app.
@@ -328,7 +328,7 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Pérdida solo sobre los tokens de la respuesta.
   - Justificación de la tasa de aprendizaje.
 
-## Fase 5: integración en la app 🟡
+## Fase 5: integración en la app ✅
 
 - [x] **Regla de estados ampliada** (`evaluar_estado_analito`):
   - Entiende "7 a 56", "Hasta 200" (incluye el límite), "Menor de 5.7", "Mayor de 50", "<=" y ">=", y cruces o trazas en orina ("1+", "++", "Trazas").
@@ -411,11 +411,37 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - **Ficha descargable en PDF** (A4, texto seleccionable, casillas y espacio para notas) **e imagen PNG** (vertical, para el celular), además del texto (`ficha_consulta.py`, fuentes DejaVu en `assets/fuentes`).
   - Calidad que queda: "ultraseñalada" en lugar de "ultrasensible", y causas posibles algo especulativas para la IGF-1 ("dieta alta en proteínas"). Van a la rúbrica humana y al generador v2.
   - `tests/test_pdf_real.py`: 18 pruebas de regresión con ese documento. **95 passed.**
+- [x] **Robustez con formatos reales de sangre y alcance solo sangre (2026-11-02):**
+  - **Sondeo de la regla** con 33 formatos reales que el dataset sintético no cubría: **22 → 33 correctos**.
+  - 4 de los fallos daban un estado **equivocado**:
+    - Rangos por sexo: siempre el de hombres. Una mujer con hemoglobina 13,0 salía BAJO.
+    - HbA1c 5,9 % con "Normal: < 5.7 Prediabetes: 5.7 - 6.4" salía NORMAL.
+    - Colesterol 110 con "Deseable: < 200 Limítrofe: 200 - 239" salía BAJO.
+  - Correcciones:
+    - `segmentos_rango` y `_estado_con_categorias` usan el segmento del sexo del paciente, si no el intervalo único del laboratorio, si no el segmento "normal/deseable/sin riesgo".
+    - Con solo categorías de riesgo da DESCONOCIDO. Sin sexo, un rango por sexo solo se resuelve si los dos dan el mismo estado.
+    - Nuevas palabras: "menor a", "superior a", "máximo", "< o =", "igual o mayor a".
+    - Dataset sintético: sigue en 10.604 / 10.604.
+  - **Rango aplicado:** la regla devuelve el segmento que usó. Ese segmento es el que ven el indicador gráfico, la ficha y el generador, para que nada la contradiga.
+  - **Extracción:** Gemini copia el rango completo con sus categorías (no elige un nivel) y devuelve el sexo, la edad (no el nombre) y la muestra de cada analito.
+    - En el PDF real: paciente {M, 15}, 8 de 8 en "sangre" y 8 de 8 estados correctos con los rangos completos.
+    - El generador recibe el sexo y la edad, como en su entrenamiento.
+  - **Solo sangre:**
+    - Los analitos de orina u otras muestras conservan su estado, pero no pasan por el RAG ni por el generador, y llevan un aviso.
+    - Un documento sin analitos de sangre devuelve un error claro.
+    - El preset de función renal cambió "Proteínas en orina" por potasio.
+  - **Preguntas:** con el PDF real, el generador repitió 4 veces "¿Qué significa tener un nivel **alto** de hormona estimulante del tiroides?" (la TSH era normal), cada vez más larga.
+    - La revisión las quitó todas.
+    - Ahora también descarta las casi repetidas (70 % de palabras en común) y registra en consola qué quita y por qué.
+  - La ficha PDF ya no parte el aviso entre dos páginas.
+  - `tests/test_sangre.py` (37 pruebas) y una regresión más en `test_pdf_real.py`. **133 passed.**
 - [ ] Comparar contra el MODO gemini en los mismos exámenes (rúbrica humana).
 
-## Fase 6: informe ⬜
+## Fase 6: informe 🟡
 
-- [ ] Tablas y gráficas de cada experimento, README actualizado con la arquitectura nueva y una sección de limitaciones y alcance.
+- [x] **Figuras** (`informe/figuras.py` → `informe/figuras/`, 2026-11-02): RAG (hit@1 total y consultas manuales), guardrail (sintético frente a texto real, con las riesgosas que detecta cada modelo), generador base frente a ajustado, curvas de aprendizaje (QLoRA y BiLSTM) y velocidad. Se generan desde los JSON de `evaluacion/resultados/`; las curvas se copian a `evaluacion/resultados/curvas.json` para no depender de `models/`. Paleta validada para daltonismo y valores escritos en cada barra.
+- [x] **README** reescrito: qué hace, alcance (solo sangre), arquitectura con diagrama, tabla de resultados, figuras, instalación en CPU y GPU, estructura y limitaciones.
+- [ ] Revisión final del equipo: leer el README y `fundamentos.md` completos y ensayar la demo.
 - [x] `informe/fundamentos.md`: relaciona cada principio del curso con un resultado medido del proyecto. Se revisó contra el PDF del curso (*PTIA Principios NN*) y contra el código el 2026-10-18.
 
 ### Cobertura de los temas del curso
@@ -435,13 +461,13 @@ Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega
 | Función de pérdida: MSE, MAE, L1, L2, cero-uno, hinge (52-57) | Entropía cruzada para entrenar, F1 para evaluar | 7 |
 | Gradiente, descenso, tasa de aprendizaje, mínimos locales (58-68) | AdamW, recorte, 3 semillas | 8 |
 | Retropropagación y regla de la cadena, XOR (69-91) | GradCache, retropropagación a través del tiempo | 9 |
-| Curva de aprendizaje (92) | Tabla de épocas de la red propia | 6 |
+| Curva de aprendizaje (92) | Tabla y gráfica de épocas de la red propia y del QLoRA (`fig4_curvas.png`) | 6 y 10 |
 | Historia: aprendizaje profundo = algoritmos + cómputo + datos (3) | Preentrenamiento frente a red desde cero | 6 |
 
 **Pendiente teórico:**
 - Agregar weight decay al ajuste del RAG. Hoy vale 0, así que el problema de Hebb "sin reducción de pesos" queda sin resolver ahí.
 - [x] ~~La pérdida ponderada por clase en guardrails (sección 7)~~: hecha; no mejora (ver 7.1). Queda la calibración (temperature scaling).
-- Las curvas de aprendizaje como gráfica, no solo como tabla.
+- [x] ~~Las curvas de aprendizaje como gráfica~~: hecha (`informe/figuras/fig4_curvas.png`).
 
 ---
 
@@ -477,7 +503,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 95 passed)
+# Pruebas (esperado: 133 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

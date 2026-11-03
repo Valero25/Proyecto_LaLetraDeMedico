@@ -1,0 +1,159 @@
+{
+ "seed": 7,
+ "modelos": [
+  "qwen2.5-3b-base",
+  "qwen2.5-3b-ajustado"
+ ],
+ "casos": {
+  "C01": {
+   "id": "sint-42-00347",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C02": {
+   "id": "sint-42-00836",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C03": {
+   "id": "sint-42-00278",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C04": {
+   "id": "sint-42-00485",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C05": {
+   "id": "sint-42-00737",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C06": {
+   "id": "sint-42-00702",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C07": {
+   "id": "sint-42-00571",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C08": {
+   "id": "sint-42-00370",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C09": {
+   "id": "sint-42-00247",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C10": {
+   "id": "sint-42-00109",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C11": {
+   "id": "sint-42-00172",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C12": {
+   "id": "sint-42-00901",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C13": {
+   "id": "sint-42-00474",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C14": {
+   "id": "sint-42-00039",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C15": {
+   "id": "sint-42-00017",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C16": {
+   "id": "sint-42-00750",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C17": {
+   "id": "sint-42-00260",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C18": {
+   "id": "sint-42-00908",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C19": {
+   "id": "sint-42-00228",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C20": {
+   "id": "sint-42-01066",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C21": {
+   "id": "sint-42-00576",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C22": {
+   "id": "sint-42-00406",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C23": {
+   "id": "sint-42-00653",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C24": {
+   "id": "sint-42-00579",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C25": {
+   "id": "sint-42-00405",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C26": {
+   "id": "sint-42-01091",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C27": {
+   "id": "sint-42-00283",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C28": {
+   "id": "sint-42-00267",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  },
+  "C29": {
+   "id": "sint-42-00656",
+   "A": "qwen2.5-3b-base",
+   "B": "qwen2.5-3b-ajustado"
+  },
+  "C30": {
+   "id": "sint-42-00236",
+   "A": "qwen2.5-3b-ajustado",
+   "B": "qwen2.5-3b-base"
+  }
+ }
+}

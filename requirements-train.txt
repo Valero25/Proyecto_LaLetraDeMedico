@@ -15,6 +15,10 @@ accelerate
 # Fase 3: guardrails (MrBERT corre en CPU en unos 25 min)
 scikit-learn
 
+# Fase 4: rúbrica humana del generador (evaluacion/rubrica.py)
+openpyxl
+scipy
+
 # Fase 4: fine-tuning (se instalan en Colab con GPU)
 # torch
 # transformers

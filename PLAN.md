@@ -322,6 +322,17 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Legibilidad (INFLESZ / Fernández-Huerta).
   - % de frases marcadas por el clasificador de la Fase 3.
   - Rúbrica humana sobre unos 50 casos.
+- [x] **Rúbrica humana preparada (`evaluacion/rubrica.py`, 2026-11-02): base frente a ajustado, a ciegas.**
+  - **Casos:** 30 del split de test, solo de sangre, repartidos entre los 8 tipos de examen; 24 tienen algún valor fuera de rango, porque los casos todo normal casi no discriminan.
+  - **Ciego:** en cada caso las dos respuestas aparecen como A y B en orden aleatorio (el ajustado es A en 15 de 30). La clave está en `evaluacion/rubrica/clave.json` y no se abre antes de evaluar.
+  - **Criterios (1 a 5, con anclas):** exactitud, claridad, seguridad, completitud y utilidad de las preguntas. Además, la respuesta preferida (A, B o empate) y un comentario.
+  - **Pasos para el equipo:**
+    1. Cada evaluador copia `evaluacion/rubrica/plantilla_rubrica.xlsx` a `evaluacion/rubrica/respuestas/rubrica_<nombre>.xlsx` y la llena.
+    2. Se corre `python evaluacion/rubrica.py resumir` → `evaluacion/resultados/fase4_rubrica.json`.
+  - **Qué calcula `resumir`:** media y desviación por criterio y modelo, prueba de Wilcoxon pareada por caso (con el promedio entre evaluadores), conteo de preferencias, acuerdo y kappa de Cohen entre evaluadores, y los comentarios atribuidos al modelo correcto.
+  - Se excluye Gemini: el motor principal es el propio, y la comparación que importa para el informe es el efecto del ajuste.
+  - `tests/test_rubrica.py`: ciego, solo sangre y resumen con dos evaluadores simulados. **154 passed.**
+- [ ] **El equipo llena la rúbrica** (al menos 2 evaluadores, para medir acuerdo) y se corre `resumir`.
 - [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
   - Curvas de pérdida de train y validación, para el análisis de sobreajuste.
@@ -531,7 +542,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 152 passed)
+# Pruebas (esperado: 154 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

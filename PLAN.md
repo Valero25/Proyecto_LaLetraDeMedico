@@ -435,6 +435,21 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - Ahora también descarta las casi repetidas (70 % de palabras en común) y registra en consola qué quita y por qué.
   - La ficha PDF ya no parte el aviso entre dos páginas.
   - `tests/test_sangre.py` (37 pruebas) y una regresión más en `test_pdf_real.py`. **133 passed.**
+- [x] **Motor principal por defecto (2026-11-02):** el backend usaba Gemini si no se le indicaba el modo; ahora usa los modelos propios. Gemini queda como segunda opción (comparación y respaldo), con su aviso en la app. **134 passed.**
+- [x] **Lectura local de PDFs digitales (`lector_pdf.py`, 2026-11-02):** con el motor principal, un PDF del laboratorio se procesa entero sin Gemini.
+  - pypdf extrae la capa de texto en modo layout, que conserva las columnas. Unas reglas reconocen dos diseños:
+    - por bloques: nombre y debajo "Resultado: valor unidad rango", con las categorías debajo;
+    - por tabla: una fila por analito, con o sin columna de banderas H/L/*.
+  - También extrae el sexo y la edad (nunca el nombre) y la muestra por la sección (UROANÁLISIS → orina).
+  - Si no hay capa de texto (foto o escaneo) o la lectura no es confiable (un resultado sin nombre), pasa a Gemini.
+  - La app dice cómo se leyó el documento y ofrece "Leerlo otra vez con Gemini".
+  - **Medición** (`evaluacion/evaluar_lector_pdf.py` → `fase5_lector_pdf.json`): 150 casos de test × 3 diseños = 450 PDFs sintéticos de respuesta conocida, leídos al **100 %** en nombre, valor, unidad, rango, muestra y paciente, sin analitos de más.
+    - En el camino se corrigieron tres errores. Las abreviaturas de una o dos letras ("K", "Ca") se descartaban como nombre. "NIT" en la lista de ruido borraba "Nitritos" y "Nitrógeno ureico". Las cruces "3+" no se reconocían como valor.
+    - Primera medición: 50-55 % de los documentos leídos.
+  - **PDF real:** la lectura local es idéntica a la de Gemini en los 8 analitos, incluidos los rangos con categorías, y da sexo y edad.
+    - De punta a punta sin clave de Gemini en el proceso (el cliente ni se crea): **36 s** en GPU, frente a 52 s con la lectura de Gemini.
+  - Limitación: los 3 diseños sintéticos son propios. Un diseño real muy distinto podría leerse mal sin que el lector lo detecte; de ahí el aviso y el botón para releer.
+  - `tests/test_lector_pdf.py` (13 pruebas). **146 passed.**
 - [ ] Comparar contra el MODO gemini en los mismos exámenes (rúbrica humana).
 
 ## Fase 6: informe 🟡
@@ -503,7 +518,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 134 passed)
+# Pruebas (esperado: 146 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

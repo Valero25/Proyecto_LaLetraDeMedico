@@ -46,6 +46,38 @@ def obtener_backend(modo):
     return backend
 
 
+def guardar_analisis(resultado, contexto_paciente):
+    """Deja en la sesión un análisis de documento y pasa a la pantalla de resultados."""
+    st.session_state.datos_extraidos = resultado["datos_extraidos"]
+    st.session_state.analisis_final = resultado["analisis_final"]
+    st.session_state.tipo_examen = resultado.get("tipo_examen", "Examen Médico")
+    st.session_state.modo_usado = resultado.get("modo", modo)
+    st.session_state.pasajes_rag = resultado.get("pasajes_rag")
+    st.session_state.contexto_paciente = contexto_paciente
+    st.session_state.paciente = resultado.get("paciente") or {}
+    st.session_state.lectura = resultado.get("lectura")
+    st.session_state.es_demo = False
+    st.session_state.preguntas_seleccionadas = list(resultado["analisis_final"].get("preguntas_sugeridas", []))
+    st.session_state.preguntas_personalizadas = []
+    st.session_state.chat_dudas = []
+    st.session_state.analisis_completado = True
+
+
+def mostrar_error_lectura(e):
+    error_msg = str(e)
+    if "api key" in error_msg.lower() or "api_key" in error_msg.lower():
+        st.error("⚠️ Este documento necesita Gemini para leerse (foto o PDF escaneado) y falta GEMINI_API_KEY en el "
+                 "archivo .env. Los PDF digitales del laboratorio se leen sin Gemini, y los ejemplos también funcionan.")
+    elif "503" in error_msg or "high demand" in error_msg:
+        st.error("⚠️ Los servidores de IA están experimentando alta demanda. Por favor, reintenta en unos instantes.")
+    elif "PerDay" in error_msg:
+        st.error("⚠️ Se agotó la cuota diaria gratuita de la API de Gemini. Los PDF digitales se siguen leyendo en local.")
+    elif "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+        st.error("⚠️ Límite de solicitudes por minuto alcanzado. Espera un momento y vuelve a presionar el botón.")
+    else:
+        st.error(f"⚠️ Ocurrió un error al procesar el examen: {error_msg}")
+
+
 # --- SELECTOR DE MOTOR EN BARRA LATERAL ---
 faltan = modelos_propios.faltantes()
 opciones = [m for m in MOTORES if m != "propio" or not faltan]
@@ -68,8 +100,8 @@ with st.sidebar:
         st.info("Estás usando la segunda opción. El motor principal son los modelos propios del equipo.")
 
     st.caption(
-        "Los modelos propios explican, verifican y responden tus dudas en local. "
-        "Solo la lectura del PDF o la foto (OCR) usa Gemini en ambos motores."
+        "Los modelos propios explican, verifican y responden tus dudas en local. Los PDF digitales del laboratorio "
+        "también se leen en local; solo las fotos y los PDF escaneados necesitan Gemini para la lectura (OCR)."
     )
 
     st.markdown("---")
@@ -206,32 +238,10 @@ if not st.session_state.analisis_completado:
                         if "error" in resultado:
                             st.error(f"Hubo un problema analizando el documento: {resultado['error']}")
                         else:
-                            st.session_state.datos_extraidos = resultado["datos_extraidos"]
-                            st.session_state.analisis_final = resultado["analisis_final"]
-                            st.session_state.tipo_examen = resultado.get("tipo_examen", "Examen Médico")
-                            st.session_state.modo_usado = resultado.get("modo", modo)
-                            st.session_state.pasajes_rag = resultado.get("pasajes_rag")
-                            st.session_state.contexto_paciente = contexto_paciente
-                            st.session_state.paciente = resultado.get("paciente") or {}
-                            st.session_state.es_demo = False
-                            st.session_state.preguntas_seleccionadas = list(resultado["analisis_final"].get("preguntas_sugeridas", []))
-                            st.session_state.preguntas_personalizadas = []
-                            st.session_state.chat_dudas = []
-                            st.session_state.analisis_completado = True
+                            guardar_analisis(resultado, contexto_paciente)
                             st.rerun()
                     except Exception as e:
-                        error_msg = str(e)
-                        if "api key" in error_msg.lower() or "api_key" in error_msg.lower():
-                            st.error("⚠️ Falta configurar GEMINI_API_KEY en el archivo .env: la lectura del documento la hace Gemini. "
-                                     "Mientras tanto puedes probar los ejemplos interactivos.")
-                        elif "503" in error_msg or "high demand" in error_msg:
-                            st.error("⚠️ Los servidores de IA están experimentando alta demanda. Por favor, reintenta en unos instantes.")
-                        elif "PerDay" in error_msg:
-                            st.error("⚠️ Se agotó la cuota diaria gratuita de la API de Gemini. Puedes probar los modelos propios o los presets.")
-                        elif "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                            st.error("⚠️ Límite de solicitudes por minuto alcanzado. Espera un momento y vuelve a presionar el botón.")
-                        else:
-                            st.error(f"⚠️ Ocurrió un error al procesar el examen: {error_msg}")
+                        mostrar_error_lectura(e)
             else:
                 st.warning("Por favor, selecciona primero un archivo de imagen o PDF.")
 
@@ -295,6 +305,7 @@ if not st.session_state.analisis_completado:
 
                     st.session_state.tipo_examen = preset["tipo_examen"]
                     st.session_state.paciente = {}
+                    st.session_state.lectura = None  # los ejemplos no tienen documento
                     st.session_state.contexto_paciente = preset["contexto_paciente"]
                     st.session_state.modo_usado = modo
                     st.session_state.es_demo = True
@@ -330,6 +341,26 @@ else:
                       f"{paciente_doc['edad']} años" if paciente_doc.get("edad") is not None else ""]
             st.caption("👤 Según el documento: " + ", ".join(p for p in partes if p)
                        + ". Se usa para elegir el rango por sexo cuando el laboratorio da uno distinto para hombres y mujeres.")
+        lectura = st.session_state.get("lectura")
+        if lectura == "local":
+            st.caption("📄 Documento leído **en local, sin Gemini**. Revisa que los valores coincidan con tu informe.")
+            if st.session_state.get("ultimo_archivo_bytes") and st.button(
+                    "¿Algún valor no coincide? Leerlo otra vez con Gemini", key="releer_gemini"):
+                with st.spinner("Leyendo el documento con Gemini..."):
+                    try:
+                        resultado = backend.procesar_resultado(
+                            st.session_state.ultimo_archivo_bytes, st.session_state.ultimo_archivo_mime,
+                            st.session_state.get("contexto_paciente", ""), lectura="gemini")
+                    except Exception as e:
+                        mostrar_error_lectura(e)
+                        st.stop()
+                if "error" in resultado:
+                    st.error(f"Hubo un problema analizando el documento: {resultado['error']}")
+                else:
+                    guardar_analisis(resultado, st.session_state.get("contexto_paciente", ""))
+                    st.rerun()
+        elif lectura == "gemini":
+            st.caption("📄 Documento leído con Gemini (foto, PDF escaneado o un diseño que el lector local no reconoce).")
         if analisis.get("muestra_escrita"):
             st.caption("ℹ️ En este ejemplo, las explicaciones son una muestra escrita por el equipo: "
                        "no las generó Gemini. Elige el motor propio para ver una explicación generada en vivo.")

@@ -1,0 +1,45 @@
+{
+  "casos_por_diseno": 150,
+  "resultados": {
+    "tabla": {
+      "documentos": 150,
+      "documentos_leidos": 1.0,
+      "analitos": 779,
+      "exactos": 1.0,
+      "nombre": 1.0,
+      "valor": 1.0,
+      "unidad": 1.0,
+      "rango": 1.0,
+      "muestra": 1.0,
+      "paciente": 1.0,
+      "analitos_de_mas": 0
+    },
+    "bloques": {
+      "documentos": 150,
+      "documentos_leidos": 1.0,
+      "analitos": 779,
+      "exactos": 1.0,
+      "nombre": 1.0,
+      "valor": 1.0,
+      "unidad": 1.0,
+      "rango": 1.0,
+      "muestra": 1.0,
+      "paciente": 1.0,
+      "analitos_de_mas": 0
+    },
+    "tabla_bandera": {
+      "documentos": 150,
+      "documentos_leidos": 1.0,
+      "analitos": 779,
+      "exactos": 1.0,
+      "nombre": 1.0,
+      "valor": 1.0,
+      "unidad": 1.0,
+      "rango": 1.0,
+      "muestra": 1.0,
+      "paciente": 1.0,
+      "analitos_de_mas": 0
+    }
+  },
+  "errores": []
+}

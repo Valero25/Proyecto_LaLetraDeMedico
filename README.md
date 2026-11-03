@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
-![Pruebas](https://img.shields.io/badge/pruebas-134%20passed-brightgreen)
+![Pruebas](https://img.shields.io/badge/pruebas-146%20passed-brightgreen)
 
 Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
 
@@ -16,7 +16,9 @@ Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan 
 
 ## ✨ Qué hace
 
-- **Lee el documento** (PDF o imagen) y extrae cada examen con su valor, unidad y rango de referencia, además del sexo y la edad del paciente si aparecen. No extrae el nombre ni otros datos personales.
+- **Lee el documento** y extrae cada examen con su valor, unidad y rango de referencia, además del sexo y la edad del paciente si aparecen. No extrae el nombre ni otros datos personales.
+  - Un **PDF digital** del laboratorio se lee **en local**, sin Gemini ni internet (`lector_pdf.py`).
+  - Una **foto o un PDF escaneado** se lee con Gemini, que es la segunda opción.
 - **Calcula el estado con reglas deterministas** (ALTO, BAJO, NORMAL o ANORMAL). Entiende rangos como "70 a 99", "Menor a 200" o "Hasta 40", y también rangos por sexo ("Hombres: … Mujeres: …") y por categorías ("Normal: < 5.7 Prediabetes: …").
 - **Explica cada resultado** con un generador propio (Qwen2.5-3B ajustado con QLoRA), apoyado en fragmentos de **MedlinePlus en español** que recupera un RAG propio.
 - **Revisa cada oración** con un clasificador propio (MrBERT-biomed) que marca frases diagnósticas o alarmistas.
@@ -30,8 +32,11 @@ Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan 
 
 ```mermaid
 flowchart LR
-    A[PDF o foto] --> B["Extracción<br/>(Gemini multimodal)"]
-    B --> C["Reglas de estado<br/>(deterministas)"]
+    A[PDF o foto] --> L{"¿PDF digital<br/>legible en local?"}
+    L -- sí --> B1["Lector local<br/>(pypdf + reglas)"]
+    L -- "no: foto o escaneo" --> B2["Gemini multimodal<br/>(segunda opción)"]
+    B1 --> C["Reglas de estado<br/>(deterministas)"]
+    B2 --> C
     C --> D{"¿Muestra<br/>de sangre?"}
     D -- no --> X[Se muestra el estado,<br/>sin explicación]
     D -- sí --> E["RAG propio<br/>ALIA-MrBERT ajustado + FAISS<br/>sobre MedlinePlus"]
@@ -46,7 +51,7 @@ La app tiene dos motores:
 - **Modelos propios** (`MODO=propio`): **el motor principal y el que se usa por defecto.** RAG, generador y guardrail entrenados por el equipo, que corren en local.
 - **Gemini** (`MODO=gemini`): **segunda opción.** Es el sistema original y se conserva como línea base de comparación y como respaldo si faltan los modelos propios.
 
-En ambos motores, solo la lectura del documento (OCR + extracción) la hace Gemini. Explicar, verificar y responder dudas lo hacen los modelos propios.
+Con el motor principal, **un PDF digital se procesa entero sin Gemini**: lectura, reglas, explicación, revisión, guardrail y respuestas a dudas. Gemini solo entra para leer fotos o PDFs escaneados, que no tienen capa de texto. También entra si la lectura local no es confiable, o si el usuario pulsa "Leerlo otra vez con Gemini" porque algún valor no coincide. `LDM_LECTURA=local` o `LDM_LECTURA=gemini` fuerzan una de las dos lecturas.
 
 | Componente | Modelo | Entrenamiento | Código |
 |---|---|---|---|
@@ -132,7 +137,7 @@ Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin 
 ### 5. Pruebas
 
 ```bash
-python -m pytest tests -q      # esperado: 134 passed (sin modelos ni Gemini)
+python -m pytest tests -q      # esperado: 146 passed (sin modelos ni Gemini)
 ```
 
 ## 📁 Estructura
@@ -151,7 +156,8 @@ tests/                       # pruebas con pytest
 ## ⚠️ Limitaciones
 
 - **No es un dispositivo médico.** Las explicaciones son informativas y la app siempre remite al médico.
-- **La lectura del documento depende de Gemini**, una API externa con cuotas. Una foto borrosa o un formato muy raro puede extraerse mal.
+- **Las fotos y los PDF escaneados dependen de Gemini**, una API externa con cuotas, y una foto borrosa puede extraerse mal.
+- **El lector local reconoce diseños por bloques y por tabla.** Se midió con un PDF real y 450 PDFs sintéticos en 3 diseños, todos leídos al 100 %. Un diseño muy distinto puede leerse mal sin que el lector lo note: por eso la app avisa que el documento se leyó en local y ofrece releerlo con Gemini.
 - **Solo sangre y solo los analitos de la base.** El RAG cubre 41 analitos con páginas de MedlinePlus. Un examen que no está (por ejemplo, IGF-1) se explica sin guía y la app lo avisa.
 - **Los rangos de entrenamiento son de adultos.** La app usa siempre el rango que trae el laboratorio, pero el generador se entrenó con casos de 18 a 85 años.
 - **El generador todavía se equivoca a veces:**

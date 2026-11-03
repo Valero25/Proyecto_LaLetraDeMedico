@@ -766,13 +766,38 @@ class LetraDeMedicoBackend:
         resultado_final["guardrail"] = estado_guardrail
         return resultado_final
 
-    def procesar_resultado(self, file_bytes, mime_type, patient_context=""):
+    def leer_documento(self, file_bytes, mime_type, lectura=None):
         """
-        Orquesta el pipeline completo: Extracción Multimodal -> Reglas -> RAG -> LLM Generativo
+        (extracción, cómo se leyó). `lectura`: "auto" (por defecto), "local" o "gemini"; también LDM_LECTURA.
+
+        auto: un PDF digital se lee en local (lector_pdf.py, sin Gemini ni internet); si es una foto, un PDF
+        escaneado o la lectura local no es confiable, se usa Gemini, la segunda opción.
         """
-        resultado_multimodal = self.step_1_and_2_multimodal_ner(file_bytes, mime_type)
+        lectura = (lectura or os.environ.get("LDM_LECTURA", "auto")).lower()
+        if lectura != "gemini" and mime_type == "application/pdf":
+            try:
+                import lector_pdf
+                local = lector_pdf.leer_pdf(file_bytes)
+            except Exception as e:
+                print(f"El lector local de PDF falló: {e}", flush=True)
+                local = None
+            if local:
+                return local, "local"
+            print("El PDF no se pudo leer en local (escaneado o diseño desconocido); se usa Gemini", flush=True)
+        if lectura == "local":
+            return {}, "local"
+        return self.step_1_and_2_multimodal_ner(file_bytes, mime_type), "gemini"
+
+    def procesar_resultado(self, file_bytes, mime_type, patient_context="", lectura=None):
+        """
+        Orquesta el pipeline completo: Lectura del documento -> Reglas -> RAG -> LLM Generativo
+        """
+        resultado_multimodal, leido_con = self.leer_documento(file_bytes, mime_type, lectura)
 
         if not resultado_multimodal or "analitos" not in resultado_multimodal:
+            if leido_con == "local":
+                return {"error": "No se pudo leer el PDF en local. Prueba la lectura con Gemini o sube el PDF "
+                                 "original del laboratorio (no una foto ni un escaneo)."}
             return {"error": "No se pudieron extraer entidades del documento."}
 
         tipo_examen = str(resultado_multimodal.get("tipo_de_examen") or "Examen Médico")
@@ -780,8 +805,10 @@ class LetraDeMedicoBackend:
         if not entidades:
             return {"error": "No se encontraron exámenes con nombre y valor en el documento. "
                              "Prueba con una foto más nítida o con el PDF original del laboratorio."}
-        return self.analizar_entidades(entidades, tipo_examen, patient_context,
-                                       paciente=limpiar_paciente(resultado_multimodal.get("paciente")))
+        salida = self.analizar_entidades(entidades, tipo_examen, patient_context,
+                                         paciente=limpiar_paciente(resultado_multimodal.get("paciente")))
+        salida["lectura"] = leido_con
+        return salida
 
     def analizar_entidades(self, entidades, tipo_examen, patient_context="", paciente=None):
         """

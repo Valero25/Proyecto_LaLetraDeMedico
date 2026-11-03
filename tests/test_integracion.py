@@ -78,6 +78,14 @@ def test_modo_gemini_conserva_el_filtro_de_palabras():
     assert r["explicaciones"][1]["explicacion"].endswith(NOTA_GUARDRAIL)
 
 
+def test_el_motor_principal_por_defecto_es_el_propio(monkeypatch):
+    # Gemini es la segunda opción: solo se usa si se pide explícitamente (MODO=gemini o modo="gemini")
+    monkeypatch.delenv("MODO", raising=False)
+    assert LetraDeMedicoBackend().modo == "propio"
+    monkeypatch.setenv("MODO", "gemini")
+    assert LetraDeMedicoBackend().modo == "gemini"
+
+
 def test_modo_invalido():
     with pytest.raises(ValueError):
         LetraDeMedicoBackend(modo="otro")

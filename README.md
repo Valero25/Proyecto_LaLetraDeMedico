@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
-![Pruebas](https://img.shields.io/badge/pruebas-133%20passed-brightgreen)
+![Pruebas](https://img.shields.io/badge/pruebas-134%20passed-brightgreen)
 
 Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
 
@@ -43,10 +43,10 @@ flowchart LR
 
 La app tiene dos motores:
 
-- **Modelos propios** (`MODO=propio`): RAG, generador y guardrail entrenados por el equipo, que corren en local.
-- **Gemini** (`MODO=gemini`): el sistema original, que se conserva como **línea base** de comparación.
+- **Modelos propios** (`MODO=propio`): **el motor principal y el que se usa por defecto.** RAG, generador y guardrail entrenados por el equipo, que corren en local.
+- **Gemini** (`MODO=gemini`): **segunda opción.** Es el sistema original y se conserva como línea base de comparación y como respaldo si faltan los modelos propios.
 
-En ambos modos, la lectura del documento (OCR + extracción) la hace Gemini.
+En ambos motores, solo la lectura del documento (OCR + extracción) la hace Gemini. Explicar, verificar y responder dudas lo hacen los modelos propios.
 
 | Componente | Modelo | Entrenamiento | Código |
 |---|---|---|---|
@@ -132,7 +132,7 @@ Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin 
 ### 5. Pruebas
 
 ```bash
-python -m pytest tests -q      # esperado: 133 passed (sin modelos ni Gemini)
+python -m pytest tests -q      # esperado: 134 passed (sin modelos ni Gemini)
 ```
 
 ## 📁 Estructura

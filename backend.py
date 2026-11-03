@@ -14,7 +14,8 @@ load_dotenv()
 # La nueva librería google-genai lee automáticamente GEMINI_API_KEY de las variables de entorno,
 # por lo que no es necesario configurarlo manualmente si ya está en .env
 if "GEMINI_API_KEY" not in os.environ:
-    print("Advertencia: No se encontró GEMINI_API_KEY en las variables de entorno.")
+    print("Advertencia: No se encontró GEMINI_API_KEY. Los modelos propios funcionan con los ejemplos, pero leer "
+          "un PDF o una foto y el motor Gemini (segunda opción) la necesitan.")
 
 MODOS = ("gemini", "propio")
 NOTA_GUARDRAIL = " (Nota del sistema: Este texto fue marcado preventivamente. Recuerda que solo un médico puede diagnosticar)."
@@ -329,12 +330,13 @@ def alinear_explicaciones(entidades, resultado):
 class LetraDeMedicoBackend:
     def __init__(self, model_name=None, modo=None, modelos=None):
         """
-        modo "gemini": el sistema original (RAG por subcadena, Gemini redacta, filtro de palabras).
-        modo "propio": los modelos entrenados por el equipo (ver modelos_propios.py). La lectura del
-        documento (OCR + NER) sigue siendo de Gemini en ambos modos.
+        modo "propio" (PRINCIPAL y por defecto): los modelos entrenados por el equipo (ver modelos_propios.py).
+        modo "gemini" (segunda opción): el sistema original (RAG por subcadena, Gemini redacta, filtro de
+        palabras), que se conserva como línea base de comparación y como respaldo si faltan los modelos.
+        La lectura del documento (OCR + NER) sigue siendo de Gemini en ambos modos.
         `modelos` permite inyectar {"rag", "generador", "guardrail"} ya cargados (la app los cachea; los tests usan dobles).
         """
-        self.modo = modo or os.environ.get("MODO", "gemini")
+        self.modo = modo or os.environ.get("MODO", "propio")
         if self.modo not in MODOS:
             raise ValueError(f"MODO debe ser uno de {MODOS}, no {self.modo!r}")
         self._modelos = dict(modelos or {})

@@ -32,7 +32,7 @@ FORMATOS_FICHA = {
 
 MOTORES = {
     "propio": "Modelos propios (entrenados por el equipo)",
-    "gemini": "Gemini (sistema original)",
+    "gemini": "Gemini (segunda opción: sistema original)",
 }
 
 
@@ -58,14 +58,18 @@ with st.sidebar:
         opciones,
         format_func=MOTORES.get,
         index=opciones.index(modo_inicial) if modo_inicial in opciones else 0,
-        help="El modo propio usa modelos locales (RAG, Qwen GGUF y Guardrail). El modo Gemini usa la API en la nube.",
+        help="Motor principal: los modelos propios, que corren en local (RAG, generador Qwen ajustado y guardrail). "
+             "Gemini es la segunda opción: el sistema original en la nube, para comparar o si faltan los modelos.",
     )
     if faltan:
-        st.warning("Modelos propios no disponibles. Faltan: " + ", ".join(faltan) + ". Ver PLAN.md, Fase 5.")
-    
+        st.warning("Modelos propios no disponibles, así que se usa la segunda opción (Gemini). Faltan: "
+                   + ", ".join(faltan) + ". Ver README, sección Modelos propios.")
+    elif modo == "gemini":
+        st.info("Estás usando la segunda opción. El motor principal son los modelos propios del equipo.")
+
     st.caption(
-        "En ambos modos, la lectura del documento (OCR + NER) la hace Gemini. "
-        "El modo propio usa el RAG, el generador y el guardrail entrenados localmente."
+        "Los modelos propios explican, verifican y responden tus dudas en local. "
+        "Solo la lectura del PDF o la foto (OCR) usa Gemini en ambos motores."
     )
 
     st.markdown("---")

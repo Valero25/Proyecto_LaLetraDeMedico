@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
-![Pruebas](https://img.shields.io/badge/pruebas-154%20passed-brightgreen)
+![Pruebas](https://img.shields.io/badge/pruebas-156%20passed-brightgreen)
 
 Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
 
@@ -137,7 +137,7 @@ Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin 
 ### 5. Pruebas
 
 ```bash
-python -m pytest tests -q      # esperado: 154 passed (sin modelos ni Gemini)
+python -m pytest tests -q      # esperado: 156 passed (sin modelos ni Gemini)
 ```
 
 ## 📁 Estructura

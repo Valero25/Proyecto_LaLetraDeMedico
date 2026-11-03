@@ -197,6 +197,34 @@ def test_preguntas_parecidas_de_examenes_distintos_se_conservan():
     assert mp.analitos_del_nombre(analitos[3]["examen"], ALIAS, ORINA) == {"alt"}
 
 
+def test_siglas_inventadas_se_corrigen_en_la_app():
+    # Hemograma real (2026-11-02): "VCM (Volumen de Célula Móvil)" y "HCM (Hidrógeno de la Célula Móvil)"
+    analitos = [{"examen": "VCM", "valor": "76", "unidad": "fL", "rango_referencia": "80 - 100", "estado": "BAJO"},
+                {"examen": "HDL", "valor": "57", "unidad": "mg/dl", "rango_referencia": "> 40", "estado": "NORMAL"}]
+    resultado = {"explicaciones": [
+        {"examen": "VCM", "explicacion": "El VCM (Volumen de Célula Móvil) mide el tamaño de los glóbulos rojos. Tu valor es bajo."},
+        {"examen": "HDL", "explicacion": "El HDL (colesterol bueno) está dentro del rango normal."}],
+        "preguntas_sugeridas": ["¿Debo repetirlo?"]}
+    revisar_coherencia(analitos, resultado)
+    assert "VCM (volumen corpuscular medio)" in resultado["explicaciones"][0]["explicacion"]
+    assert "Célula Móvil" not in resultado["explicaciones"][0]["explicacion"]
+    assert "HDL (colesterol bueno)" in resultado["explicaciones"][1]["explicacion"]  # una aclaración, no una sigla
+
+
+def test_verificaciones_de_calidad_del_v2():
+    import sys as _sys
+    _sys.path.insert(0, str(RAIZ / "training" / "generador"))
+    from verificacion import causas_repetidas, siglas_inventadas, usa_usted
+    causa = "Este resultado puede deberse a una dieta alta en grasas o azúcares, falta de ejercicio regular o ciertas condiciones."
+    datos = {"explicaciones": [{"examen": "LDL", "explicacion": f"Tu LDL está alto. {causa}"},
+                               {"examen": "AST", "explicacion": f"Tu AST está alta. {causa}"}],
+             "preguntas_sugeridas": ["¿Debo consulte a su médico?"]}
+    assert causas_repetidas(datos) == [causa]
+    assert siglas_inventadas({"explicaciones": [{"examen": "MCH", "explicacion": "El MCH (Masa Corporal de Hemoglobina) está bajo."}]})
+    assert not siglas_inventadas({"explicaciones": [{"examen": "TGO", "explicacion": "La TGO (también conocida como AST) está alta."}]})
+    assert usa_usted(datos)
+
+
 def test_si_no_queda_ninguna_pregunta_se_dan_las_de_respaldo():
     analitos = analitos_pdf()[:1]
     resultado = {"explicaciones": [{"examen": analitos[0]["examen"], "explicacion": "normal"}],

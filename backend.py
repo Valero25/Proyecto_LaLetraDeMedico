@@ -220,8 +220,20 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
       hormona estimulante del tiroides?" con la TSH normal.
     """
     mp, alias, claves_orina = _catalogo_alias()
-    from verificacion import estado_consistente
+    from verificacion import corregir_siglas, estado_consistente
     avisos = []
+
+    # Siglas con un significado inventado por el generador ("VCM (Volumen de Célula Móvil)", hemograma real del
+    # 2026-11-02): se cambia por el nombre del catálogo. Los profesores casi nunca lo hacen (1 de 810 respuestas),
+    # así que limpiar el dataset no basta: es una alucinación del estudiante y se corrige aquí.
+    for exp in resultado.get("explicaciones", []):
+        if exp.get("sin_explicacion"):
+            continue
+        texto, cambios = corregir_siglas(exp.get("explicacion", ""))
+        if cambios:
+            exp["explicacion"] = texto
+            for antes, despues in cambios:
+                print(f"Sigla corregida: {antes} -> {despues}", flush=True)
 
     corregidas = 0
     for analito, exp in zip(entidades, resultado.get("explicaciones", [])):

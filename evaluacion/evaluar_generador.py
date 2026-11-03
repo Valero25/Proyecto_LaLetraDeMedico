@@ -23,7 +23,7 @@ sys.path.insert(0, str(RAIZ / "training" / "generador"))
 sys.path.insert(0, str(RAIZ / "training" / "guardrails"))
 sys.path.insert(0, str(RAIZ / "evaluacion"))
 
-from verificacion import frases_para_guardrails, inflesz, parsear, verificar  # noqa: E402
+from verificacion import calidad, frases_para_guardrails, inflesz, parsear, verificar  # noqa: E402
 
 CASOS = RAIZ / "data" / "generador" / "casos.jsonl"
 SALIDAS = RAIZ / "data" / "generador" / "salidas"
@@ -51,6 +51,21 @@ def evaluar_archivo(filas, casos, clasificar):
         "palabras_por_respuesta": media(len(t.split()) for t in textos),
         "segundos_por_caso": media(r.get("segundos") for r in filas),
     }
+    # Calidad (generador v2): errores vistos con PDFs reales que las métricas de arriba no detectan.
+    # Todas son "menos es mejor", salvo menciona_valor_alterados.
+    calidades = [calidad(r["respuesta"], casos[r["id"]]) for r, _ in validas]
+    alterados = [d["menciona_valor"] for r, v in validas
+                 for d, a in zip(v["detalle"], casos[r["id"]]["analitos"]) if a["estado"] != "NORMAL"]
+    n = len(validas) or 1
+    resultado.update({
+        "menciona_valor_alterados": media(alterados),
+        "causas_repetidas": sum(bool(q["causas_repetidas"]) for q in calidades) / n,
+        "siglas_inventadas": sum(bool(q["siglas_inventadas"]) for q in calidades) / n,
+        "usa_usted": sum(q["usa_usted"] for q in calidades) / n,
+        "respuestas_con_pregunta_quitada": sum(q["preguntas_quitadas"] > 0 for q in calidades) / n,
+        "ejemplos_siglas_inventadas": [s for q in calidades for s in q["siglas_inventadas"]][:10],
+        "ejemplos_causas_repetidas": [s for q in calidades for s in q["causas_repetidas"]][:10],
+    })
     if clasificar:
         frases = [frases_para_guardrails(r["respuesta"]) for r, _ in validas]
         riesgo = iter(clasificar([o for fs in frases for o in fs]))
@@ -84,8 +99,9 @@ def main():
         if filas:
             resultados[archivo.stem] = evaluar_archivo(filas, casos, clasificar)
 
-    columnas = ["n", "json_valido", "cobertura", "menciona_valor", "estado_consistente", "inflesz",
-                "oraciones_marcadas", "respuestas_con_marca", "palabras_por_respuesta", "segundos_por_caso"]
+    columnas = ["n", "json_valido", "cobertura", "menciona_valor", "menciona_valor_alterados", "estado_consistente",
+                "inflesz", "oraciones_marcadas", "respuestas_con_marca", "causas_repetidas", "siglas_inventadas",
+                "usa_usted", "respuestas_con_pregunta_quitada", "palabras_por_respuesta", "segundos_por_caso"]
     print(f"{'modelo':<34}" + "".join(f"{c[:12]:>13}" for c in columnas))
     for nombre, r in resultados.items():
         celdas = []

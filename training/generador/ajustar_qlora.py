@@ -64,7 +64,10 @@ def main():
     parser.add_argument("--limite", type=int, help="Usar solo N ejemplos (prueba rápida)")
     parser.add_argument("--checkpoints", type=Path, help="Carpeta de checkpoints (ej. en Google Drive)")
     parser.add_argument("--salida", type=Path)
+    parser.add_argument("--version", default="v1", choices=["v1", "v2"],
+                        help="Dataset: v1 = sft_train.jsonl; v2 = sft_train_v2.jsonl (filtros de calidad, ver dataset.py)")
     args = parser.parse_args()
+    sufijo = "" if args.version == "v1" else f"_{args.version}"
 
     import torch
     from datasets import Dataset
@@ -74,11 +77,11 @@ def main():
 
     gpu = torch.cuda.is_available()
     nombre_corto = args.modelo.split("/")[-1].lower()
-    salida = args.salida or SALIDA_DIR / f"{nombre_corto}-lora"
+    salida = args.salida or SALIDA_DIR / f"{nombre_corto}-lora{sufijo.replace('_', '-')}"
     checkpoints = args.checkpoints or salida / "checkpoints"
 
-    train = Dataset.from_list(cargar_split(DATOS / "sft_train.jsonl", args.limite))
-    val = Dataset.from_list(cargar_split(DATOS / "sft_val.jsonl", args.limite))
+    train = Dataset.from_list(cargar_split(DATOS / f"sft_train{sufijo}.jsonl", args.limite))
+    val = Dataset.from_list(cargar_split(DATOS / f"sft_val{sufijo}.jsonl", args.limite))
     print(f"{len(train)} ejemplos de train, {len(val)} de validación", flush=True)
 
     tokenizador = AutoTokenizer.from_pretrained(args.modelo)
@@ -146,6 +149,7 @@ def main():
         json.dump({"modelo_base": args.modelo, "cuantizado_4bit": not args.sin_cuantizar,
                    "lora": {"r": args.r, "alpha": args.alpha, "dropout": args.dropout, "capas": CAPAS_LORA},
                    "parametros_totales": total, "parametros_entrenables": entrenables, "conteo_por_capa": capas,
+                   "version_datos": args.version,
                    "ejemplos_train": len(train), "ejemplos_val": len(val), "epocas": args.epocas, "lr": args.lr,
                    "lote_efectivo": args.batch * args.acumulacion, "max_len": args.max_len, "minutos": round(minutos, 1),
                    "perdida_train": [{"paso": h["step"], "perdida": h["loss"]} for h in historial if "loss" in h],

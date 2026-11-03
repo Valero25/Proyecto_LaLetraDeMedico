@@ -333,6 +333,36 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - Se excluye Gemini: el motor principal es el propio, y la comparación que importa para el informe es el efecto del ajuste.
   - `tests/test_rubrica.py`: ciego, solo sangre y resumen con dos evaluadores simulados. **154 passed.**
 - [ ] **El equipo llena la rúbrica** (al menos 2 evaluadores, para medir acuerdo) y se corre `resumir`.
+- [x] **Generador v2: datos preparados (2026-11-02).** Mismo modelo y mismos hiperparámetros; solo cambian los datos, para aislar el efecto de su calidad.
+  - **Verificaciones de calidad nuevas** (`verificacion.calidad`), a partir de errores vistos con PDFs reales:
+    - causas repetidas entre exámenes;
+    - siglas con un significado inventado (solo cuenta un paréntesis cuyas iniciales forman la sigla, así "HDL (colesterol bueno)" no es error);
+    - "usted" en vez de "tú";
+    - preguntas que la revisión de la app quitaría.
+
+    Se usan como filtro del dataset y como métricas en `evaluar_generador.py`.
+  - **Diagnóstico:**
+
+    | | Profesor 14B | gpt-oss-120b | Qwen3.8-27B | Estudiante v1 (test) | Qwen base (test) |
+    |---|---|---|---|---|---|
+    | Causas repetidas | **11,8 %** | 0 % | 0 % | **13,4 %** | 13,0 % |
+    | Siglas inventadas | 0 % | 0 % | 0,6 % | 1,3 % | 0 % |
+    | Usa "usted" | 0 % | 2,1 % | 1,8 % | 0 % | 15,8 % |
+    | Con alguna pregunta que se quitaría | 10,8 % | 6,6 % | 12,0 % | 6,7 % | 20,5 % |
+    | Menciona el valor en todos los exámenes | **34 %** | 97,5 % | 59,9 % | 68,5 % (en alterados) | 10,7 % (en alterados) |
+
+    - Las causas repetidas y el valor omitido vienen del profesor 14B, que aportó el 49 % del train del v1: **el estudiante hereda los defectos de sus datos** (sección 10 de `fundamentos.md`).
+    - Las siglas inventadas, en cambio, casi no están en los datos: son una alucinación propia del estudiante. Por eso además se corrigen en la app (`verificacion.corregir_siglas` dentro de `revisar_coherencia`): "VCM (Volumen de Célula Móvil)" → "VCM (volumen corpuscular medio)".
+  - **Dataset v2** (`dataset.py --sin-guardrails --version v2` → `sft_train_v2.jsonl` y `sft_val_v2.jsonl`; el v1 no se toca):
+    - Los filtros del v1, más:
+      - menciona el valor de todo examen fuera de rango;
+      - sin causas repetidas, sin siglas inventadas y sin "usted";
+      - las preguntas se limpian con la revisión de la app y quedan al menos 2.
+    - Resultado: **421 de train y 93 de val** (v1: 555 y 97). El 14B baja del 49 % al 35 % del train.
+    - Descartes nuevos: 118 por no mencionar el valor de un alterado, 12 por causas repetidas, 6 por "usted", 1 por una sigla inventada y 1 por menos de 2 preguntas coherentes.
+  - **Entrenamiento:** `ajustar_qlora.py --version v2` y `qlora_v2_colab.ipynb` (entrena, responde los 150 casos de test y exporta a GGUF en una sesión de la T4, unas 1,5 h). Probado en CPU con SmolLM2-135M.
+  - **Pruebas:** `test_pdf_real.py` con la corrección de siglas y las verificaciones de calidad. **156 passed.**
+- [ ] **Entrenar el v2 en Colab**, evaluarlo con `evaluar_generador.py` frente al v1 y decidir cuál usa la app (`LDM_MODELO_GENERADOR` apunta al GGUF).
 - [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
   - Curvas de pérdida de train y validación, para el análisis de sobreajuste.
@@ -542,7 +572,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 154 passed)
+# Pruebas (esperado: 156 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

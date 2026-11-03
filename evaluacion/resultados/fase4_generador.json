@@ -10,6 +10,27 @@
       "inflesz": 63.59657095200286,
       "palabras_por_respuesta": 198.13422818791946,
       "segundos_por_caso": 13.874666666666666,
+      "menciona_valor_alterados": 0.6852589641434262,
+      "causas_repetidas": 0.1342281879194631,
+      "siglas_inventadas": 0.013422818791946308,
+      "usa_usted": 0.0,
+      "respuestas_con_pregunta_quitada": 0.06711409395973154,
+      "ejemplos_siglas_inventadas": [
+        "MCH (Masa Corporal de Hemoglobina)",
+        "HCM (hematógeno corporal medio)"
+      ],
+      "ejemplos_causas_repetidas": [
+        "Tu resultado es alto, lo que puede deberse a que tu cuerpo está produciendo más glucosa de lo normal.",
+        "Esto puede deberse a que estás experimentando estrés físico o emocional, o a que tienes una condición médica que está influyendo en tu nivel de azúcar en sangre.",
+        "Tu resultado es alto, lo que puede deberse a diversos factores.",
+        "Esto puede deberse a varios factores, incluyendo la dieta y la genética.",
+        "Un nivel alto puede deberse a una deshidratación, una ingesta excesiva de proteínas o ciertas condiciones médicas.",
+        "Este resultado puede estar relacionado con diversos factores, como estrés o una respuesta a ciertas condiciones.",
+        "Esto puede deberse a que estabas en ayunas durante 12 horas, lo que puede hacer que tu nivel de calcio esté un poco elevado.",
+        "Esto puede deberse a que estabas en ayunas durante 12 horas, lo que puede hacer que tu nivel de albúmina esté un poco elevado.",
+        "Tu porcentaje de neutrófilos está por debajo del rango normal, lo cual puede deberse a diversos factores, como una respuesta defensiva reducida o ciertas condiciones médicas.",
+        "Tu resultado de tiroxina libre está un poco bajo, lo cual puede deberse a que tu tiroides está produciendo menos hormonas de las que tu cerebro necesita."
+      ],
       "oraciones_marcadas": 0.005249343832020997,
       "respuestas_con_marca": 0.053691275167785234,
       "ejemplos_marcados": [
@@ -32,6 +53,24 @@
       "inflesz": 65.20436592695268,
       "palabras_por_respuesta": 122.61643835616438,
       "segundos_por_caso": 8.364,
+      "menciona_valor_alterados": 0.10699588477366255,
+      "causas_repetidas": 0.13013698630136986,
+      "siglas_inventadas": 0.0,
+      "usa_usted": 0.15753424657534246,
+      "respuestas_con_pregunta_quitada": 0.2054794520547945,
+      "ejemplos_siglas_inventadas": [],
+      "ejemplos_causas_repetidas": [
+        "Puede deberse a diálisis, diarrea, retención de urea, entre otros.",
+        "Puede deberse a diálisis, diarrea, retención de urea, entre otros.",
+        "También puede estar relacionado con el consumo de alcohol.",
+        "Puede indicar que su hígado no está dañado, aunque podría estar relacionado con el consumo de alcohol.",
+        "Esto puede indicar que tu sistema inmunológico está funcionando menos eficazmente.",
+        "Los niveles de fosfatasa alcalina están en niveles altos, lo que puede indicar problemas del hígado.",
+        "Esto podría indicar una infección o un trastorno inmunológico.",
+        "Esto podría indicar una deshidratación o problemas con los riñones.",
+        "Los niveles de Albúmina están por encima del rango normal, lo que puede indicar que tu hígado está funcionando correctamente.",
+        "Puede deberse a factores como la presión arterial alta que toma losartán."
+      ],
       "oraciones_marcadas": 0.06401137980085349,
       "respuestas_con_marca": 0.4178082191780822,
       "ejemplos_marcados": [

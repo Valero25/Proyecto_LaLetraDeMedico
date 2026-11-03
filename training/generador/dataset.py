@@ -13,8 +13,15 @@ ejemplos que el propio guardrail del proyecto aprueba.
 Salida (formato chat, para el SFTTrainer de TRL):
     data/generador/sft_train.jsonl y sft_val.jsonl, con {"id", "profesor", "messages": [...]}
 
+Versión 2 (`--version v2` → sft_train_v2.jsonl y sft_val_v2.jsonl; el v1 no se toca). Además de lo anterior:
+3. menciona el valor del paciente en todos los exámenes fuera de rango (el v1 heredó un 70,7 % del profesor 14B);
+4. sin oraciones de causas repetidas entre exámenes, sin siglas con un significado inventado y sin "usted"
+   (verificacion.calidad), errores vistos con PDFs reales;
+5. las preguntas se limpian con la misma revisión de coherencia de la app y quedan al menos 2.
+Medido el 2026-11-02: quedan 421 de train y 93 de val (v1: 555 y 97); el 14B baja del 49 % al 35 % del train.
+
 Uso:
-    python training/generador/dataset.py [--sin-guardrails]
+    python training/generador/dataset.py [--sin-guardrails] [--version v2]
 """
 import argparse
 import json
@@ -28,7 +35,7 @@ sys.path.insert(0, str(RAIZ / "evaluacion"))
 sys.path.insert(0, str(RAIZ / "training" / "guardrails"))
 
 from prompt import mensajes_estudiante  # noqa: E402
-from verificacion import es_ejemplo_limpio, frases_para_guardrails, parsear  # noqa: E402
+from verificacion import calidad, es_ejemplo_limpio, frases_para_guardrails, parsear, verificar  # noqa: E402
 
 CASOS = RAIZ / "data" / "generador" / "casos.jsonl"
 RESPUESTAS_DIR = RAIZ / "data" / "generador" / "respuestas"
@@ -49,7 +56,9 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("--sin-guardrails", action="store_true", help="No filtrar con el clasificador (más rápido)")
+    parser.add_argument("--version", default="v1", choices=["v1", "v2"])
     args = parser.parse_args()
+    sufijo = "" if args.version == "v1" else f"_{args.version}"
 
     with open(CASOS, encoding="utf-8") as f:
         casos = {c["id"]: c for c in map(json.loads, f)}
@@ -68,6 +77,28 @@ def main():
             motivo = ("JSON inválido" if not v.get("json_valido") else "falta un examen" if v["cobertura"] < 1
                       else "estado inconsistente" if v["estado_consistente"] < 1 else "otro (preguntas o exámenes extra)")
             motivos[motivo] += 1
+
+    preguntas_limpias = {}
+    if args.version == "v2":
+        aprobadas = []
+        for r in limpias:
+            caso = casos[r["id"]]
+            v = verificar(r["respuesta"], caso)
+            q = calidad(r["respuesta"], caso)
+            if not all(d["menciona_valor"] for d, a in zip(v["detalle"], caso["analitos"]) if a["estado"] != "NORMAL"):
+                motivos["v2: no menciona el valor de un examen fuera de rango"] += 1
+            elif q["causas_repetidas"]:
+                motivos["v2: causas repetidas entre exámenes"] += 1
+            elif q["siglas_inventadas"]:
+                motivos["v2: sigla con un significado inventado"] += 1
+            elif q["usa_usted"]:
+                motivos["v2: usa usted en vez de tú"] += 1
+            elif len(q["preguntas_validas"]) < 2:
+                motivos["v2: menos de 2 preguntas coherentes"] += 1
+            else:
+                preguntas_limpias[(r["id"], r["profesor"])] = q["preguntas_validas"]
+                aprobadas.append(r)
+        limpias = aprobadas
 
     if not args.sin_guardrails:
         from evaluar_guardrails import probabilidades_modelo
@@ -99,10 +130,14 @@ def main():
     por_split = {"train": [], "val": []}
     for r in limpias:
         caso = casos[r["id"]]
+        respuesta = parsear(r["respuesta"])
+        if (r["id"], r["profesor"]) in preguntas_limpias:
+            # v2: el estudiante aprende solo las preguntas que la app dejaría pasar
+            respuesta = {**respuesta, "preguntas_sugeridas": preguntas_limpias[(r["id"], r["profesor"])]}
         por_split[r["split"]].append({"id": r["id"], "profesor": r["profesor"],
-                                      "messages": mensajes_estudiante(caso, caso["pasajes"], parsear(r["respuesta"]))})
+                                      "messages": mensajes_estudiante(caso, caso["pasajes"], respuesta)})
     for split, filas in por_split.items():
-        with open(SALIDA_DIR / f"sft_{split}.jsonl", "w", encoding="utf-8") as f:
+        with open(SALIDA_DIR / f"sft_{split}{sufijo}.jsonl", "w", encoding="utf-8") as f:
             f.writelines(json.dumps(x, ensure_ascii=False) + "\n" for x in filas)
 
     print(f"{len(respuestas)} respuestas; descartadas: {dict(motivos) or 'ninguna'}")

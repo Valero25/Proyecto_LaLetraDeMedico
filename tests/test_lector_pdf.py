@@ -72,9 +72,51 @@ def test_categorias_bajo_el_resultado():
     assert analitos[0]["rango_referencia"] == "Sin riesgo: Mayor de 55 mg/dl. Riesgo moderado: 35 - 55 mg/dl"
 
 
+def test_formatos_de_colsanitas_2011():
+    # Bandera antes del valor, unidad y rango en la misma celda, y rango como mínimo y máximo sin guion
+    assert lector_pdf.leer_resultado(lector_pdf.celdas("ALANINO AMINO TRANSFERASA (ALAT - TGP)   28.70   U/l 0.00 31.00")) \
+        == ("ALANINO AMINO TRANSFERASA (ALAT - TGP)", "28.70", "U/l", "0.00 - 31.00")
+    assert lector_pdf.leer_resultado(lector_pdf.celdas("ASPARTATO AMINO TRANSFERASA (ASAT - TGO)   * 35.60   U/l 0.00 32.00")) \
+        == ("ASPARTATO AMINO TRANSFERASA (ASAT - TGO)", "35.60", "U/l", "0.00 - 32.00")
+    # La nota "VALORES DE REFERENCIA SEGÚN..." no corta las categorías que vienen debajo
+    texto = ("       COLESTEROL LDL - NO CALCULADO                         102.37            mg/dl\n"
+             "        **            VALORES DE REFERENCIA SEGÚN LA NCEP ATP III - 2001\n"
+             "        Optimo          : Menor de 100 mg/dl\n"
+             "        Casi Optimo     : Entre 100 - 129 mg/dl\n"
+             "                    Colorimétrico EnzimáticoMétodo:\n")
+    analitos, _, confiable = lector_pdf.analizar_texto([texto])
+    assert confiable and analitos[0]["rango_referencia"] == "Optimo : Menor de 100 mg/dl. Casi Optimo : Entre 100 - 129 mg/dl"
+    assert LetraDeMedicoBackend.evaluar_estado_analito("102.37", analitos[0]["rango_referencia"]) == "ALTO"
+
+
+@pytest.mark.parametrize("diseno", DISENOS)
+def test_lectura_por_posicion_tambien_lee_los_tres_disenos(diseno):
+    import io
+
+    from pypdf import PdfReader
+    paginas = [lector_pdf.texto_por_posicion(p) for p in PdfReader(io.BytesIO(pdf_de_caso(CASO, diseno))).pages]
+    analitos, _, confiable = lector_pdf.analizar_texto(paginas)
+    assert confiable
+    assert [(a["valor"], a["unidad"], a["rango_referencia"]) for a in analitos] == \
+        [(a["valor"], a["unidad"], a["rango_referencia"]) for a in CASO["analitos"]]
+
+
+def test_pdf_real_colsanitas_si_esta_disponible():
+    ruta = Path(r"C:\Users\Juan\Downloads\laboratorio 2011.pdf")
+    if not ruta.exists():
+        pytest.skip("PDF real de prueba no disponible en este equipo")
+    leido = lector_pdf.leer_pdf(ruta.read_bytes())
+    assert leido["paciente"] == {"edad": 72, "sexo": "F"}
+    assert [(a["valor"], a["unidad"]) for a in leido["analitos"]] == \
+        [("102.37", "mg/dl"), ("209.00", "mg/dl"), ("28.70", "U/l"), ("35.60", "U/l")]
+    estados = [LetraDeMedicoBackend.evaluar_estado_analito(a["valor"], a["rango_referencia"], "F") for a in leido["analitos"]]
+    assert estados == ["ALTO", "ALTO", "NORMAL", "ALTO"]
+
+
 def test_paciente_sin_nombre():
     assert lector_pdf.paciente_del_texto("Paciente: ANA PÉREZ  Edad: 15 Años  Género: Másculino") == {"edad": 15, "sexo": "M"}
     assert lector_pdf.paciente_del_texto("Sexo: F") == {"sexo": "F"}
+    assert lector_pdf.paciente_del_texto("Edad        Años  72 Sexo F") == {"edad": 72, "sexo": "F"}  # Colsanitas
 
 
 # --- Integración con el backend ---

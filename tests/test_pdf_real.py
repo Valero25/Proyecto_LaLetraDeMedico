@@ -177,6 +177,26 @@ def test_preguntas_casi_repetidas_se_quitan():
     assert resultado["preguntas_sugeridas"] == [base, "¿Es necesario repetir el análisis o hacer algún estudio adicional?"]
 
 
+def test_preguntas_parecidas_de_examenes_distintos_se_conservan():
+    # Segundo PDF real (química, 2026-11-02): el filtro quitaba AST y ALT por "casi iguales" y dejaba una pregunta
+    analitos = [
+        {"examen": "COLESTEROL LDL - NO CALCULADO", "valor": "102.37", "unidad": "mg/dl", "rango_referencia": "Menor de 100 mg/dl", "estado": "ALTO"},
+        {"examen": "TRIGLICERIDOS", "valor": "209.00", "unidad": "mg/dl", "rango_referencia": "Menor de 150 mg/dl", "estado": "ALTO"},
+        {"examen": "ASPARTATO AMINO TRANSFERASA (ASAT - TGO)", "valor": "35.60", "unidad": "U/l", "rango_referencia": "0.00 - 32.00", "estado": "ALTO"},
+        {"examen": "ALANINO AMINO TRANSFERASA (ALAT - TGP)", "valor": "28.70", "unidad": "U/l", "rango_referencia": "0.00 - 31.00", "estado": "NORMAL"},
+    ]
+    preguntas = ["¿Qué factores podrían estar influyendo en mis niveles de colesterol LDL y triglicéridos?",
+                 "¿Qué factores podrían estar influyendo en mis niveles de AST?",
+                 "¿Qué factores podrían estar influyendo en mis niveles de ALT?",
+                 "¿Qué factores podrían estar influyendo en mis niveles de ALAT?"]  # ALAT es la misma ALT
+    resultado = {"explicaciones": [{"examen": a["examen"], "explicacion": "Está por encima del rango normal."}
+                                   for a in analitos], "preguntas_sugeridas": preguntas}
+    revisar_coherencia(analitos, resultado)
+    assert resultado["preguntas_sugeridas"] == preguntas[:3]
+    assert mp.analitos_del_nombre(analitos[2]["examen"], ALIAS, ORINA) == {"ast"}
+    assert mp.analitos_del_nombre(analitos[3]["examen"], ALIAS, ORINA) == {"alt"}
+
+
 def test_si_no_queda_ninguna_pregunta_se_dan_las_de_respaldo():
     analitos = analitos_pdf()[:1]
     resultado = {"explicaciones": [{"examen": analitos[0]["examen"], "explicacion": "normal"}],

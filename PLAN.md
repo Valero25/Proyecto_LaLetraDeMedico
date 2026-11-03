@@ -450,6 +450,19 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - De punta a punta sin clave de Gemini en el proceso (el cliente ni se crea): **36 s** en GPU, frente a 52 s con la lectura de Gemini.
   - Limitación: los 3 diseños sintéticos son propios. Un diseño real muy distinto podría leerse mal sin que el lector lo detecte; de ahí el aviso y el botón para releer.
   - `tests/test_lector_pdf.py` (13 pruebas). **146 passed.**
+- [x] **Segundo PDF real (Colsanitas 2011, química: LDL, triglicéridos, ALT y AST), 2026-11-02:**
+  - **No se leía en local y la app pasó a Gemini**, como estaba previsto. Causa: el sistema del laboratorio escribe los fragmentos fuera del orden visual, y el modo layout de pypdf los pegaba ("mg/dl102.37", "U/l 0.00 31.0028.70").
+  - Corrección: si el modo layout no da una lectura confiable, `texto_por_posicion` rearma las filas con la posición (x, y) de cada fragmento.
+    - Probada sola con los 450 PDFs sintéticos: 100 %.
+    - Formatos nuevos: bandera antes del valor ("* 35.60"), unidad y rango en la misma celda, rango como mínimo y máximo sin guion, y la edad separada de su número ("Edad · Años 72").
+    - La nota "VALORES DE REFERENCIA SEGÚN…" ya no corta las categorías de debajo.
+  - **Resultado:** 4 de 4 analitos y estados correctos (LDL, triglicéridos y AST altos; ALT normal).
+    - Las categorías completas ("Óptimo: Menor de 100 · Casi óptimo: …"), donde Gemini solo había dado "Menor de 100".
+    - **El sexo (mujer, 72 años), que Gemini no detectó.**
+  - **Preguntas:** el filtro de repetidas quitaba "¿…mis niveles de AST?" y "¿…de ALT?" por parecidas, y la ficha quedó con una sola pregunta. Ahora dos preguntas solo son repetidas si nombran los mismos exámenes. Se agregaron los alias ALAT, ASAT, "Alanino amino transferasa" y "Aspartato amino transferasa".
+  - La consola dice por qué no se pudo leer un PDF en local (sin texto, diseño desconocido o la línea dudosa).
+  - Calidad que queda para el generador v2: repitió la misma frase de causas ("dieta alta en grasas o azúcares…") en LDL, triglicéridos y AST.
+  - 6 pruebas nuevas, con los dos PDFs reales como regresión. **152 passed.**
 - [ ] Comparar contra el MODO gemini en los mismos exámenes (rúbrica humana).
 
 ## Fase 6: informe 🟡
@@ -518,7 +531,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 146 passed)
+# Pruebas (esperado: 152 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

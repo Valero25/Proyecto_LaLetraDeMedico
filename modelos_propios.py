@@ -61,8 +61,9 @@ ALIAS_EXTRA = {
     "glucosa": ["Glicemia", "Glucemia"],
     "hemoglobina_a1c": ["Hemoglobina glicosilada", "Hemoglobina glucosilada", "HbA1c"],
     "bun": ["Nitrógeno ureico"],
-    "alt": ["Transaminasa glutámico pirúvica", "TGP"],
-    "ast": ["Transaminasa glutámico oxalacética", "TGO"],
+    # "ALANINO AMINO TRANSFERASA (ALAT - TGP)" y "ASPARTATO AMINO TRANSFERASA (ASAT - TGO)": PDF real del 2026-11-02
+    "alt": ["Transaminasa glutámico pirúvica", "TGP", "ALAT", "Alanino amino transferasa", "Alanina amino transferasa"],
+    "ast": ["Transaminasa glutámico oxalacética", "TGO", "ASAT", "Aspartato amino transferasa"],
 }
 
 

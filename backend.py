@@ -258,9 +258,11 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
             (palabras & PALABRAS_SUBE and all(e != "ALTO" for e in propias))
             or (palabras & PALABRAS_BAJA and all(e != "BAJO" for e in propias)))
         # El generador a veces repite la misma pregunta alargándola ("...para un paciente de 15 años", "...y cómo se
-        # relaciona con mi salud general"): se descarta si comparte el 70 % de sus palabras con una ya aceptada
+        # relaciona con mi salud general"): se descarta si comparte el 70 % de sus palabras con una ya aceptada Y
+        # habla de los mismos exámenes. "¿...mis niveles de AST?" y "¿...de ALT?" son distintas (caso real, PDF de
+        # química del 2026-11-02: el filtro las quitaba y dejaba una sola pregunta).
         repetida = any(len(palabras & set(mp.tokens(v))) >= 0.7 * min(len(palabras), len(set(mp.tokens(v))))
-                       for v in validas)
+                       and claves_mencionadas(v) == mencionadas for v in validas)
         if repetida:
             quitadas += 1
             print(f"Pregunta quitada (casi igual a otra): {pregunta}", flush=True)
@@ -272,7 +274,7 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
         else:
             validas.append(pregunta)
     if quitadas:
-        print(f"Se quitaron {quitadas} preguntas incoherentes con los resultados", flush=True)
+        print(f"Se quitaron {quitadas} preguntas (incoherentes con los resultados o repetidas)", flush=True)
     resultado["preguntas_sugeridas"] = validas or list(PREGUNTAS_RESPALDO)
     return avisos
 

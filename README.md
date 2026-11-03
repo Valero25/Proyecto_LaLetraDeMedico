@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
-![Pruebas](https://img.shields.io/badge/pruebas-146%20passed-brightgreen)
+![Pruebas](https://img.shields.io/badge/pruebas-152%20passed-brightgreen)
 
 Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
 
@@ -137,7 +137,7 @@ Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin 
 ### 5. Pruebas
 
 ```bash
-python -m pytest tests -q      # esperado: 146 passed (sin modelos ni Gemini)
+python -m pytest tests -q      # esperado: 152 passed (sin modelos ni Gemini)
 ```
 
 ## 📁 Estructura
@@ -157,7 +157,7 @@ tests/                       # pruebas con pytest
 
 - **No es un dispositivo médico.** Las explicaciones son informativas y la app siempre remite al médico.
 - **Las fotos y los PDF escaneados dependen de Gemini**, una API externa con cuotas, y una foto borrosa puede extraerse mal.
-- **El lector local reconoce diseños por bloques y por tabla.** Se midió con un PDF real y 450 PDFs sintéticos en 3 diseños, todos leídos al 100 %. Un diseño muy distinto puede leerse mal sin que el lector lo note: por eso la app avisa que el documento se leyó en local y ofrece releerlo con Gemini.
+- **El lector local reconoce diseños por bloques y por tabla.** Se midió con 2 PDFs reales de laboratorios distintos (Compensar 2021 y Colsanitas 2011) y 450 PDFs sintéticos en 3 diseños, todos leídos al 100 %. Si el texto del PDF viene en desorden, las filas se rearman por la posición de cada fragmento. Un diseño muy distinto puede leerse mal sin que el lector lo note: por eso la app avisa que el documento se leyó en local y ofrece releerlo con Gemini.
 - **Solo sangre y solo los analitos de la base.** El RAG cubre 41 analitos con páginas de MedlinePlus. Un examen que no está (por ejemplo, IGF-1) se explica sin guía y la app lo avisa.
 - **Los rangos de entrenamiento son de adultos.** La app usa siempre el rango que trae el laboratorio, pero el generador se entrenó con casos de 18 a 85 años.
 - **El generador todavía se equivoca a veces:**

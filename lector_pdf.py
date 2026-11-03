@@ -30,6 +30,10 @@ SECCIONES_ORINA = ("orina", "uroanalisis", "urianalisis", "parcial de orina", "s
 SECCIONES_OTRAS = ("coprologico", "coproscopico", "heces", "materia fecal", "espermograma", "liquido")
 RE_VALOR = re.compile(r"^[<>≤≥]?\s*[-+]?\d+(?:[.,]\d+)?$")
 RE_VALOR_BANDERA = re.compile(r"^([<>≤≥]?\s*[-+]?\d+(?:[.,]\d+)?)\s*([*HLhl↑↓]|\(\s*[HL]\s*\))$")
+# Bandera antes del valor: "* 35.60" (Colsanitas, 2011)
+RE_BANDERA_VALOR = re.compile(r"^(?:[*↑↓]|\(\s*[HL]\s*\))\s*([<>≤≥]?\s*[-+]?\d+(?:[.,]\d+)?)$")
+# Rango como mínimo y máximo en columnas, sin guion: "0.00   31.00" -> "0.00 - 31.00"
+RE_MIN_MAX = re.compile(r"^([<>]?\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)$")
 RE_BANDERA = re.compile(r"^([*HLhl↑↓]|\(\s*[HL]\s*\)|alto|bajo)$", re.I)
 RE_UNIDAD = re.compile(r"^(?=.*[A-Za-zµμ%])[A-Za-zµμ%/^\d.*³²⁶×x]{1,18}$")
 RE_CATEGORIA = re.compile(r"^[A-Za-zÁÉÍÓÚáéíóúñÑ][A-Za-zÁÉÍÓÚáéíóúñÑ ]{1,30}:\s*\S.*\d")
@@ -51,8 +55,8 @@ def es_ruido(linea):
 def es_valor(celda):
     t = celda.strip()
     # Cruces ("1+", "3+", "++") y trazas: valores cualitativos de orina, fuera del alcance pero se muestran
-    return bool(RE_VALOR.match(t) or RE_VALOR_BANDERA.match(t) or re.fullmatch(r"\d\s*\+|\++", t)) \
-        or sin_tildes(t) in QUALITATIVOS
+    return bool(RE_VALOR.match(t) or RE_VALOR_BANDERA.match(t) or RE_BANDERA_VALOR.match(t)
+                or re.fullmatch(r"\d\s*\+|\++", t)) or sin_tildes(t) in QUALITATIVOS
 
 
 def es_unidad(celda):
@@ -91,14 +95,20 @@ def leer_resultado(partes):
     nombre = " ".join(partes[:i]) if prefijo is None else ""
     if prefijo is None and not re.search(r"[A-Za-zÁ-úñÑ]", nombre):
         nombre = ""  # en tablas el nombre puede venir en la línea anterior
-    valor = RE_VALOR_BANDERA.sub(r"\1", partes[i].strip())
+    valor = RE_BANDERA_VALOR.sub(r"\1", RE_VALOR_BANDERA.sub(r"\1", partes[i].strip()))
     # Las banderas ("H", "L", "*") pueden ir entre el valor y la unidad: se quitan antes de buscar la unidad
     resto = [c for c in partes[i + 1:] if not RE_BANDERA.match(c.strip())]
     unidad = ""
     if resto and es_unidad(resto[0]) and not RE_VALOR.match(resto[0]):
         unidad, resto = resto[0], resto[1:]
+    elif resto:
+        # La unidad y el rango en la misma celda: "U/l 0.00 31.00"
+        m = re.match(r"^(\S+)\s+(.*\d.*)$", resto[0])
+        if m and es_unidad(m.group(1)) and not RE_VALOR.match(m.group(1)):
+            unidad, resto = m.group(1), [m.group(2)] + resto[1:]
     resto = [c for c in resto if not RE_BANDERA.match(c.strip())]
     rango = " ".join(resto).strip()
+    rango = RE_MIN_MAX.sub(r"\1 - \2", rango)
     cualitativo = sin_tildes(valor) in QUALITATIVOS or bool(re.fullmatch(r"\d\s*\+|\++", valor))
     # Un número suelto sin unidad ni rango no es un resultado (ej. un número de orden en el encabezado)
     if not cualitativo and not unidad and not re.search(r"\d", rango):
@@ -118,10 +128,10 @@ def muestra_de_seccion(seccion):
 
 
 def paciente_del_texto(texto):
-    """Solo sexo y edad. Acepta "Edad: 15 Años", "Género: Masculino", "Sexo: F"."""
+    """Solo sexo y edad. Acepta "Edad: 15 Años", "Edad   Años  72", "Género: Masculino", "Sexo: F"."""
     t = sin_tildes(texto)
     paciente = {}
-    m = re.search(r"\bedad\s*:?\s*(\d{1,3})\s*(?:anos|a\b|años)?", t)
+    m = re.search(r"\bedad\b[^\d\n]{0,25}?(\d{1,3})\b", t)
     if m:
         paciente["edad"] = int(m.group(1))
     m = re.search(r"\b(?:genero|sexo)\s*:?\s*(masculino|femenino|hombre|mujer|m\b|f\b)", t)
@@ -154,6 +164,10 @@ def analizar_texto(paginas):
                 nombre_pendiente, actual = [], None
                 continue
             limpia = " ".join(linea.split())
+            # Notas sobre el rango ("** VALORES DE REFERENCIA SEGÚN LA NCEP ATP III - 2001"): se saltan sin cortar
+            # el resultado actual, porque sus categorías vienen justo debajo
+            if "valores de referencia" in sin_tildes(limpia) or re.match(r"^\*+\s*[A-Za-z]", limpia):
+                continue
             # Categorías del rango, debajo de un resultado: "Sin riesgo: Menor de 200.0 mg/dl"
             if actual is not None and RE_CATEGORIA.match(limpia) and not es_ruido(limpia):
                 previo = actual["rango_referencia"].rstrip(" .")
@@ -170,6 +184,7 @@ def analizar_texto(paginas):
                 # Basta una letra: los laboratorios usan abreviaturas como "K", "Na" o "Hb"
                 if not re.search(r"[A-Za-zÁ-úñÑ]", nombre):
                     confiable = False  # un resultado sin nombre: mejor que lo lea Gemini
+                    print(f"Lector local: resultado sin nombre en la línea {limpia!r}", flush=True)
                     nombre_pendiente, actual = [], None
                     continue
                 actual = {"examen": nombre, "valor": valor, "unidad": unidad, "rango_referencia": rango,
@@ -194,10 +209,48 @@ def tipo_de_examen(secciones):
                                                     else ", ".join(nombres[:-1]) + " y " + nombres[-1]) + ")"
 
 
+def texto_por_posicion(pagina, ancho_caracter=5.0, tolerancia_y=2.5):
+    """
+    Rearma las líneas de la página con la posición (x, y) de cada fragmento de texto, en el orden en que se ven.
+
+    Hace falta cuando el sistema del laboratorio escribe los fragmentos en otro orden: en un PDF real (Colsanitas,
+    2011) el modo layout de pypdf daba "mg/dl102.37" y "U/l 0.00 31.0028.70", porque el valor se escribía después
+    de la unidad y el rango. Con las posiciones sale "COLESTEROL LDL   102.37   mg/dl" y "28.70   U/l 0.00 31.00".
+    Cada fragmento se coloca en la columna x / ancho_caracter, así la sangría se conserva como en el modo layout.
+    """
+    fragmentos = []
+
+    def visitor(texto, cm, tm, fuente, tam):
+        if texto and texto.strip():
+            x = tm[4] * cm[0] + tm[5] * cm[2] + cm[4]
+            y = tm[4] * cm[1] + tm[5] * cm[3] + cm[5]
+            fragmentos.append((y, x, " ".join(texto.split("\n")).strip()))
+
+    pagina.extract_text(visitor_text=visitor)
+    filas = []  # [(y, [(x, texto)])], de arriba a abajo
+    for y, x, t in sorted(fragmentos, key=lambda f: -f[0]):
+        if filas and abs(filas[-1][0] - y) < tolerancia_y:
+            filas[-1][1].append((x, t))
+        else:
+            filas.append((y, [(x, t)]))
+    lineas = []
+    for _, celdas_fila in filas:
+        linea = ""
+        for x, t in sorted(celdas_fila):
+            columna = max(0, int(x / ancho_caracter))
+            linea += " " * (columna - len(linea)) if columna > len(linea) + 1 else ("   " if linea else "")
+            linea += t
+        lineas.append(linea)
+    return "\n".join(lineas)
+
+
 def leer_pdf(file_bytes, minimo_caracteres=80):
     """
     {"tipo_de_examen", "paciente", "analitos"} en el mismo formato que la extracción de Gemini, o None si el PDF
     no tiene texto (escaneado), no se pudo abrir o la lectura no es confiable.
+
+    Primero se lee en modo layout de pypdf (validado con el PDF real de Compensar y 450 PDFs sintéticos). Si no
+    sale una lectura confiable, se intenta otra vez rearmando las líneas por posición (`texto_por_posicion`).
     """
     from pypdf import PdfReader
     try:
@@ -208,8 +261,21 @@ def leer_pdf(file_bytes, minimo_caracteres=80):
         return None
     texto = "\n".join(paginas)
     if len(re.sub(r"\s", "", texto)) < minimo_caracteres:
-        return None  # PDF escaneado: no tiene capa de texto
+        print(f"Lector local: el PDF no tiene capa de texto ({len(lector.pages)} páginas): parece escaneado", flush=True)
+        return None
     analitos, secciones, confiable = analizar_texto(paginas)
     if not analitos or not confiable:
+        print("Lector local: el modo layout no dio una lectura confiable; se rearman las líneas por posición", flush=True)
+        try:
+            por_posicion = [texto_por_posicion(p) for p in lector.pages]
+        except Exception as e:
+            print(f"Lector local: no se pudieron leer las posiciones del texto: {e}", flush=True)
+            return None
+        analitos, secciones, confiable = analizar_texto(por_posicion)
+        texto = "\n".join(por_posicion)
+    if not analitos:
+        print("Lector local: no se reconoció ningún analito en el texto del PDF (diseño desconocido)", flush=True)
+        return None
+    if not confiable:
         return None
     return {"tipo_de_examen": tipo_de_examen(secciones), "paciente": paciente_del_texto(texto), "analitos": analitos}

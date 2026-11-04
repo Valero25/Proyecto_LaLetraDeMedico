@@ -228,6 +228,43 @@ Hay tres contrastes con los modelos anteriores:
 
 **Resultado en la tarea** (150 casos de test): la cobertura de exámenes pasa de 68,7 % a 99,3 %, el estado consistente de 69,7 % a 99,4 % y mencionar el valor del paciente de 10,3 % a 70,7 %. Las oraciones que el guardrail v2 de la Fase 3 (sección 7.2) marca como riesgosas bajan de 6,4 % a 0,5 %, y las respuestas con alguna oración marcada, de 41,8 % a 5,4 %. El detalle está en `PLAN.md`. Este último número muestra algo del aprendizaje supervisado: **el estudiante aprende la distribución de sus datos, defectos incluidos.** El profesor que aportó la mitad del train (Qwen2.5-14B) menciona el valor solo en el 41,5 % de sus respuestas, y el promedio ponderado de los tres profesores (~66 %) predice casi exactamente lo que logra el estudiante.
 
+### 10.2 Calidad frente a cantidad: el generador v2
+
+Si el estudiante aprende la distribución de sus datos, la forma de corregir un defecto es quitarlo de los datos. El v2 repite el ajuste con **el mismo modelo, los mismos hiperparámetros y la misma semilla**: solo cambian los datos, así que cualquier diferencia se debe a ellos.
+- **Filtro:** a los filtros del v1 se suman cuatro. Debe mencionar el valor de todo examen fuera de rango, y no puede repetir causas entre exámenes, inventar el significado de una sigla ni tratar de "usted".
+- **Lo que se descarta:** 138 ejemplos entre train y validación, 118 de ellos por omitir el valor. Quedan **421 de train, frente a 555**. El profesor 14B baja del 49 % al 35 % del train.
+
+| 150 casos de test | Base | v1 (555 ejemplos) | **v2 (421 ejemplos)** |
+|---|---|---|---|
+| Menciona el valor en los exámenes fuera de rango | 10,7 % | 68,5 % | **79,3 %** |
+| Respuestas con causas repetidas | 13,0 % | 13,4 % | **5,3 %** |
+| Respuestas con una sigla inventada | 0 % | 1,3 % | **0 %** |
+| Respuestas con una oración riesgosa (guardrail v2) | 41,8 % | 5,4 % | **2,7 %** |
+| Estado consistente | 69,7 % | 99,4 % | 99,4 % |
+
+Con un 24 % menos de ejemplos, el v2 mejora en todo lo que el filtro ataca y no empeora en nada. Figura: `informe/figuras/fig6_generador_v2.png`. La cantidad de datos importa, pero una vez que el modelo ya aprendió la tarea, **cada ejemplo enseña también sus defectos**. Quitar los ejemplos defectuosos vale más que conservarlos.
+
+**La pérdida no lo ve.** La pérdida de validación final del v2 (0,546) es *mayor* que la del v1 (0,538), y aun así el v2 es mejor en la tarea (`fig4_curvas.png`, panel izquierdo). Hay dos razones:
+1. Los conjuntos de validación son distintos (93 y 97 ejemplos), así que las cifras no se comparan directamente.
+2. La entropía cruzada mide qué tan probable le parece al modelo *una* explicación de referencia, palabra por palabra. No mide si mencionó el valor o si repitió una causa.
+
+Es la misma distinción de la sección 7: se entrena con una pérdida diferenciable y se decide con la métrica de la tarea. La pérdida de train del v2 también queda más alta (0,45 frente a 0,42), porque con menos datos hay menos pasos de gradiente: 54 frente a 70.
+
+**Lo que los datos no explican.** Las siglas inventadas ("VCM (Volumen de Célula Móvil)") casi no estaban en el dataset: 1 de 810 respuestas de los profesores. No se aprenden por imitación; son alucinaciones del estudiante, que completa una sigla con la expansión que le parece más probable. Para un defecto así, filtrar los datos ayuda poco, y por eso la app además lo corrige con una regla después de generar (`corregir_siglas`).
+
+### 10.3 El contexto también tiene distribución: los pasajes del RAG
+
+El generador no modela $p(\text{explicación} \mid \text{datos})$ sino $p(\text{explicación} \mid \text{datos}, \text{pasaje})$: cada analito llega con un fragmento de MedlinePlus. Lo que aprendió depende también de **qué pasajes vio al entrenar**. En el v1 y el v2 eran los que encontraba la búsqueda por el nombre del examen.
+
+Con un PDF real de 2011 apareció el problema:
+- Para una AST alta, la búsqueda por nombre entregó el fragmento "la prueba de AST se suele incluir en un análisis de rutina", que no trae causas.
+- El v2 completó con lo que aprendió en general y escribió que podía deberse a "una **menor** actividad física". Es una causa inventada y además al revés: el fragmento correcto (`mlp-prueba-de-ast-03`) lista hepatitis, cirrosis y alcohol, y dice que es el *ejercicio* lo que puede alterar el resultado.
+- El guardrail no la marcó. Está en condicional y suena informativa, y el clasificador aprendió el **estilo** de una frase riesgosa (diagnóstica o alarmista), no su **verdad**. Detectar falsedades médicas exige comparar con la fuente, y eso no lo hace un clasificador de oraciones.
+
+**La corrección se hizo en la recuperación.** Para un analito alto o bajo, se elige entre los fragmentos de ese analito el que explica ese resultado. El criterio cuenta oraciones que tienen la dirección ("niveles altos") y una causa ("pueden deberse"); está en `modelos_propios.puntaje_estado`. Lo evaluaron 88 consultas etiquetadas (`evaluacion/evaluar_rag_estado.py`), y el fragmento correcto pasó de **15,9 % a 95,5 %**. Esta última cifra es optimista, porque el criterio se ajustó sobre esas mismas consultas. Con el fragmento correcto desaparece la causa inventada, pero queda una muletilla genérica: "una condición metabólica" se repite en tres exámenes.
+
+Es el cambio de distribución de la sección 7.2, esta vez en la **entrada**. El modelo se entrenó con pasajes casi siempre genéricos y ahora recibe pasajes de causas que nunca aprendió a aprovechar del todo. La solución de fondo es la misma de siempre: entrenar con la distribución de uso. Un v3 ajustado con los pasajes según el estado aprendería a tomar las causas del fragmento en lugar de inventarlas.
+
 ## Resumen
 
 | Principio del curso | Dónde aparece en LetraDeMédico | Evidencia |
@@ -243,4 +280,6 @@ Hay tres contrastes con los modelos anteriores:
 | Generalización y cambio de distribución | Guardrail v1 frente a v2 en texto real de los generadores | Falsos positivos en texto real: 69 → 3 (de 166 informativas); F1 sintético: 0,991 → 0,989 |
 | Descenso del gradiente, tasa de aprendizaje y mínimos locales | AdamW con 2 × 10⁻³ desde cero y 2 a 3 × 10⁻⁵ en ajuste fino; 3 semillas | Recorte activo en los primeros ~130 de 228 pasos; F1 de 0,902 ± 0,009 entre semillas |
 | Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; oraciones riesgosas 6,4 % → 0,5 %; validación siempre a la baja |
+| Aprendizaje supervisado: el estudiante imita la distribución de sus datos | Generador v2: mismos hiperparámetros, dataset filtrado (421 frente a 555 ejemplos) | Menciona el valor 68,5 % → 79,3 %; causas repetidas 13,4 % → 5,3 %; pérdida de validación 0,538 → 0,546 (la pérdida no lo ve) |
+| Cambio de distribución en la entrada (contexto del RAG) | Pasaje según el estado del analito | Fragmento que explica el resultado 15,9 % → 95,5 %; desaparece la causa inventada de la AST |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |

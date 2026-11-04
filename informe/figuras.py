@@ -193,19 +193,27 @@ def figura_curvas():
     if not {"qlora", "bilstm"} <= set(datos):
         print("   (faltan curvas: se omite fig4)")
         return
-    q, b = datos["qlora"], datos["bilstm"]["historial"]
+    b = datos["bilstm"]["historial"]
     fig, (izq, der) = plt.subplots(1, 2, figsize=(11, 4.0))
-    izq.plot([p["paso"] for p in q["perdida_train"]], [p["perdida"] for p in q["perdida_train"]], color=AZUL,
-             linewidth=2, label="Train")
-    izq.plot([p["paso"] for p in q["perdida_val"]], [p["perdida"] for p in q["perdida_val"]], color=NARANJA,
-             linewidth=2, marker="o", markersize=7, label="Validación")
-    ultimo = q["perdida_val"][-1]
-    izq.annotate(f"{ultimo['perdida']:.3f}", (ultimo["paso"], ultimo["perdida"]), textcoords="offset points",
-                 xytext=(6, 6), fontsize=8.5)
-    izq.set_title(f"QLoRA del generador ({q['ejemplos_train']} ejemplos, {q['epocas']} épocas)")
-    izq.set_xlabel("Paso de optimización")
+    # v1 y v2 tienen distinto número de pasos (70 y 54): el eje es la época, para compararlos
+    versiones = [("qlora", "v1", AZUL), ("qlora_v2", "v2", NARANJA)]
+    for clave, nombre, color in versiones:
+        if clave not in datos:
+            continue
+        q = datos[clave]
+        pasos = q["perdida_val"][-1]["paso"]
+        a_epoca = lambda paso: paso / pasos * q["epocas"]  # noqa: E731
+        izq.plot([a_epoca(p["paso"]) for p in q["perdida_train"]], [p["perdida"] for p in q["perdida_train"]],
+                 color=color, linewidth=2, label=f"{nombre} train ({q['ejemplos_train']} ej.)")
+        izq.plot([a_epoca(p["paso"]) for p in q["perdida_val"]], [p["perdida"] for p in q["perdida_val"]],
+                 color=color, linewidth=2, linestyle="--", marker="o", markersize=6, label=f"{nombre} validación")
+        ultimo = q["perdida_val"][-1]
+        izq.annotate(f"{ultimo['perdida']:.3f}", (a_epoca(ultimo["paso"]), ultimo["perdida"]),
+                     textcoords="offset points", xytext=(6, 4 if nombre == "v2" else -12), fontsize=8.5)
+    izq.set_title("QLoRA del generador: v1 y v2")
+    izq.set_xlabel("Época")
     izq.set_ylabel("Pérdida (entropía cruzada, solo la respuesta)")
-    izq.legend()
+    izq.legend(fontsize=8.5)
     rejilla(izq, "y")
 
     epocas = [h["epoca"] for h in b]

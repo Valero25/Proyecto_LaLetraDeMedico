@@ -423,7 +423,10 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - **Causa de fondo:** el v1 y el v2 se entrenaron con pasajes buscados solo por nombre, así que aún no aprovechan del todo un fragmento de causas. Un v3 entrenado con los pasajes según el estado lo atacaría desde los datos.
   - **Pruebas:** dos nuevas en `test_pdf_real.py`, sin modelos. **159 passed.**
   - **Decisión:** el v2 queda por defecto (`modelos_propios.generador_por_defecto`). Si su GGUF no está, se usa el v1, y `LDM_MODELO_GENERADOR` elige otro.
-- [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
+- [x] Evidencia teórica que exige `informe/fundamentos.md` (sección 10). Las secciones 10.2 y 10.3 se agregaron el 2026-11-04:
+  - **10.2:** calidad frente a cantidad de datos con el v2. Incluye por qué la pérdida de validación no ve la mejora.
+  - **10.3:** cambio de distribución en la entrada, con los pasajes del RAG según el estado.
+  - `fig4_curvas.png` muestra las curvas del v1 y del v2 por época.
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
   - Curvas de pérdida de train y validación, para el análisis de sobreajuste.
   - Pérdida solo sobre los tokens de la respuesta.

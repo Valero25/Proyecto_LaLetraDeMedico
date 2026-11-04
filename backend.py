@@ -128,6 +128,7 @@ FRASE_ESTADO = {"ALTO": "por encima del", "BAJO": "por debajo del", "NORMAL": "d
 PALABRAS_SUBE = {"alto", "alta", "altos", "altas", "elevado", "elevada", "elevados", "elevadas", "aumentado", "aumentada"}
 PALABRAS_BAJA = {"bajo", "baja", "bajos", "bajas", "disminuido", "disminuida", "reducido", "reducida"}
 # Alias de una palabra que también son palabras comunes en una pregunta ("¿azúcar en la sangre?")
+PALABRAS_ANTECEDENTES = {"antecedentes", "antecedente", "familia", "familiares", "hereditario", "hereditaria"}
 ALIAS_COMUNES = {("sangre",), ("proteinas",), ("densidad",), ("ph",)}
 PREGUNTAS_RESPALDO = ["¿Qué significan estos resultados en mi caso particular?",
                       "¿Necesito repetir algún examen o hacer un control más adelante?"]
@@ -257,14 +258,30 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
         palabras = mp.tokens(pregunta)
         largos = [(t, c) for t, c in alias if mp.contiene(palabras, t)]
         # Se queda con los alias más específicos: "colesterol de alta densidad" antes que "colesterol"
-        return {c for t, c in largos if t not in ALIAS_COMUNES
-                and not any(len(o) > len(t) and mp.contiene(list(o), t) for o, _ in largos)}
+        claves = set()
+        for t, c in largos:
+            if t in ALIAS_COMUNES or any(len(o) > len(t) and mp.contiene(list(o), t) for o, _ in largos):
+                continue
+            # La palabra sola de una familia ("colesterol", "bilirrubina") habla de las pruebas de esa familia que
+            # el paciente sí tiene: con Col. LDL y HDL, "mis niveles de colesterol" no es un examen ajeno, y con
+            # "Bilirrubina total" la "bilirrubina" no es la de orina (evaluación del generador v2, 2026-11-03).
+            familia = c.split("_")[0]
+            hermanas = {k for k in estado_por_clave if k.split("_")[0] == familia}
+            claves |= hermanas if t == (familia,) and c not in estado_por_clave and hermanas else {c}
+        return claves
+
+    def palabras_de(pregunta):
+        # "bajo control" no dice que un valor esté bajo ("¿Cómo mantengo mi glucosa bajo control?")
+        lista = mp.tokens(pregunta)
+        return {p for i, p in enumerate(lista)
+                if not (p in PALABRAS_BAJA and i + 1 < len(lista) and lista[i + 1] == "control")}
 
     validas, quitadas = [], 0
     for pregunta in resultado.get("preguntas_sugeridas", []):
         mencionadas = claves_mencionadas(pregunta)
-        palabras = set(mp.tokens(pregunta))
-        ajenas = mencionadas and not mencionadas & set(estado_por_clave)
+        palabras = palabras_de(pregunta)
+        # Una pregunta sobre antecedentes ("mi familia tiene colesterol alto") puede nombrar un examen que no se hizo
+        ajenas = mencionadas and not mencionadas & set(estado_por_clave) and not palabras & PALABRAS_ANTECEDENTES
         propias = [estado_por_clave[c] for c in mencionadas if c in estado_por_clave]
         contradice = propias and (
             (palabras & PALABRAS_SUBE and all(e != "ALTO" for e in propias))
@@ -273,7 +290,7 @@ def revisar_coherencia(entidades, resultado, tipo_examen=""):
         # relaciona con mi salud general"): se descarta si comparte el 70 % de sus palabras con una ya aceptada Y
         # habla de los mismos exámenes. "¿...mis niveles de AST?" y "¿...de ALT?" son distintas (caso real, PDF de
         # química del 2026-11-02: el filtro las quitaba y dejaba una sola pregunta).
-        repetida = any(len(palabras & set(mp.tokens(v))) >= 0.7 * min(len(palabras), len(set(mp.tokens(v))))
+        repetida = any(len(palabras & palabras_de(v)) >= 0.7 * min(len(palabras), len(palabras_de(v)))
                        and claves_mencionadas(v) == mencionadas for v in validas)
         if repetida:
             quitadas += 1

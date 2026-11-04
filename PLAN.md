@@ -362,7 +362,31 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - Descartes nuevos: 118 por no mencionar el valor de un alterado, 12 por causas repetidas, 6 por "usted", 1 por una sigla inventada y 1 por menos de 2 preguntas coherentes.
   - **Entrenamiento:** `ajustar_qlora.py --version v2` y `qlora_v2_colab.ipynb` (entrena, responde los 150 casos de test y exporta a GGUF en una sesión de la T4, unas 1,5 h). Probado en CPU con SmolLM2-135M.
   - **Pruebas:** `test_pdf_real.py` con la corrección de siglas y las verificaciones de calidad. **156 passed.**
-- [ ] **Entrenar el v2 en Colab**, evaluarlo con `evaluar_generador.py` frente al v1 y decidir cuál usa la app (`LDM_MODELO_GENERADOR` apunta al GGUF).
+- [x] **Generador v2 entrenado y evaluado (2026-11-03).** Colab T4, 35,9 min, 54 pasos. La pérdida de train baja de 0,80 a 0,45 y la de validación de 0,58 a 0,55, sin sobreajuste. No se compara con la validación del v1 (0,538) porque los dos conjuntos de validación son distintos.
+
+  | 150 casos de test | Base | Ajustado v1 | **Ajustado v2** |
+  |---|---|---|---|
+  | JSON válido | 97,3 % | 99,3 % | **100 %** |
+  | Respeta el estado calculado | 69,7 % | 99,4 % | 99,4 % |
+  | Menciona el valor en los alterados | 10,7 % | 68,5 % | **79,3 %** |
+  | Causas repetidas | 13,0 % | 13,4 % | **5,3 %** |
+  | Siglas inventadas | 0 % | 1,3 % | **0 %** |
+  | Con alguna pregunta quitada | 12,3 % | 2,0 % | **1,3 %** |
+  | Respuestas con oración riesgosa (guardrail v2) | 41,8 % | 5,4 % | **2,7 %** |
+  | INFLESZ (legibilidad) | 65,2 | 63,6 | 63,3 |
+  | Segundos por caso (T4) | 8 | 14 | 15 |
+
+  - **Con menos datos pero más limpios, el v2 mejora en todo lo que ataca el filtro y no empeora en nada.** Las causas repetidas bajan a menos de la mitad, y la mención del valor sube 11 puntos aunque sigue lejos del 97,5 % de gpt-oss. Es la evidencia de que la calidad de los datos pesa más que su cantidad (sección 10 de `fundamentos.md`). Figura: `informe/figuras/fig6_generador_v2.png`.
+  - **El filtro de preguntas tenía falsos positivos.** Al principio daba 10,7 % de preguntas quitadas en el v2 frente a 6,7 % en el v1. Revisando caso por caso, casi todas eran preguntas correctas:
+    - "glucosa **bajo control**" se leía como "glucosa baja";
+    - "bilirrubina" a secas se tomaba como la de orina, aunque el examen tenía "Bilirrubina total";
+    - "colesterol" a secas se tomaba como colesterol total, aunque el examen tenía Col. LDL y HDL;
+    - "mis antecedentes familiares de colesterol alto" se marcaba como examen ajeno, y era el motivo de consulta del paciente.
+
+    Se corrigió `revisar_coherencia`, que también usa la app, con una prueba nueva en `test_pdf_real.py`. Las cifras de la tabla ya usan el filtro corregido para los tres modelos. **157 passed.**
+  - **Lo que queda:** el guardrail aún marca una confusión real del v2, "Un MCV elevado puede indicar una anemia **microcítica**" (debería ser macrocítica). La app la señala al paciente.
+  - **Decisión:** la app pasará a usar el **v2**, después de probar su GGUF (`letrademedico-qwen2.5-3b-v2-q4_k_m.gguf`) con los dos PDFs reales.
+- [ ] Probar el GGUF v2 de punta a punta con los dos PDFs reales y dejarlo por defecto en `modelos_propios.RUTAS["generador"]`.
 - [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
   - Curvas de pérdida de train y validación, para el análisis de sobreajuste.
@@ -572,7 +596,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 156 passed)
+# Pruebas (esperado: 157 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

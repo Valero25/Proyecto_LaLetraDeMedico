@@ -1,6 +1,42 @@
 {
   "clasificador": "mrbert-biomed-v2",
   "resultados": {
+    "qwen2.5-3b-ajustado-v2": {
+      "n": 150,
+      "json_valido": 1.0,
+      "cobertura": 1.0,
+      "menciona_valor": 0.7608809523809524,
+      "estado_consistente": 0.9938888888888889,
+      "inflesz": 63.298099244534214,
+      "palabras_por_respuesta": 187.20666666666668,
+      "segundos_por_caso": 14.957333333333333,
+      "menciona_valor_alterados": 0.7928286852589641,
+      "causas_repetidas": 0.05333333333333334,
+      "siglas_inventadas": 0.0,
+      "usa_usted": 0.0,
+      "respuestas_con_pregunta_quitada": 0.013333333333333334,
+      "ejemplos_siglas_inventadas": [],
+      "ejemplos_causas_repetidas": [
+        "Esto puede deberse a factores como la dieta o la falta de actividad física.",
+        "Tu resultado es alto, lo que puede deberse a factores como la dieta o la falta de actividad física.",
+        "Este incremento puede deberse a una ingesta excesiva de suplementos de hierro o a una alteración renal.",
+        "Un nivel alto de albúmina puede deberse a una deshidratación, a una menor actividad física o a una posible alteración renal leve.",
+        "Un nivel elevado puede deberse a una ingesta de proteínas alta, problemas renales o a una hidratación insuficiente.",
+        "Un nivel bajo puede deberse a una menor actividad ósea o a variaciones normales.",
+        "Un nivel bajo puede deberse a una deficiencia de hierro o a una anemia leve.",
+        "La TSH es una hormona que regula la producción de la tiroides; su nivel bajo puede deberse a una tiroides pequeña o a una respuesta reducida a la hormona estimulante.",
+        "Este valor puede deberse a una dieta alta en azúcares o a factores genéticos."
+      ],
+      "oraciones_marcadas": 0.0032722513089005235,
+      "respuestas_con_marca": 0.02666666666666667,
+      "ejemplos_marcados": [
+        "Tu nivel es alto, lo que aumenta el riesgo de enfermedades cardíacas.",
+        "Tu fosfatasa alcalina está ligeramente baja.",
+        "Los linfocitos en tu sangre están bajos.",
+        "Esto puede deberse a una enfermedad hepática, cirrosis, mononucleosis, problemas cardíacos, pancreatitis, hemocromatosis, quemaduras profundas, convulsiones o uso de medicamentos tóxicos para el hígado, especialmente el alcohol.",
+        "Un MCV elevado puede indicar una anemia microcítica o una ingesta excesiva de hierro."
+      ]
+    },
     "qwen2.5-3b-ajustado": {
       "n": 150,
       "json_valido": 0.9933333333333333,
@@ -14,7 +50,7 @@
       "causas_repetidas": 0.1342281879194631,
       "siglas_inventadas": 0.013422818791946308,
       "usa_usted": 0.0,
-      "respuestas_con_pregunta_quitada": 0.06711409395973154,
+      "respuestas_con_pregunta_quitada": 0.020134228187919462,
       "ejemplos_siglas_inventadas": [
         "MCH (Masa Corporal de Hemoglobina)",
         "HCM (hematógeno corporal medio)"
@@ -57,7 +93,7 @@
       "causas_repetidas": 0.13013698630136986,
       "siglas_inventadas": 0.0,
       "usa_usted": 0.15753424657534246,
-      "respuestas_con_pregunta_quitada": 0.2054794520547945,
+      "respuestas_con_pregunta_quitada": 0.1232876712328767,
       "ejemplos_siglas_inventadas": [],
       "ejemplos_causas_repetidas": [
         "Puede deberse a diálisis, diarrea, retención de urea, entre otros.",

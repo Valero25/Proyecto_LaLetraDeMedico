@@ -197,6 +197,26 @@ def test_preguntas_parecidas_de_examenes_distintos_se_conservan():
     assert mp.analitos_del_nombre(analitos[3]["examen"], ALIAS, ORINA) == {"alt"}
 
 
+def test_preguntas_legitimas_del_generador_v2_se_conservan():
+    # Evaluación del generador v2 (2026-11-03): el filtro quitaba estas preguntas, que sí son coherentes
+    analitos = [
+        {"examen": "Glucosa", "valor": "90", "unidad": "mg/dL", "rango_referencia": "70 - 100", "estado": "NORMAL"},
+        {"examen": "Col. LDL", "valor": "140", "unidad": "mg/dL", "rango_referencia": "0 - 100", "estado": "ALTO"},
+        {"examen": "Col. HDL", "valor": "35", "unidad": "mg/dL", "rango_referencia": "40 - 60", "estado": "BAJO"},
+        {"examen": "Bilirrubina total", "valor": "2.1", "unidad": "mg/dL", "rango_referencia": "0.2 - 1.2", "estado": "ALTO"},
+    ]
+    buenas = ["¿Cómo puedo mantener mis niveles de glucosa bajo control?",          # "bajo control" no es "bajo"
+              "¿Qué cambios en mi estilo de vida ayudarían a mejorar mi colesterol?",  # colesterol = LDL y HDL
+              "¿Qué podría estar causando mi nivel elevado de bilirrubina?",          # bilirrubina = la total
+              "¿Hay relación entre mis antecedentes familiares de colesterol alto y estos resultados?"]
+    malas = ["¿Por qué tengo la glucosa baja?",                    # glucosa normal
+             "¿Qué significa que mi creatinina esté alta?"]       # no se la hizo
+    resultado = {"explicaciones": [{"examen": a["examen"], "explicacion": "dentro del rango"} for a in analitos],
+                 "preguntas_sugeridas": buenas + malas}
+    revisar_coherencia(analitos, resultado, "Química sanguínea")
+    assert resultado["preguntas_sugeridas"] == buenas
+
+
 def test_siglas_inventadas_se_corrigen_en_la_app():
     # Hemograma real (2026-11-02): "VCM (Volumen de Célula Móvil)" y "HCM (Hidrógeno de la Célula Móvil)"
     analitos = [{"examen": "VCM", "valor": "76", "unidad": "fL", "rango_referencia": "80 - 100", "estado": "BAJO"},

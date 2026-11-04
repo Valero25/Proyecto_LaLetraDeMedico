@@ -145,18 +145,43 @@ def figura_generador():
     guardar(fig, "fig3_generador.png", "evaluacion/resultados/fase4_generador.json")
 
 
+def figura_generador_v2():
+    """Base, v1 y v2 sobre los mismos 150 casos de test, en las métricas que el v2 busca mejorar."""
+    r = leer("fase4_generador.json")["resultados"]
+    if "qwen2.5-3b-ajustado-v2" not in r:
+        print("   (falta data/generador/salidas/qwen2.5-3b-ajustado-v2.jsonl evaluado: se omite fig6)")
+        return
+    modelos = [("qwen2.5-3b-base", "Qwen2.5-3B base", GRIS), ("qwen2.5-3b-ajustado", "Ajustado v1 (555 ejemplos)", AZUL),
+               ("qwen2.5-3b-ajustado-v2", "Ajustado v2 (421 ejemplos limpios)", NARANJA)]
+    metricas = [("estado_consistente", "Respeta el estado calculado"),
+                ("menciona_valor_alterados", "Menciona el valor en los\nexámenes fuera de rango"),
+                ("causas_repetidas", "Respuestas con causas repetidas\n(menos es mejor)"),
+                ("siglas_inventadas", "Respuestas con una sigla inventada\n(menos es mejor)"),
+                ("respuestas_con_pregunta_quitada", "Respuestas con una pregunta incoherente\n(menos es mejor)"),
+                ("respuestas_con_marca", "Respuestas con una oración riesgosa\n(guardrail v2; menos es mejor)")]
+    fig, ax = plt.subplots(figsize=(8.6, 6.0))
+    barras_agrupadas(ax, [e for _, e in metricas],
+                     [(nombre, color, [r[k].get(m) or 0 for m, _ in metricas]) for k, nombre, color in modelos])
+    ax.set_title(f"Generador v2: mismos hiperparámetros, datos más limpios ({r['qwen2.5-3b-ajustado-v2']['n']} casos de test)",
+                 pad=30)
+    ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
+    ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=3, borderaxespad=0.2, handlelength=1.2, fontsize=8.5)
+    guardar(fig, "fig6_generador_v2.png", "evaluacion/resultados/fase4_generador.json")
+
+
 # --- 4. Curvas de entrenamiento -----------------------------------------------------------------------------------
 def curvas():
     """Copia las curvas de models/ a evaluacion/resultados/curvas.json (versionado) y las devuelve."""
     destino = RESULTADOS / "curvas.json"
     fuentes = {"qlora": RAIZ / "models" / "generador" / "qwen2.5-3b-instruct-lora" / "entrenamiento.json",
+               "qlora_v2": RAIZ / "models" / "generador" / "qwen2.5-3b-instruct-lora-v2" / "entrenamiento.json",
                "bilstm": RAIZ / "models" / "guardrails" / "bilstm" / "entrenamiento.json"}
     datos = json.loads(destino.read_text(encoding="utf-8")) if destino.exists() else {}
     for nombre, ruta in fuentes.items():
         if ruta.exists():
             e = json.loads(ruta.read_text(encoding="utf-8"))
             datos[nombre] = ({"perdida_train": e["perdida_train"], "perdida_val": e["perdida_val"], "epocas": e["epocas"],
-                              "lr": e["lr"], "ejemplos_train": e["ejemplos_train"]} if nombre == "qlora" else
+                              "lr": e["lr"], "ejemplos_train": e["ejemplos_train"]} if nombre.startswith("qlora") else
                              {"historial": e["historial"], "parametros": e["parametros"], "lr": e["lr"]})
     if datos:
         destino.write_text(json.dumps(datos, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -220,5 +245,5 @@ def figura_velocidad():
 if __name__ == "__main__":
     SALIDA.mkdir(parents=True, exist_ok=True)
     print("Figuras:")
-    for f in (figura_rag, figura_guardrail, figura_generador, figura_curvas, figura_velocidad):
+    for f in (figura_rag, figura_guardrail, figura_generador, figura_curvas, figura_velocidad, figura_generador_v2):
         f()

@@ -386,7 +386,17 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     Se corrigió `revisar_coherencia`, que también usa la app, con una prueba nueva en `test_pdf_real.py`. Las cifras de la tabla ya usan el filtro corregido para los tres modelos. **157 passed.**
   - **Lo que queda:** el guardrail aún marca una confusión real del v2, "Un MCV elevado puede indicar una anemia **microcítica**" (debería ser macrocítica). La app la señala al paciente.
   - **Decisión:** la app pasará a usar el **v2**, después de probar su GGUF (`letrademedico-qwen2.5-3b-v2-q4_k_m.gguf`) con los dos PDFs reales.
-- [ ] Probar el GGUF v2 de punta a punta con los dos PDFs reales y dejarlo por defecto en `modelos_propios.RUTAS["generador"]`.
+- [x] **GGUF v2 probado de punta a punta con los dos PDFs reales (2026-11-04, RTX 4050, lectura local, sin Gemini).**
+
+  | PDF | Analitos | v1 | **v2** |
+  |---|---|---|---|
+  | Endocrinología 2021 (incluye la carga de los modelos) | 8 | 158 s | **130 s** |
+  | Colsanitas 2011 (con los modelos ya cargados) | 4 | 19 s | **15 s** |
+
+  - En los dos modelos: todos los exámenes con su valor, sin siglas inventadas, sin "usted", sin explicaciones cambiadas por plantilla y 0 oraciones marcadas por el guardrail.
+  - El v2 además escribe el rango de referencia dentro del texto ("ligeramente por encima del rango normal (menor a 150 mg/dl)").
+  - Lo que queda en los dos: en Colsanitas, LDL y triglicéridos comparten la misma causa ("dieta alta en grasas o menor actividad física"), que es razonable en dos lípidos. Para la AST alta, el v2 menciona "una menor actividad física", una causa más floja que la del v1 ("daño en el hígado o en los músculos"). Esto va a la rúbrica humana.
+  - **Decisión:** el v2 queda por defecto (`modelos_propios.generador_por_defecto`). Si su GGUF no está, se usa el v1, y `LDM_MODELO_GENERADOR` elige otro.
 - [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
   - Curvas de pérdida de train y validación, para el análisis de sobreajuste.

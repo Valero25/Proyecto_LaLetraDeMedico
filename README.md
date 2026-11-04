@@ -121,7 +121,8 @@ Los pesos no se versionan, por tamaño. Van en `models/`:
 models/rag/alia-ajustado-completo/          # embeddings del RAG
 models/rag/indice-alia-ajustado/            # índice FAISS (se construye solo la primera vez)
 models/guardrails/mrbert-biomed-v2/         # clasificador del guardrail
-models/generador/letrademedico-qwen2.5-3b-q4_k_m.gguf
+models/generador/letrademedico-qwen2.5-3b-v2-q4_k_m.gguf   # generador v2 (por defecto)
+models/generador/letrademedico-qwen2.5-3b-q4_k_m.gguf      # generador v1 (respaldo si falta el v2)
 ```
 
 Si falta alguno, la app ofrece solo el motor Gemini y dice cuál falta. Cómo entrenarlos (con notebooks para Colab T4) está en `PLAN.md`.

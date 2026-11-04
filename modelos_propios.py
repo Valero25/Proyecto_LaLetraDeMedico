@@ -23,11 +23,20 @@ for carpeta in ("training/rag", "training/generador"):
 from prompt import mensajes_estudiante, recortar  # noqa: E402
 from verificacion import dividir_oraciones, parsear  # noqa: E402
 
+
+def generador_por_defecto():
+    """El generador v2 (dataset limpio, mejor en todas las métricas del test: PLAN.md, Fase 4); si su GGUF no está
+    descargado, el v1. LDM_MODELO_GENERADOR elige otro."""
+    carpeta = RAIZ / "models" / "generador"
+    v2 = carpeta / "letrademedico-qwen2.5-3b-v2-q4_k_m.gguf"
+    return v2 if v2.exists() else carpeta / "letrademedico-qwen2.5-3b-q4_k_m.gguf"
+
+
 RUTAS = {
     "rag": Path(os.environ.get("LDM_MODELO_RAG", RAIZ / "models" / "rag" / "alia-ajustado-completo")),
     "indice": Path(os.environ.get("LDM_INDICE_RAG", RAIZ / "models" / "rag" / "indice-alia-ajustado")),
     "guardrail": Path(os.environ.get("LDM_MODELO_GUARDRAIL", RAIZ / "models" / "guardrails" / "mrbert-biomed-v2")),
-    "generador": Path(os.environ.get("LDM_MODELO_GENERADOR", RAIZ / "models" / "generador" / "letrademedico-qwen2.5-3b-q4_k_m.gguf")),
+    "generador": Path(os.environ.get("LDM_MODELO_GENERADOR") or generador_por_defecto()),
 }
 MAX_CARACTERES_PASAJE = 700  # igual que en el entrenamiento (training/generador/preparar_casos.py)
 UMBRAL_RIESGO = 0.5

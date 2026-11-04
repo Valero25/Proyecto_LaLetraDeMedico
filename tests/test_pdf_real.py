@@ -337,3 +337,30 @@ def test_ficha_sin_explicaciones_alineadas_no_falla():
     datos["explicaciones"] = []
     assert ficha_consulta.ficha_pdf(**datos).startswith(b"%PDF")
     assert ficha_consulta.ficha_png(**datos)
+
+
+def _fragmentos(analito):
+    docs = [json.loads(l) for l in (RAIZ / "data" / "rag" / "documentos.jsonl").read_text(encoding="utf-8").splitlines() if l]
+    return [d for d in docs if analito in d["analitos"]]
+
+
+def _mejor(analito, estado):
+    return max(_fragmentos(analito), key=lambda d: mp.puntaje_estado(d, estado))["id"]
+
+
+def test_rag_elige_el_fragmento_que_explica_el_resultado():
+    # PDF Colsanitas (2026-11-04): a la AST alta le llegaba "se suele incluir en un análisis de rutina" y el
+    # generador inventó "una menor actividad física". El fragmento -03 trae las causas reales.
+    assert _mejor("ast", "ALTO") == "mlp-prueba-de-ast-03"
+    assert _mejor("glucosa", "ALTO") == "mlp-prueba-de-glucosa-en-la-sangre-05"
+    assert _mejor("calcio", "BAJO") == "mlp-prueba-de-calcio-en-la-sangre-05"
+    # Hematocrito bajo: no el fragmento de los altos (-05), aunque hable de "plasma demasiado bajo"
+    assert _mejor("hematocrito", "BAJO") in {"mlp-hematocrito-03", "mlp-hematocrito-04"}
+    # Ácido úrico alto en sangre: no el fragmento del ácido úrico en orina (-05)
+    assert _mejor("acido_urico", "ALTO") == "mlp-prueba-de-acido-urico-04"
+
+
+def test_baja_densidad_no_cuenta_como_bajo():
+    doc = {"texto": "El colesterol de baja densidad puede causar problemas.", "seccion": ""}
+    assert mp.puntaje_estado(doc, "BAJO")[0] == 0
+    assert mp.puntaje_estado({**doc, "texto": "Niveles bajos de HDL pueden ser un signo de riesgo."}, "BAJO")[0] == 2

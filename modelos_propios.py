@@ -47,6 +47,41 @@ MIN_TOKENS_RESPUESTA = 900  # un lote de 8 analitos ocupa unos 700 tokens de res
 UMBRAL_SIN_ALIAS = 0.55
 
 
+# Para un analito alto o bajo, el pasaje útil es el que explica ESE resultado. La búsqueda por nombre daba, por
+# ejemplo, "la prueba de AST se suele incluir en un análisis de rutina" a una AST alta, y el generador inventó la
+# causa ("una menor actividad física"; PDF Colsanitas, 2026-11-04). Medido en evaluacion/evaluar_rag_estado.py.
+DIRECCION = {
+    "ALTO": {"alto", "altos", "alta", "altas", "elevado", "elevados", "elevada", "elevadas", "aumentado", "aumentados",
+             "mayor", "mayores", "demasiado", "demasiada", "demasiados", "hipercalemia", "hipercalcemia", "leucocitosis",
+             "hiperbilirrubinemia", "grandes"},
+    "BAJO": {"bajo", "bajos", "baja", "bajas", "disminuido", "disminuidos", "menor", "menores", "poca", "poco",
+             "pocos", "deficiencia", "hipocalcemia", "leucopenia", "trombocitopenia", "hipobilirrubinemia", "pequenos"},
+}
+CAUSA = {"deberse", "debido", "causar", "causado", "causada", "causados", "causas", "signo", "senal", "significar",
+         "significa", "afecciones", "incluyen", "incluir", "provocar", "razones", "relacionados"}
+SECCION_RESULTADOS = "significan"
+
+
+def puntaje_estado(doc, estado):
+    """Oraciones del pasaje (tal como lo recibe el generador) que dicen la dirección del resultado y una causa o
+    significado (2 puntos cada una), más 1 si es de la sección "¿Qué significan los resultados?"; en empate gana el
+    que más palabras tiene de esa dirección frente a la contraria. "Baja densidad" no cuenta como bajo."""
+    texto = recortar(doc["texto"], MAX_CARACTERES_PASAJE).lower()
+    for frase in ("baja densidad", "alta densidad", "alto contenido"):
+        texto = texto.replace(frase, " ")
+    opuesto = "BAJO" if estado == "ALTO" else "ALTO"
+    a_favor = balance = 0
+    for oracion in dividir_oraciones(texto):
+        palabras = tokens(oracion)
+        if not set(palabras) & CAUSA or "orina" in palabras:  # la app es solo de sangre: "ácido úrico en orina" no
+            continue
+        a_favor += bool(set(palabras) & DIRECCION[estado])
+        balance += sum(p in DIRECCION[estado] for p in palabras) - sum(p in DIRECCION[opuesto] for p in palabras)
+    # El resultado contrario solo desempata: a un hematocrito bajo no le sirve el fragmento de los altos, pero un
+    # fragmento que explica las dos direcciones (glóbulos blancos altos y bajos) no pierde por eso
+    return 2 * a_favor + (SECCION_RESULTADOS in doc.get("seccion", "").lower()), balance
+
+
 PALABRAS_VACIAS = {"de", "del", "la", "el", "los", "las", "en", "a", "u", "o", "y", "e", "por", "para", "con"}
 PALABRAS_SANGRE = {"suero", "sangre", "serico", "serica", "plasma", "plasmatico", "plasmatica", "hemograma"}
 PALABRAS_ORINA = {"orina", "urinario", "urinaria", "uroanalisis", "sedimento", "urianalisis"}
@@ -71,8 +106,9 @@ ALIAS_EXTRA = {
     "hemoglobina_a1c": ["Hemoglobina glicosilada", "Hemoglobina glucosilada", "HbA1c"],
     "bun": ["Nitrógeno ureico"],
     # "ALANINO AMINO TRANSFERASA (ALAT - TGP)" y "ASPARTATO AMINO TRANSFERASA (ASAT - TGO)": PDF real del 2026-11-02
-    "alt": ["Transaminasa glutámico pirúvica", "TGP", "ALAT", "Alanino amino transferasa", "Alanina amino transferasa"],
-    "ast": ["Transaminasa glutámico oxalacética", "TGO", "ASAT", "Aspartato amino transferasa"],
+    "alt": ["Transaminasa glutámico pirúvica", "TGP", "ALAT", "Alanino amino transferasa", "Alanina amino transferasa",
+            "Alanino aminotransferasa", "Alanina aminotransferasa"],
+    "ast": ["Transaminasa glutámico oxalacética", "TGO", "ASAT", "Aspartato amino transferasa", "Aspartato aminotransferasa"],
 }
 
 
@@ -144,7 +180,7 @@ class RecuperadorRAG:
     def analitos_del_nombre(self, examen, tipo_examen=""):
         return analitos_del_nombre(examen, self.alias, self.claves_orina, tipo_examen)
 
-    def buscar(self, consulta, examen=None, tipo_examen="", k=None):
+    def buscar(self, consulta, examen=None, tipo_examen="", k=None, estado=None):
         """
         Búsqueda densa con dos protecciones (medidas con el PDF real de prueba, 2026-11-02):
 
@@ -154,6 +190,8 @@ class RecuperadorRAG:
            terminaba en la página de glucosa en orina.
         2. Sin alias, el primer resultado solo se acepta si su similitud supera UMBRAL_SIN_ALIAS. Si no,
            devuelve None: es mejor explicar sin guía que con la de otro examen (IGF-1 recibía la de creatinina).
+        3. Con `estado` ALTO o BAJO y alias, entre los fragmentos de ese analito gana el de mayor puntaje_estado (el
+           que explica ese resultado); en empate, el de mayor similitud.
         """
         kwargs = {"prompt_name": "query"} if self.usa_prompt else {}
         vector = self.modelo.encode([consulta], normalize_embeddings=True, **kwargs)
@@ -161,6 +199,10 @@ class RecuperadorRAG:
         similitudes, posiciones = self.indice.search(vector, k or len(self.documentos))
         candidatos = [(float(s), self.documentos[i]) for s, i in zip(similitudes[0], posiciones[0]) if i >= 0]
         validos = self.analitos_del_nombre(examen, tipo_examen) if examen else set()
+        if validos and estado in DIRECCION:
+            propios = [d for _, d in candidatos if validos & set(d["analitos"])]
+            if propios:  # max() se queda con el primero en empate: el más similar
+                return max(propios, key=lambda d: puntaje_estado(d, estado))
         if validos:
             con_alias = next((d for _, d in candidatos if validos & set(d["analitos"])), None)
             if con_alias is not None:
@@ -169,11 +211,12 @@ class RecuperadorRAG:
             return None
         return candidatos[0][1]
 
-    def recuperar(self, analitos, tipo_examen):
+    def recuperar(self, analitos, tipo_examen, usar_estado=True):
         """Un pasaje por analito y en su orden. Los que no tienen guía llevan texto vacío y sin_cobertura."""
         pasajes = []
         for a in analitos:
-            doc = self.buscar(f"{a['examen']} ({tipo_examen})", examen=a["examen"], tipo_examen=tipo_examen)
+            doc = self.buscar(f"{a['examen']} ({tipo_examen})", examen=a["examen"], tipo_examen=tipo_examen,
+                              estado=a.get("estado") if usar_estado else None)
             if doc is None:
                 pasajes.append({"examen": a["examen"], "titulo": "", "fuente": None, "texto": "", "sin_cobertura": True})
                 continue

@@ -397,7 +397,31 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - El v2 además escribe el rango de referencia dentro del texto ("ligeramente por encima del rango normal (menor a 150 mg/dl)").
   - Lo que queda en los dos: en Colsanitas, LDL y triglicéridos comparten la misma causa ("dieta alta en grasas o menor actividad física"). Es correcta según MedlinePlus (`mlp-prueba-de-trigliceridos-01` y `mlp-niveles-de-colesterol-06`), pero el RAG no le entregó esos fragmentos: el modelo acertó por lo aprendido en el entrenamiento.
   - **Error del v2 en la AST alta:** escribe "una menor actividad física", una causa inventada y al revés (MedlinePlus, `mlp-prueba-de-ast-03`: enfermedad hepática, hepatitis, alcohol…, y es el *ejercicio* lo que puede alterar el resultado). El guardrail no lo marca porque va en condicional. **Causa de fondo:** el RAG busca solo por el nombre del examen y le entregó el fragmento `-01` ("se incluye en un análisis de rutina"), que no trae causas.
-- [ ] **RAG según el estado:** para un analito alto o bajo, elegir entre los fragmentos de ese mismo analito el que explica ese resultado. Un primer intento por palabras clave ("altos", "pueden deberse") mejora AST, plaquetas, potasio y hemoglobina, pero empeora glucosa, creatinina, bilirrubina y sodio, y elige el fragmento de hematocrito alto para uno bajo. No se aplicó. Falta etiquetar unas 40 combinaciones de analito y estado con su fragmento correcto y aplicar el criterio que acierte más.
+- [x] **RAG según el estado (2026-11-04).** Para un analito alto o bajo, se elige entre los fragmentos de ese mismo analito el que explica ese resultado (`modelos_propios.puntaje_estado`).
+  - **Criterio:** cuenta las oraciones, en los 700 caracteres que recibe el generador, que dicen la dirección del resultado ("altos", "más bajo de lo normal", "hipercalcemia"…) junto con una causa o un significado ("pueden deberse", "signo de", "incluyen"). Suma 1 si el fragmento es de "¿Qué significan los resultados?". En empate gana el fragmento con más palabras de esa dirección que de la contraria.
+  - **Exclusiones:** no cuentan las oraciones sobre orina, porque la app es solo de sangre, ni "baja/alta densidad" ni "alto contenido".
+  - **Sin cambios:** los resultados normales y los analitos sin alias siguen con la búsqueda anterior.
+  - **Evaluación** (`evaluacion/evaluar_rag_estado.py` → `fase5_rag_estado.json`): 44 combinaciones de analito y estado, etiquetadas leyendo los fragmentos, cada una con un nombre corto y uno largo de laboratorio (88 consultas).
+
+    | Búsqueda | Fragmento que explica el resultado |
+    |---|---|
+    | Solo por el nombre (antes) | 14 / 88 (15,9 %) |
+    | **Con el estado** | **84 / 88 (95,5 %)** |
+
+  - **Proceso:**
+    - El primer intento, solo con palabras sueltas, empeoraba glucosa, creatinina y hematocrito.
+    - Restar las oraciones del resultado contrario castigaba a los fragmentos que explican las dos direcciones (glóbulos blancos, VCM).
+    - Agregar "puede/pueden" como palabras de causa bajó el acierto a 75 %.
+    - Tras la primera corrida se aceptaron como correctos 4 fragmentos que, releídos, sí explican el resultado: glucosa-01, a1c-01, albumina-00 y tsh-00.
+    - **El criterio se ajustó sobre este mismo conjunto, así que el 95,5 % es optimista.**
+  - **Lo que falla:**
+    - Plaquetas altas: el texto útil de `-02` queda después de los 700 caracteres.
+    - VCM alto: el criterio elige `-03`, que habla de la HCM alta; no separa dos índices dentro del mismo fragmento.
+  - **PDF Colsanitas con el v2:**
+    - La AST alta ahora recibe `mlp-prueba-de-ast-03` y la "menor actividad física" desaparece: "puede deberse a una inflamación leve del hígado o a una condición metabólica".
+    - Queda una muletilla del generador: "una condición metabólica" se repite en LDL, triglicéridos y AST. No viene del pasaje.
+    - **Causa de fondo:** el v1 y el v2 se entrenaron con pasajes buscados solo por nombre, así que aún no aprovechan del todo un fragmento de causas. Un v3 entrenado con los pasajes según el estado lo atacaría desde los datos.
+  - **Pruebas:** dos nuevas en `test_pdf_real.py`, sin modelos. **159 passed.**
   - **Decisión:** el v2 queda por defecto (`modelos_propios.generador_por_defecto`). Si su GGUF no está, se usa el v1, y `LDM_MODELO_GENERADOR` elige otro.
 - [ ] Evidencia teórica que exige `informe/fundamentos.md` (sección 10):
   - Conteo de parámetros entrenables de LoRA frente al total, por matriz: $r(d+k)$ frente a $d \cdot k$.
@@ -608,7 +632,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 157 passed)
+# Pruebas (esperado: 159 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

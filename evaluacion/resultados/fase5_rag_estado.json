@@ -1,0 +1,1059 @@
+{
+  "consultas": 88,
+  "casos": 44,
+  "acierto_antes": 0.1590909090909091,
+  "acierto_con_estado": 0.9545454545454546,
+  "empeora": [],
+  "sigue_fallando": [
+    {
+      "examen": "PLT",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-04",
+      "con_estado": "mlp-pruebas-de-plaquetas-00",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "Plaquetas",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-04",
+      "con_estado": "mlp-pruebas-de-plaquetas-00",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "MCV",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-00",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "VOLUMEN CORPUSCULAR MEDIO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-01",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    }
+  ],
+  "filas": [
+    {
+      "examen": "Hemoglobina",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-analisis-de-hemoglobina-03"
+      ],
+      "antes": "mlp-analisis-de-hemoglobina-00",
+      "con_estado": "mlp-analisis-de-hemoglobina-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HEMOGLOBINA EN SANGRE TOTAL",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-analisis-de-hemoglobina-03"
+      ],
+      "antes": "mlp-analisis-de-hemoglobina-00",
+      "con_estado": "mlp-analisis-de-hemoglobina-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HGB",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-analisis-de-hemoglobina-04"
+      ],
+      "antes": "mlp-analisis-de-hemoglobina-00",
+      "con_estado": "mlp-analisis-de-hemoglobina-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Hemoglobina",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-analisis-de-hemoglobina-04"
+      ],
+      "antes": "mlp-analisis-de-hemoglobina-00",
+      "con_estado": "mlp-analisis-de-hemoglobina-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Hematocrito",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-hematocrito-03",
+        "mlp-hematocrito-04"
+      ],
+      "antes": "mlp-hematocrito-00",
+      "con_estado": "mlp-hematocrito-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HTO HEMATOCRITO",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-hematocrito-03",
+        "mlp-hematocrito-04"
+      ],
+      "antes": "mlp-hematocrito-06",
+      "con_estado": "mlp-hematocrito-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HCT",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-hematocrito-05"
+      ],
+      "antes": "mlp-hematocrito-00",
+      "con_estado": "mlp-hematocrito-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Hematocrito",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-hematocrito-05"
+      ],
+      "antes": "mlp-hematocrito-00",
+      "con_estado": "mlp-hematocrito-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Glóbulos rojos",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-conteo-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-conteo-de-globulos-rojos-01",
+      "con_estado": "mlp-conteo-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "RECUENTO DE ERITROCITOS",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-conteo-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-conteo-de-globulos-rojos-05",
+      "con_estado": "mlp-conteo-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "RBC",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-conteo-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-conteo-de-globulos-rojos-01",
+      "con_estado": "mlp-conteo-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Recuento de glóbulos rojos",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-conteo-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-conteo-de-globulos-rojos-05",
+      "con_estado": "mlp-conteo-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Leucocitos",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-conteo-de-globulos-blancos-04"
+      ],
+      "antes": "mlp-conteo-de-globulos-blancos-00",
+      "con_estado": "mlp-conteo-de-globulos-blancos-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "RECUENTO DE LEUCOCITOS",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-conteo-de-globulos-blancos-04"
+      ],
+      "antes": "mlp-conteo-de-globulos-blancos-04",
+      "con_estado": "mlp-conteo-de-globulos-blancos-04",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "WBC",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-conteo-de-globulos-blancos-04"
+      ],
+      "antes": "mlp-conteo-de-globulos-blancos-00",
+      "con_estado": "mlp-conteo-de-globulos-blancos-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Glóbulos blancos",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-conteo-de-globulos-blancos-04"
+      ],
+      "antes": "mlp-conteo-de-globulos-blancos-00",
+      "con_estado": "mlp-conteo-de-globulos-blancos-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Plaquetas",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-04",
+      "con_estado": "mlp-pruebas-de-plaquetas-02",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "RECUENTO DE PLAQUETAS",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-02",
+      "con_estado": "mlp-pruebas-de-plaquetas-02",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "PLT",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-04",
+      "con_estado": "mlp-pruebas-de-plaquetas-00",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "Plaquetas",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-pruebas-de-plaquetas-02"
+      ],
+      "antes": "mlp-pruebas-de-plaquetas-04",
+      "con_estado": "mlp-pruebas-de-plaquetas-00",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "VCM",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-01",
+      "con_estado": "mlp-indices-de-globulos-rojos-02",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Volumen corpuscular medio",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-01",
+      "con_estado": "mlp-indices-de-globulos-rojos-02",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "MCV",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-00",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "VOLUMEN CORPUSCULAR MEDIO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-01",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": false
+    },
+    {
+      "examen": "HCM",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02",
+        "mlp-indices-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-01",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Hemoglobina corpuscular media",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-indices-de-globulos-rojos-02",
+        "mlp-indices-de-globulos-rojos-03"
+      ],
+      "antes": "mlp-indices-de-globulos-rojos-00",
+      "con_estado": "mlp-indices-de-globulos-rojos-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Neutrófilos",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-formula-leucocitaria-05"
+      ],
+      "antes": "mlp-formula-leucocitaria-04",
+      "con_estado": "mlp-formula-leucocitaria-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "NEUTROFILOS %",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-formula-leucocitaria-05"
+      ],
+      "antes": "mlp-formula-leucocitaria-06",
+      "con_estado": "mlp-formula-leucocitaria-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Linfocitos",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-formula-leucocitaria-05"
+      ],
+      "antes": "mlp-formula-leucocitaria-00",
+      "con_estado": "mlp-formula-leucocitaria-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "LINFOCITOS %",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-formula-leucocitaria-05"
+      ],
+      "antes": "mlp-formula-leucocitaria-04",
+      "con_estado": "mlp-formula-leucocitaria-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Colesterol total",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-07",
+      "con_estado": "mlp-niveles-de-colesterol-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "COLESTEROL TOTAL",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-07",
+      "con_estado": "mlp-niveles-de-colesterol-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "LDL",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-03",
+      "con_estado": "mlp-niveles-de-colesterol-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "COLESTEROL LDL - NO CALCULADO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-05",
+      "con_estado": "mlp-niveles-de-colesterol-06",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HDL",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-00",
+      "con_estado": "mlp-niveles-de-colesterol-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "COLESTEROL DE ALTA DENSIDAD",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-niveles-de-colesterol-05",
+        "mlp-niveles-de-colesterol-06"
+      ],
+      "antes": "mlp-niveles-de-colesterol-06",
+      "con_estado": "mlp-niveles-de-colesterol-05",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Triglicéridos",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-trigliceridos-01",
+        "mlp-prueba-de-trigliceridos-06"
+      ],
+      "antes": "mlp-prueba-de-trigliceridos-00",
+      "con_estado": "mlp-prueba-de-trigliceridos-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TRIGLICERIDOS",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-trigliceridos-01",
+        "mlp-prueba-de-trigliceridos-06"
+      ],
+      "antes": "mlp-prueba-de-trigliceridos-01",
+      "con_estado": "mlp-prueba-de-trigliceridos-06",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Glucosa",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-glucosa-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-glucosa-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-glucosa-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A ORINA",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-glucosa-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-glucosa-en-la-sangre-06",
+      "con_estado": "mlp-prueba-de-glucosa-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Glicemia basal",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-glucosa-en-la-sangre-01",
+        "mlp-prueba-de-glucosa-en-la-sangre-06"
+      ],
+      "antes": "mlp-prueba-de-glucosa-en-la-sangre-06",
+      "con_estado": "mlp-prueba-de-glucosa-en-la-sangre-01",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "GLUCOSA EN AYUNAS",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-glucosa-en-la-sangre-01",
+        "mlp-prueba-de-glucosa-en-la-sangre-06"
+      ],
+      "antes": "mlp-prueba-de-glucosa-en-la-sangre-06",
+      "con_estado": "mlp-prueba-de-glucosa-en-la-sangre-01",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HbA1c",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-hemoglobina-a1c-01",
+        "mlp-prueba-de-hemoglobina-a1c-06"
+      ],
+      "antes": "mlp-prueba-de-hemoglobina-a1c-03",
+      "con_estado": "mlp-prueba-de-hemoglobina-a1c-01",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HEMOGLOBINA GLICOSILADA",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-hemoglobina-a1c-01",
+        "mlp-prueba-de-hemoglobina-a1c-06"
+      ],
+      "antes": "mlp-prueba-de-hemoglobina-a1c-00",
+      "con_estado": "mlp-prueba-de-hemoglobina-a1c-01",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Creatinina",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-creatinina-06"
+      ],
+      "antes": "mlp-prueba-de-creatinina-03",
+      "con_estado": "mlp-prueba-de-creatinina-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "CREATININA EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-creatinina-06"
+      ],
+      "antes": "mlp-prueba-de-creatinina-03",
+      "con_estado": "mlp-prueba-de-creatinina-06",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "BUN",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03"
+      ],
+      "antes": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-00",
+      "con_estado": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "NITROGENO UREICO EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03"
+      ],
+      "antes": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-00",
+      "con_estado": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Urea",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03"
+      ],
+      "antes": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-04",
+      "con_estado": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "NITROGENO UREICO",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03"
+      ],
+      "antes": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-00",
+      "con_estado": "mlp-examen-de-nitrogeno-ureico-en-sangre-nus-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Ácido úrico",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-acido-urico-04"
+      ],
+      "antes": "mlp-prueba-de-acido-urico-00",
+      "con_estado": "mlp-prueba-de-acido-urico-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ACIDO URICO EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-acido-urico-04"
+      ],
+      "antes": "mlp-prueba-de-acido-urico-04",
+      "con_estado": "mlp-prueba-de-acido-urico-04",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Ácido úrico",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-acido-urico-05"
+      ],
+      "antes": "mlp-prueba-de-acido-urico-00",
+      "con_estado": "mlp-prueba-de-acido-urico-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ACIDO URICO",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-acido-urico-05"
+      ],
+      "antes": "mlp-prueba-de-acido-urico-04",
+      "con_estado": "mlp-prueba-de-acido-urico-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Calcio",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-calcio-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-calcio-en-la-sangre-01",
+      "con_estado": "mlp-prueba-de-calcio-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "CALCIO TOTAL EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-calcio-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-calcio-en-la-sangre-02",
+      "con_estado": "mlp-prueba-de-calcio-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Ca",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-calcio-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-calcio-en-la-sangre-01",
+      "con_estado": "mlp-prueba-de-calcio-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Calcio",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-calcio-en-la-sangre-05"
+      ],
+      "antes": "mlp-prueba-de-calcio-en-la-sangre-01",
+      "con_estado": "mlp-prueba-de-calcio-en-la-sangre-05",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Albúmina",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-albumina-en-la-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-albumina-en-la-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ALBUMINA EN SUERO",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-albumina-en-la-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-albumina-en-la-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ALB",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-albumina-en-la-sangre-00",
+        "mlp-prueba-de-albumina-en-la-sangre-04"
+      ],
+      "antes": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Albúmina",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-albumina-en-la-sangre-00",
+        "mlp-prueba-de-albumina-en-la-sangre-04"
+      ],
+      "antes": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-albumina-en-la-sangre-00",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ALT",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-sangre-de-alt-03",
+        "mlp-prueba-de-sangre-de-alt-04"
+      ],
+      "antes": "mlp-prueba-de-sangre-de-alt-01",
+      "con_estado": "mlp-prueba-de-sangre-de-alt-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ALANINO AMINO TRANSFERASA (ALAT - TGP)",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-sangre-de-alt-03",
+        "mlp-prueba-de-sangre-de-alt-04"
+      ],
+      "antes": "mlp-prueba-de-sangre-de-alt-01",
+      "con_estado": "mlp-prueba-de-sangre-de-alt-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TGP",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-sangre-de-alt-03"
+      ],
+      "antes": "mlp-prueba-de-sangre-de-alt-01",
+      "con_estado": "mlp-prueba-de-sangre-de-alt-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ALANINO AMINOTRANSFERASA",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-sangre-de-alt-03"
+      ],
+      "antes": "mlp-prueba-de-sangre-de-alt-01",
+      "con_estado": "mlp-prueba-de-sangre-de-alt-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "AST",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-ast-03"
+      ],
+      "antes": "mlp-prueba-de-ast-00",
+      "con_estado": "mlp-prueba-de-ast-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "ASPARTATO AMINO TRANSFERASA (ASAT - TGO)",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-ast-03"
+      ],
+      "antes": "mlp-prueba-de-ast-01",
+      "con_estado": "mlp-prueba-de-ast-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Fosfatasa alcalina",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-fosfatasa-alcalina-03",
+        "mlp-fosfatasa-alcalina-04"
+      ],
+      "antes": "mlp-fosfatasa-alcalina-00",
+      "con_estado": "mlp-fosfatasa-alcalina-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "FOSFATASA ALCALINA",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-fosfatasa-alcalina-03",
+        "mlp-fosfatasa-alcalina-04"
+      ],
+      "antes": "mlp-fosfatasa-alcalina-00",
+      "con_estado": "mlp-fosfatasa-alcalina-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Bilirrubina total",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-examen-de-bilirrubina-en-sangre-03"
+      ],
+      "antes": "mlp-examen-de-bilirrubina-en-sangre-04",
+      "con_estado": "mlp-examen-de-bilirrubina-en-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "BILIRRUBINA TOTAL",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-examen-de-bilirrubina-en-sangre-03"
+      ],
+      "antes": "mlp-examen-de-bilirrubina-en-sangre-05",
+      "con_estado": "mlp-examen-de-bilirrubina-en-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "GGT",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-gamma-glutamil-transferasa-ggt-04"
+      ],
+      "antes": "mlp-prueba-de-gamma-glutamil-transferasa-ggt-00",
+      "con_estado": "mlp-prueba-de-gamma-glutamil-transferasa-ggt-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "GAMMA GLUTAMIL TRANSFERASA",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-gamma-glutamil-transferasa-ggt-04"
+      ],
+      "antes": "mlp-prueba-de-gamma-glutamil-transferasa-ggt-00",
+      "con_estado": "mlp-prueba-de-gamma-glutamil-transferasa-ggt-04",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TSH",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-tsh-00",
+        "mlp-prueba-de-tsh-01",
+        "mlp-prueba-de-tsh-05",
+        "mlp-prueba-de-tsh-06"
+      ],
+      "antes": "mlp-prueba-de-tsh-00",
+      "con_estado": "mlp-prueba-de-tsh-00",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "HORMONA ESTIMULANTE DEL TIROIDES ULTRASENSIBLE",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-tsh-00",
+        "mlp-prueba-de-tsh-01",
+        "mlp-prueba-de-tsh-05",
+        "mlp-prueba-de-tsh-06"
+      ],
+      "antes": "mlp-prueba-de-tsh-02",
+      "con_estado": "mlp-prueba-de-tsh-00",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TSH",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-tsh-00",
+        "mlp-prueba-de-tsh-01",
+        "mlp-prueba-de-tsh-05",
+        "mlp-prueba-de-tsh-06"
+      ],
+      "antes": "mlp-prueba-de-tsh-00",
+      "con_estado": "mlp-prueba-de-tsh-06",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Tirotropina",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-tsh-00",
+        "mlp-prueba-de-tsh-01",
+        "mlp-prueba-de-tsh-05",
+        "mlp-prueba-de-tsh-06"
+      ],
+      "antes": "mlp-prueba-de-tsh-00",
+      "con_estado": "mlp-prueba-de-tsh-06",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "T4 libre",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-tiroxina-t4-07"
+      ],
+      "antes": "mlp-prueba-de-tiroxina-t4-04",
+      "con_estado": "mlp-prueba-de-tiroxina-t4-07",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TIROXINA LIBRE",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-tiroxina-t4-07"
+      ],
+      "antes": "mlp-prueba-de-tiroxina-t4-01",
+      "con_estado": "mlp-prueba-de-tiroxina-t4-07",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "FT4",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-tiroxina-t4-08"
+      ],
+      "antes": "mlp-prueba-de-tiroxina-t4-00",
+      "con_estado": "mlp-prueba-de-tiroxina-t4-08",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "TIROXINA LIBRE",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-tiroxina-t4-08"
+      ],
+      "antes": "mlp-prueba-de-tiroxina-t4-01",
+      "con_estado": "mlp-prueba-de-tiroxina-t4-08",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Sodio",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-sodio-en-la-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-sodio-en-la-sangre-01",
+      "con_estado": "mlp-prueba-de-sodio-en-la-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "SODIO EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-sodio-en-la-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-sodio-en-la-sangre-03",
+      "con_estado": "mlp-prueba-de-sodio-en-la-sangre-03",
+      "acierta_antes": true,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Na",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-sodio-en-la-sangre-03",
+        "mlp-prueba-de-sodio-en-la-sangre-04"
+      ],
+      "antes": "mlp-prueba-de-sodio-en-la-sangre-00",
+      "con_estado": "mlp-prueba-de-sodio-en-la-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "SODIO",
+      "estado": "BAJO",
+      "correctos": [
+        "mlp-prueba-de-sodio-en-la-sangre-03",
+        "mlp-prueba-de-sodio-en-la-sangre-04"
+      ],
+      "antes": "mlp-prueba-de-sodio-en-la-sangre-01",
+      "con_estado": "mlp-prueba-de-sodio-en-la-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "Potasio",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-potasio-en-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-potasio-en-sangre-00",
+      "con_estado": "mlp-prueba-de-potasio-en-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    },
+    {
+      "examen": "POTASIO EN SUERO",
+      "estado": "ALTO",
+      "correctos": [
+        "mlp-prueba-de-potasio-en-sangre-03"
+      ],
+      "antes": "mlp-prueba-de-potasio-en-sangre-00",
+      "con_estado": "mlp-prueba-de-potasio-en-sangre-03",
+      "acierta_antes": false,
+      "acierta_con_estado": true
+    }
+  ]
+}

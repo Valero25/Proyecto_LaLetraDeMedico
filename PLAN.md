@@ -617,6 +617,7 @@ Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega
 | Retropropagación y regla de la cadena, XOR (69-91) | GradCache, retropropagación a través del tiempo | 9 |
 | Curva de aprendizaje (92) | Tabla y gráfica de épocas de la red propia y del QLoRA (`fig4_curvas.png`) | 6 y 10 |
 | Historia: aprendizaje profundo = algoritmos + cómputo + datos (3) | Preentrenamiento frente a red desde cero | 6 |
+| Ajuste fino, calidad de datos y cambio de distribución en la entrada | Generador v2, RAG según el estado y diagnóstico del v3 (causas sin respaldo) | 10.2, 10.3 y 10.4 |
 
 **Pendiente teórico:**
 - Agregar weight decay al ajuste del RAG. Hoy vale 0, así que el problema de Hebb "sin reducción de pesos" queda sin resolver ahí.

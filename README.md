@@ -42,7 +42,7 @@ El sistema original dependía por completo de una API externa (Gemini). Este tra
 | **Guardrail** | `BSC-LT/MrBERT-biomed` | *Fine-tuning* de clasificación en 3 clases |
 | **Generador** | `Qwen2.5-3B-Instruct` | QLoRA (4 bits, r = 16) con destilación desde modelos profesores; exportado a GGUF Q4_K_M |
 
-**Hallazgos principales.** Frente al sistema original, el RAG propio pasa de 5,0 % a **92,5 %** de acierto en el primer resultado con consultas coloquiales; el guardrail pasa de una F1 de 0,219 a **0,991** en analitos no vistos; y el generador ajustado respeta el estado calculado en el **99,4 %** de los casos (69,7 % el modelo base), con solo un **5,4 %** de respuestas que contienen alguna oración riesgosa (41,8 % el modelo base). Un PDF digital se procesa **de principio a fin en local**, sin servicios externos.
+**Hallazgos principales.** Frente al sistema original, el RAG propio pasa de 5,0 % a **92,5 %** de acierto en el primer resultado con consultas coloquiales; el guardrail pasa de una F1 de 0,219 a **0,991** en analitos no vistos; y el generador ajustado respeta el estado calculado en el **99,4 %** de los casos (69,7 % el modelo base), con solo un **2,7 %** de respuestas que contienen alguna oración riesgosa (41,8 % el modelo base). Un PDF digital se procesa **de principio a fin en local**, sin servicios externos.
 
 ## 2. Planteamiento del problema
 
@@ -146,8 +146,9 @@ Todas las cifras provienen de `evaluacion/resultados/*.json` y las figuras se re
 | RAG: fragmento correcto según el estado del analito | 15,9 % (búsqueda solo por nombre) | **95,5 %** |
 | Guardrail: F1 binaria en frases de analitos no vistos | 0,219 | **0,991** |
 | Guardrail: falsos positivos en texto real (166 frases informativas) | 1 (sin detectar ninguna riesgosa) | **3** |
-| Generador: respeta el estado calculado (150 casos) | 69,7 % (Qwen base) | **99,4 %** |
-| Generador: respuestas con alguna oración riesgosa | 41,8 % (Qwen base) | **5,4 %** |
+| Generador v2: respeta el estado calculado (150 casos) | 69,7 % (Qwen base) | **99,4 %** |
+| Generador v2: menciona el valor de los exámenes alterados | 10,7 % (Qwen base) | **79,3 %** |
+| Generador v2: respuestas con alguna oración riesgosa | 41,8 % (Qwen base) | **2,7 %** |
 | Lector local de PDF: 2 PDFs reales + 450 sintéticos (3 diseños) | — | **100 %** |
 | Tiempo por examen de 8 analitos | — | **28 s** GPU / **85 s** CPU |
 
@@ -182,6 +183,7 @@ El documento [`informe/fundamentos.md`](informe/fundamentos.md) relaciona cada c
 | Descenso del gradiente | Tasa de aprendizaje, épocas y estabilidad |
 | Retropropagación | Regla de la cadena en el ajuste QLoRA |
 | Calidad frente a cantidad de datos | Generador v2 y pasajes del RAG según el estado |
+| Aprendizaje por atajos | El ajuste fino aumentó las causas sin respaldo en el pasaje; datos del v3 |
 
 ## 9. Reproducibilidad
 

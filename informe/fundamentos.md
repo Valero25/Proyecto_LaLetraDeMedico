@@ -146,12 +146,12 @@ En test hay 323 frases riesgosas y 183 informativas.
 
 **Conclusión:** se mantiene MrBERT-biomed sin ponderar y con τ = 0,5. Para mejorar la sensibilidad, lo que falta son datos de los casos difíciles: los 200 desacuerdos que revisará el equipo. Calibrar el modelo, por ejemplo con *temperature scaling* sobre validación, haría útil el umbral y queda como trabajo futuro.
 
-
 ### 7.2 Cambio de distribución: el mismo modelo en texto real
 
 Un clasificador minimiza la pérdida sobre **la distribución de sus datos de entrenamiento**. Nada garantiza que funcione igual sobre datos que vienen de otra distribución. El guardrail v1 lo muestra: con F1 de 0,991 en el test sintético, marcó como riesgosas el **42 %** de las oraciones informativas que escribieron los generadores reales de la Fase 4 (69 de 166). Por ejemplo, "Las plaquetas son pequeñas células de la sangre que ayudan a formar coágulos" recibió P(riesgosa) = 0,96. Las frases sintéticas que vio al entrenar las escribió un solo profesor, a pedido y por clase; los generadores reales escriben muchas definiciones con otro estilo. Por la sobreconfianza de la sección 7.1, ni siquiera bajar o subir el umbral lo corrige.
 
 La solución es la de siempre en aprendizaje automático: **llevar al entrenamiento datos de la distribución en la que se va a usar el modelo.** El v2 suma 345 oraciones reales a las 899 sintéticas y baja los falsos positivos en texto real de 69 a 3, perdiendo solo 0,002 de F1 en el test sintético. Las etiquetas de esas oraciones las puso un juez (gpt-oss-120b) con un sesgo conocido, y el v2 lo hereda un poco: la clase diagnóstica sintética baja de 0,961 a 0,950. Es la misma lección de la sección 10.1: el modelo aprende la distribución de sus datos, sesgos de etiquetado incluidos.
+
 ## 8. Descenso del gradiente y tasa de aprendizaje
 
 El gradiente de la pérdida indica, para cada peso, en qué dirección aumenta más la pérdida. El descenso del gradiente da un paso pequeño en la dirección contraria:
@@ -192,7 +192,7 @@ El resultado es el mismo gradiente que con el lote completo de 32, pero con la m
 
 ## 10. Fine-tuning QLoRA del generador (Fase 4)
 
-El ajuste del generador sigue el mismo esquema de pérdida, gradiente y retropropagación, con una restricción: no se actualizan los pesos $W$ del modelo base, que quedan congelados y cuantizados a 4 bits. Cada matriz ajustada se reemplaza por $W + BA$, donde $A$ y $B$ son matrices pequeñas (de rango bajo). La retropropagación atraviesa todo el modelo, pero solo $A$ y $B$ reciben la actualización del descenso del gradiente. La pérdida será la entropía cruzada sobre el siguiente token de las explicaciones de referencia: la misma función de la sección 7, aplicada a un vocabulario de más de cien mil clases (unos 152 mil tokens si el modelo base es Qwen2.5) en lugar de 3. Se calcula solo sobre los tokens de la respuesta, no sobre los del prompt, porque el modelo debe aprender a explicar, no a repetir los datos de entrada.
+El ajuste del generador sigue el mismo esquema de pérdida, gradiente y retropropagación, con una restricción: no se actualizan los pesos $W$ del modelo base, que quedan congelados y cuantizados a 4 bits. Cada matriz ajustada se reemplaza por $W + BA$, donde $A$ y $B$ son matrices pequeñas (de rango bajo). La retropropagación atraviesa todo el modelo, pero solo $A$ y $B$ reciben la actualización del descenso del gradiente. La pérdida es la entropía cruzada sobre el siguiente token de las explicaciones de referencia: la misma función de la sección 7, aplicada a un vocabulario de más de cien mil clases (unos 152 mil tokens si el modelo base es Qwen2.5) en lugar de 3. Se calcula solo sobre los tokens de la respuesta, no sobre los del prompt, porque el modelo debe aprender a explicar, no a repetir los datos de entrada.
 
 Por cada matriz ajustada de tamaño $d \times k$, LoRA de rango $r$ agrega $r(d + k)$ parámetros entrenables, en lugar de los $d \cdot k$ de la matriz completa. Con $d = k = 2.048$ y $r = 16$, son 65.536 parámetros frente a 4,2 millones, un 1,6 %. Como $B$ empieza en cero, $W + BA = W$ al inicio: el modelo parte exactamente del base. Por eso la tasa de aprendizaje típica de LoRA (2 × 10⁻⁴) puede ser unas 10 veces mayor que la del ajuste fino completo de la sección 8.
 
@@ -263,7 +263,36 @@ Con un PDF real de 2011 apareció el problema:
 
 **La corrección se hizo en la recuperación.** Para un analito alto o bajo, se elige entre los fragmentos de ese analito el que explica ese resultado. El criterio cuenta oraciones que tienen la dirección ("niveles altos") y una causa ("pueden deberse"); está en `modelos_propios.puntaje_estado`. Lo evaluaron 88 consultas etiquetadas (`evaluacion/evaluar_rag_estado.py`), y el fragmento correcto pasó de **15,9 % a 95,5 %**. Esta última cifra es optimista, porque el criterio se ajustó sobre esas mismas consultas. Con el fragmento correcto desaparece la causa inventada, pero queda una muletilla genérica: "una condición metabólica" se repite en tres exámenes.
 
-Es el cambio de distribución de la sección 7.2, esta vez en la **entrada**. El modelo se entrenó con pasajes casi siempre genéricos y ahora recibe pasajes de causas que nunca aprendió a aprovechar del todo. La solución de fondo es la misma de siempre: entrenar con la distribución de uso. Un v3 ajustado con los pasajes según el estado aprendería a tomar las causas del fragmento en lugar de inventarlas.
+Es el cambio de distribución de la sección 7.2, esta vez en la **entrada**. El modelo se entrenó con pasajes casi siempre genéricos y ahora recibe pasajes de causas que nunca aprendió a aprovechar del todo. La solución de fondo es la misma de siempre: entrenar con la distribución de uso. La sección 10.4 mide cuánto pesa este problema y cómo lo ataca el v3.
+
+### 10.4 El ajuste fino también enseña a ignorar el contexto: diagnóstico del v3
+
+La AST no fue un caso aislado. Para medirlo, `verificacion.causas_sin_respaldo` toma las oraciones de causas de cada examen alto o bajo y comprueba si sus palabras concretas aparecen en el pasaje que recibió el modelo. Es una aproximación léxica, por raíz de 5 letras, que no reconoce sinónimos ("hígado" frente a "hepática"), así que las cifras sirven para comparar modelos entre sí, no como tasa absoluta de invención.
+
+| Quién escribe (pasajes buscados por nombre) | Oraciones de causas sin respaldo en el pasaje |
+|---|---|
+| Profesores (gpt-oss-120b / Qwen2.5-14B / Qwen3.8-27B) | 45,6 % / 51,6 % / 56,0 % |
+| Qwen2.5-3B base | 50,9 % |
+| Ajustado v1 | 58,7 % |
+| Ajustado v2 | **64,8 %** |
+
+Las cifras de los modelos de 3B son sobre los 150 casos de test (`evaluacion/resultados/fase4_generador.json`); las de los profesores, sobre sus respuestas de referencia (detalle en `PLAN.md`, Fase 4).
+
+**El ajuste fino aumentó la invención**, aunque mejoró todas las demás métricas. La explicación está en lo que el modelo maximiza. El ajuste minimiza la entropía cruzada de la respuesta dado el prompt, es decir, aprende $p(\text{explicación} \mid \text{datos}, \text{pasaje})$. Pero en los datos de entrenamiento esa dependencia del pasaje era débil, por tres razones:
+
+1. **El pasaje casi nunca era el adecuado.** En el 92,3 % de los analitos alterados (2.015 de 2.183), el pasaje buscado solo por nombre no es el que entrega la app. Si el pasaje no trae las causas, la respuesta de referencia no puede salir de él.
+2. **La guía del profesor pedía "posibles causas generales"**, así que casi toda respuesta de referencia trae causas, haya o no en el pasaje.
+3. **Los profesores veían el pasaje cortado a 350 caracteres** por las cuotas de la API, de modo que incluso con el fragmento correcto escribían causas que el estudiante no podía ver en su entrada.
+
+Con esos datos, la forma más barata de bajar la pérdida es aprender una regularidad de superficie, "toda explicación de un valor alterado lleva causas", sin consultar el pasaje. Es un **atajo** (*shortcut learning*): la red encuentra la correlación más simple que explica los datos, no la que el diseñador tenía en mente. Y como el v2 filtró las respuestas por otros criterios (mencionar el valor, no repetir causas), conservó y reforzó ese patrón: es la lección de la sección 10.1 llevada a la entrada, el estudiante imita también la relación, o la falta de relación, entre su contexto y su salida.
+
+**El v3 ataca las tres causas desde los datos**, con el mismo modelo y los mismos hiperparámetros, para que cualquier diferencia se deba a los datos (como en la sección 10.2):
+
+- Los mismos 1.250 casos y splits, con los **pasajes que usa la app** (alias, umbral y fragmento según el estado, sección 10.3).
+- Una guía que exige **tomar las causas del pasaje** y, si el pasaje no trae causas, no nombrar causas concretas. El profesor ve el pasaje completo de 700 caracteres.
+- Un filtro más: se descarta toda respuesta con causas sin respaldo, y entre las muestras aprobadas de un caso gana la que más causas respaldadas tiene.
+
+La predicción, coherente con todo lo anterior, es que la cifra de causas sin respaldo del v3 quede por debajo de la del modelo base. El entrenamiento y su evaluación (`evaluar_generador.py --version v3`) están pendientes; cuando estén, sus números completan esta sección.
 
 ## Resumen
 
@@ -282,4 +311,23 @@ Es el cambio de distribución de la sección 7.2, esta vez en la **entrada**. El
 | Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; oraciones riesgosas 6,4 % → 0,5 %; validación siempre a la baja |
 | Aprendizaje supervisado: el estudiante imita la distribución de sus datos | Generador v2: mismos hiperparámetros, dataset filtrado (421 frente a 555 ejemplos) | Menciona el valor 68,5 % → 79,3 %; causas repetidas 13,4 % → 5,3 %; pérdida de validación 0,538 → 0,546 (la pérdida no lo ve) |
 | Cambio de distribución en la entrada (contexto del RAG) | Pasaje según el estado del analito | Fragmento que explica el resultado 15,9 % → 95,5 %; desaparece la causa inventada de la AST |
+| Aprendizaje por atajos: el estudiante imita también cómo se relacionan su entrada y su salida | Diagnóstico de causas sin respaldo en el pasaje y datos del generador v3 | Causas sin respaldo: base 50,9 % → v1 58,7 % → v2 64,8 %; v3 pendiente de entrenar |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |
+
+## Referencias
+
+- Aristóteles. *De memoria et reminiscentia* (leyes de asociación).
+- Bain, A. (1873). *Mind and Body: The Theories of Their Relation*. Henry S. King.
+- Cybenko, G. (1989). Approximation by superpositions of a sigmoidal function. *Mathematics of Control, Signals and Systems*, 2(4), 303-314.
+- Dettmers, T., Pagnoni, A., Holtzman, A. y Zettlemoyer, L. (2023). QLoRA: Efficient finetuning of quantized LLMs. *NeurIPS 2023*.
+- Gao, L., Zhang, Y., Han, J. y Callan, J. (2021). Scaling deep contrastive learning batch size under memory limited setup (GradCache). *RepL4NLP 2021*.
+- Geirhos, R. et al. (2020). Shortcut learning in deep neural networks. *Nature Machine Intelligence*, 2, 665-673.
+- Hebb, D. O. (1949). *The Organization of Behavior*. Wiley.
+- Henderson, M. et al. (2017). Efficient natural language response suggestion for smart reply (pérdida de ranking con negativos del lote). arXiv:1705.00652.
+- Hochreiter, S. y Schmidhuber, J. (1997). Long short-term memory. *Neural Computation*, 9(8), 1735-1780.
+- Hu, E. J. et al. (2021). LoRA: Low-rank adaptation of large language models. arXiv:2106.09685.
+- Loshchilov, I. y Hutter, F. (2019). Decoupled weight decay regularization (AdamW). *ICLR 2019*.
+- McCulloch, W. S. y Pitts, W. (1943). A logical calculus of the ideas immanent in nervous activity. *Bulletin of Mathematical Biophysics*, 5, 115-133.
+- Rosenblatt, F. (1958). The perceptron: A probabilistic model for information storage and organization in the brain. *Psychological Review*, 65(6), 386-408.
+- Rumelhart, D. E., Hinton, G. E. y Williams, R. J. (1986). Learning representations by back-propagating errors. *Nature*, 323, 533-536.
+- Material del curso: *PTIA Principios NN* (93 diapositivas).

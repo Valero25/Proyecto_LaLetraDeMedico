@@ -1,5 +1,6 @@
 {
   "clasificador": "mrbert-biomed-v2",
+  "casos": "casos.jsonl",
   "resultados": {
     "qwen2.5-3b-ajustado-v2": {
       "n": 150,
@@ -26,6 +27,19 @@
         "Un nivel bajo puede deberse a una deficiencia de hierro o a una anemia leve.",
         "La TSH es una hormona que regula la producción de la tiroides; su nivel bajo puede deberse a una tiroides pequeña o a una respuesta reducida a la hormona estimulante.",
         "Este valor puede deberse a una dieta alta en azúcares o a factores genéticos."
+      ],
+      "causas_sin_respaldo": 0.6482213438735178,
+      "ejemplos_causas_sin_respaldo": [
+        "CREA: Un nivel alto puede deberse a una menor masa muscular o a problemas renales leves.",
+        "Urea: Esto puede deberse a una ingesta baja de proteínas o a una hidratación excesiva.",
+        "Calcio: Un nivel bajo puede deberse a una ingesta insuficiente de calcio, a problemas de absorción o a uso de medicamentos.",
+        "HbA1c: Esto puede deberse a una variación temporal en tu azúcar o a factores como el suplemento de hierro que tomas.",
+        "Colesterol LDL: Este valor puede deberse a factores como la dieta, el peso corporal o la actividad física.",
+        "Hormona estimulante de tiroides: Esto puede deberse a una tiroides funcionalmente activa o a una respuesta a ciertos medicamentos.",
+        "Plaquetas: Tu nivel es alto, lo que puede deberse a una inflamación leve o a una respuesta a ciertos medicamentos.",
+        "Glucosa en ayunas: Tu valor es alto, lo que puede deberse a una dieta alta en carbohidratos o a una resistencia a la insulina leve.",
+        "Fosfatasa alcalina: Tu valor de 149 U/L está ligeramente por encima del rango, lo que puede deberse a una actividad ósea activa o a una ingesta de ciertos suplementos.",
+        "Leucocitos: Los leucocitos son glóbulos blancos que defienden al cuerpo; tu nivel es bajo, lo cual puede deberse a diversos factores como estrés o medicamentos; te sugiero comentarlo con tu médico."
       ],
       "oraciones_marcadas": 0.0032722513089005235,
       "respuestas_con_marca": 0.02666666666666667,
@@ -67,6 +81,19 @@
         "Tu porcentaje de neutrófilos está por debajo del rango normal, lo cual puede deberse a diversos factores, como una respuesta defensiva reducida o ciertas condiciones médicas.",
         "Tu resultado de tiroxina libre está un poco bajo, lo cual puede deberse a que tu tiroides está produciendo menos hormonas de las que tu cerebro necesita."
       ],
+      "causas_sin_respaldo": 0.5871212121212122,
+      "ejemplos_causas_sin_respaldo": [
+        "TGO: Tu valor es ligeramente alto, lo cual puede deberse a diversas razones, como estrés muscular o ciertos medicamentos.",
+        "Fosfatasa alcalina: Tu resultado está por debajo del rango normal, lo que puede indicar que la producción de esta enzima esté disminuida.",
+        "Fosfatasa alcalina: Esto puede deberse a factores como la edad o ciertas condiciones médicas, pero es recomendable que lo revises con tu médico para confirmar el motivo.",
+        "Leucocitos: Tu nivel es bajo, lo que puede deberse a diversos factores como estrés o medicamentos.",
+        "Volumen corpuscular medio: Tu valor es bajo, lo que puede deberse a diferentes causas como una deficiencia de hierro.",
+        "CREA: Este resultado puede deberse a variaciones normales o a factores como la edad o la dieta, y conviene comentarlo con tu médico para valorar si necesita estudios adicionales.",
+        "HbA1c: Esto puede deberse a varios factores, como una dieta alta en carbohidratos o falta de actividad física.",
+        "Colesterol LDL: Puede deberse a factores como la dieta o el estilo de vida, pero es importante hablar sobre esto con tu médico para entender mejor tus resultados.",
+        "Plaquetas: Esto puede deberse a que estás experimentando estrés físico o emocional, o a que tienes una condición médica que está influyendo en tu producción de plaquetas.",
+        "MCH: Tu resultado es alto, lo que puede deberse a que tus glóbulos rojos están transportando más oxígeno de lo normal."
+      ],
       "oraciones_marcadas": 0.005249343832020997,
       "respuestas_con_marca": 0.053691275167785234,
       "ejemplos_marcados": [
@@ -106,6 +133,19 @@
         "Esto podría indicar una deshidratación o problemas con los riñones.",
         "Los niveles de Albúmina están por encima del rango normal, lo que puede indicar que tu hígado está funcionando correctamente.",
         "Puede deberse a factores como la presión arterial alta que toma losartán."
+      ],
+      "causas_sin_respaldo": 0.5087719298245614,
+      "ejemplos_causas_sin_respaldo": [
+        "GLU: Esto puede estar relacionado con el cansancio que te sientes últimamente.",
+        "Leucocitos: Tu nivel es bajo, lo que podría indicar una anemia o una enfermedad que afecta a los glóbulos blancos.",
+        "Plaquetas: Las plaquetas están en el rango alto, lo que puede indicar una posible coagulación sanguínea excesiva.",
+        "Leucocitos: Esto podría indicar una posible deficiencia de glóbulos blancos, pero no es definitivo sin más contexto.",
+        "NEU%: Esto podría indicar una posible infección o reacción inflamatoria, aunque no es definitivo sin más contexto.",
+        "Creatinina: Esto puede indicar que tu riñón está trabajando más duro que de costumbre.",
+        "Na: Puede deberse a diálisis, diarrea, retención de sodio, entre otros.",
+        "Urea: Puede deberse a diálisis, diarrea, retención de urea, entre otros.",
+        "GLU: Esto podría indicar hipoglucemia, especialmente en personas mayores que pueden tener dificultades para procesar la glucosa.",
+        "Creatinina: Esto sugiere que los riñones no están funcionando correctamente, lo que puede estar relacionado con la edad del paciente."
       ],
       "oraciones_marcadas": 0.06401137980085349,
       "respuestas_con_marca": 0.4178082191780822,

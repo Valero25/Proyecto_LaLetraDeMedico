@@ -293,14 +293,69 @@ def preguntas_a_quitar(datos, caso):
     return validas, len(preguntas) - len(validas)
 
 
+# Palabras de una oración de causas que no nombran ninguna causa concreta ("puede deberse a varios factores")
+GENERICAS_CAUSA = set("""factores factor variedad condicion condiciones alteracion alteraciones problema problemas nivel
+niveles resultado resultados valor valores puede pueden podria podrian deberse indicar relacionado relacionada
+relacionados diversas diversos varias varios ciertas ciertos medica medicas medico medicos salud cuerpo sangre
+importante posible posibles causa causas normal rango encima debajo ligeramente ligero ligera leve leves elevado
+elevada elevados alto alta altos bajo baja bajos general generales afeccion afecciones temporal temporales otras otros
+tambien estilo vida tienes tener cosas situaciones situacion momento significa significar indica aumento aumentado
+disminucion disminuido mayor menor cantidad mucho mucha muchos muchas algun alguna algunos algunas incluso entre
+manera forma conversar converses hablar evaluar analizar determinar necesario necesita seguimiento pruebas prueba
+estudios estudio examen examenes medida mide miden produccion produce producir funcion funcionamiento recomendable
+revises revisar revisarlo confirmar implicados implicado descartar entender explicaciones""".split())
+# "factores" solo marca una enumeración de causas si viene con "como" ("factores como la dieta"): "revísalo para
+# confirmar que no haya otros factores" no nombra ninguna
+MARCAS_CAUSA_RESPALDO = tuple(m for m in MARCAS_CAUSA if m != "factores") + ("factores como", "debido a", "causad")
+LARGO_RAIZ = 5
+
+
+def _raices(texto):
+    return {p[:LARGO_RAIZ] for p in _palabras(texto) if len(p) >= LARGO_RAIZ}
+
+
+def causas_sin_respaldo(datos, caso, pasajes=None):
+    """
+    Causas que el generador escribe y que no están en el pasaje del RAG (v3, 2026-11-04). Caso real: AST alta
+    explicada con "una menor actividad física", cuando el pasaje lista hepatitis, cirrosis y alcohol.
+
+    Para cada examen ALTO/BAJO con pasaje, toma sus oraciones de causas (MARCAS_CAUSA_RESPALDO) y sus palabras concretas
+    (sin las genéricas de GENERICAS_CAUSA ni las del nombre del examen). La oración tiene respaldo si alguna de
+    esas palabras (por su raíz de 5 letras: "hepática" ~ "hepatitis" no, "renal" ~ "renales" sí) aparece en el
+    pasaje. Es una aproximación léxica: no ve sinónimos ("hígado" frente a "hepática").
+    Devuelve {"evaluadas": oraciones de causas con alguna palabra concreta, "sin_respaldo": [(examen, oración)]}.
+    """
+    pasajes = pasajes if pasajes is not None else caso.get("pasajes", [])
+    explicaciones = (datos or {}).get("explicaciones", [])
+    evaluadas, sin_respaldo = 0, []
+    for analito, exp, pasaje in zip(caso["analitos"], explicaciones, pasajes):
+        if analito.get("estado") not in ("ALTO", "BAJO") or not (pasaje or {}).get("texto"):
+            continue
+        del_pasaje = _raices(pasaje["texto"])
+        del_nombre = _raices(analito.get("examen", "")) | _raices(pasaje.get("titulo", ""))
+        for oracion in dividir_oraciones(exp.get("explicacion", "")):
+            if not any(m in _sin_tildes(oracion) for m in MARCAS_CAUSA_RESPALDO):
+                continue
+            concretas = {r for r in _raices(oracion) if r not in del_nombre
+                         and not any(g[:LARGO_RAIZ] == r for g in GENERICAS_CAUSA)}
+            if not concretas:
+                continue
+            evaluadas += 1
+            if not concretas & del_pasaje:
+                sin_respaldo.append((analito.get("examen"), oracion))
+    return {"evaluadas": evaluadas, "sin_respaldo": sin_respaldo}
+
+
 def calidad(texto, caso):
-    """Las cuatro verificaciones de calidad juntas, para el dataset v2 y para evaluar_generador.py."""
+    """Las verificaciones de calidad juntas, para los datasets v2 y v3 y para evaluar_generador.py."""
     datos = parsear(texto)
     if datos is None:
         return None
     validas, quitadas = preguntas_a_quitar(datos, caso)
+    respaldo = causas_sin_respaldo(datos, caso)
     return {"causas_repetidas": causas_repetidas(datos), "siglas_inventadas": siglas_inventadas(datos),
-            "usa_usted": usa_usted(datos), "preguntas_quitadas": quitadas, "preguntas_validas": validas}
+            "usa_usted": usa_usted(datos), "preguntas_quitadas": quitadas, "preguntas_validas": validas,
+            "causas_evaluadas": respaldo["evaluadas"], "causas_sin_respaldo": respaldo["sin_respaldo"]}
 
 
 def es_ejemplo_limpio(v):

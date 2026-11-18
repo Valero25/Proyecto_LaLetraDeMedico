@@ -1,34 +1,77 @@
 # 🩺 LetraDeMédico
 
-> **Traductor de resultados de exámenes de sangre a lenguaje claro, con modelos entrenados por el equipo.**
+**Traducción de resultados de exámenes de sangre a lenguaje claro mediante modelos neuronales entrenados por el equipo**
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
-![Pruebas](https://img.shields.io/badge/pruebas-159%20passed-brightgreen)
+![PyTorch](https://img.shields.io/badge/PyTorch-QLoRA-ee4c2c?logo=pytorch)
+![Pruebas](https://img.shields.io/badge/pruebas-161%20passed-brightgreen)
+![Estado](https://img.shields.io/badge/estado-informe%20en%20curso-yellow)
 
-Las consultas médicas suelen ser cortas y los resultados de laboratorio llegan llenos de siglas, unidades y rangos. **LetraDeMédico** lee el informe (PDF o foto), calcula si cada valor está alto, bajo o normal, lo explica en español claro y prepara preguntas para llevar a la consulta.
-
-⚠️ **No diagnostica ni reemplaza al médico.** Su trabajo es informar y preparar al paciente para la consulta.
-
-**Alcance: solo exámenes de sangre** (hemograma, química sanguínea, perfil lipídico, perfil hepático, tiroides, electrolitos). Si un documento trae resultados de orina u otras muestras, la app los muestra con su estado, pero no los explica.
+> ⚠️ **Aviso.** LetraDeMédico es un proyecto académico. **No diagnostica ni reemplaza al médico**: su propósito es informar al paciente y prepararlo para la consulta.
 
 ---
 
-## ✨ Qué hace
+## Tabla de contenido
 
-- **Lee el documento** y extrae cada examen con su valor, unidad y rango de referencia, además del sexo y la edad del paciente si aparecen. No extrae el nombre ni otros datos personales.
-  - Un **PDF digital** del laboratorio se lee **en local**, sin Gemini ni internet (`lector_pdf.py`).
-  - Una **foto o un PDF escaneado** se lee con Gemini, que es la segunda opción.
-- **Calcula el estado con reglas deterministas** (ALTO, BAJO, NORMAL o ANORMAL). Entiende rangos como "70 a 99", "Menor a 200" o "Hasta 40", y también rangos por sexo ("Hombres: … Mujeres: …") y por categorías ("Normal: < 5.7 Prediabetes: …").
-- **Explica cada resultado** con un generador propio (Qwen2.5-3B ajustado con QLoRA), apoyado en fragmentos de **MedlinePlus en español** que recupera un RAG propio.
-- **Revisa cada oración** con un clasificador propio (MrBERT-biomed) que marca frases diagnósticas o alarmistas.
-- **Corrige sus propios errores:**
-  - reemplaza una explicación que contradiga el estado calculado;
-  - quita las preguntas que digan "alto" de un valor normal, que nombren un examen que el paciente no se hizo o que se repitan.
-- **Genera una ficha para la consulta** en **PDF** (para imprimir, con casillas y espacio para notas), **imagen PNG** (para el celular) o texto.
-- **Responde dudas** con el fragmento de MedlinePlus que corresponde y su fuente.
+1. [Resumen](#1-resumen)
+2. [Planteamiento del problema](#2-planteamiento-del-problema)
+3. [Objetivos](#3-objetivos)
+4. [Alcance](#4-alcance)
+5. [Arquitectura del sistema](#5-arquitectura-del-sistema)
+6. [Metodología](#6-metodología)
+7. [Resultados](#7-resultados)
+8. [Fundamentos teóricos](#8-fundamentos-teóricos)
+9. [Reproducibilidad](#9-reproducibilidad)
+10. [Estructura del repositorio](#10-estructura-del-repositorio)
+11. [Limitaciones y consideraciones éticas](#11-limitaciones-y-consideraciones-éticas)
+12. [Trabajo en curso y futuro](#12-trabajo-en-curso-y-futuro)
+13. [Autoría y referencias](#13-autoría-y-referencias)
 
-## 🏗️ Arquitectura
+---
+
+## 1. Resumen
+
+Los resultados de laboratorio llegan al paciente cargados de siglas, unidades y rangos de referencia, y la consulta médica rara vez deja tiempo para explicarlos. **LetraDeMédico** recibe un informe de laboratorio (PDF o fotografía), extrae cada analito con su valor y rango, determina con reglas deterministas si está **alto, bajo o normal**, lo explica en español claro y propone preguntas para llevar a la consulta.
+
+El sistema original dependía por completo de una API externa (Gemini). Este trabajo lo sustituye por **tres modelos neuronales propios**, entrenados y evaluados por el equipo:
+
+| Componente | Modelo base | Técnica de entrenamiento |
+|---|---|---|
+| **Recuperador (RAG)** | `SINAI/ALIA-MrBERT-es-biomedical-embeddings` + FAISS | Ajuste contrastivo con negativos difíciles |
+| **Guardrail** | `BSC-LT/MrBERT-biomed` | *Fine-tuning* de clasificación en 3 clases |
+| **Generador** | `Qwen2.5-3B-Instruct` | QLoRA (4 bits, r = 16) con destilación desde modelos profesores; exportado a GGUF Q4_K_M |
+
+**Hallazgos principales.** Frente al sistema original, el RAG propio pasa de 5,0 % a **92,5 %** de acierto en el primer resultado con consultas coloquiales; el guardrail pasa de una F1 de 0,219 a **0,991** en analitos no vistos; y el generador ajustado respeta el estado calculado en el **99,4 %** de los casos (69,7 % el modelo base), con solo un **5,4 %** de respuestas que contienen alguna oración riesgosa (41,8 % el modelo base). Un PDF digital se procesa **de principio a fin en local**, sin servicios externos.
+
+## 2. Planteamiento del problema
+
+- Los informes de laboratorio están escritos para profesionales: el paciente ve un número y un rango, pero no sabe qué significa ni qué preguntar.
+- Los modelos de lenguaje generales **alucinan, contradicen el dato o usan un tono diagnóstico y alarmista**, lo que es inaceptable en un contexto de salud.
+- Depender de una API comercial implica enviar datos de salud a terceros, cuotas de uso y resultados no reproducibles.
+
+La pregunta que guía el proyecto es: **¿pueden modelos pequeños, entrenados por el equipo y ejecutados en local, explicar resultados de laboratorio con mayor fidelidad y seguridad que un sistema basado en un LLM comercial?**
+
+## 3. Objetivos
+
+**Objetivo general.** Construir y evaluar un sistema que explique resultados de exámenes de sangre en lenguaje claro y seguro, con modelos neuronales propios que funcionen en local.
+
+**Objetivos específicos.**
+
+1. Generar un **dataset sintético** de exámenes de laboratorio para medir y corregir la lógica de clasificación de estados.
+2. Entrenar un **recuperador semántico** sobre MedlinePlus en español que entienda consultas coloquiales.
+3. Entrenar un **clasificador de seguridad** (guardrail) que detecte oraciones diagnósticas o alarmistas.
+4. Ajustar con **QLoRA** un generador pequeño que explique cada resultado de forma coherente con el estado calculado.
+5. **Integrar** los tres modelos en una aplicación usable y **evaluarla** con PDFs reales de laboratorio.
+6. Vincular cada decisión de entrenamiento con los **principios de redes neuronales** vistos en el curso.
+
+## 4. Alcance
+
+- **Incluye:** exámenes de sangre (hemograma, química sanguínea, perfil lipídico, perfil hepático, tiroides, electrolitos). La base de conocimiento cubre **41 analitos** con páginas de MedlinePlus en español.
+- **Excluye:** orina y otras muestras (la app muestra su estado, pero no las explica), diagnóstico, recomendaciones de tratamiento y población pediátrica (el generador se entrenó con casos de 18 a 85 años).
+- **Privacidad:** el lector extrae sexo y edad si aparecen, pero **no** el nombre ni otros datos personales.
+
+## 5. Arquitectura del sistema
 
 ```mermaid
 flowchart LR
@@ -46,131 +89,238 @@ flowchart LR
     H --> I[App Streamlit<br/>+ ficha PDF / PNG]
 ```
 
-La app tiene dos motores:
+**Flujo.**
 
-- **Modelos propios** (`MODO=propio`): **el motor principal y el que se usa por defecto.** RAG, generador y guardrail entrenados por el equipo, que corren en local.
-- **Gemini** (`MODO=gemini`): **segunda opción.** Es el sistema original y se conserva como línea base de comparación y como respaldo si faltan los modelos propios.
+1. **Lectura.** Un PDF digital se lee en local (`lector_pdf.py`), reconociendo diseños por bloques y por tabla. Solo las fotos y los PDF escaneados recurren a Gemini.
+2. **Estado del analito.** Reglas deterministas (`backend.py`, `evaluar_con_rango`) que interpretan rangos como "70 a 99", "Menor a 200", "Hasta 40", rangos por sexo y por categorías clínicas.
+3. **Recuperación.** El RAG busca el fragmento de MedlinePlus que corresponde al analito **y a su estado** (alto o bajo).
+4. **Generación.** El generador redacta la explicación y las preguntas a partir del dato y del pasaje recuperado.
+5. **Autocorrección.** Se reemplazan explicaciones que contradicen el estado y se eliminan preguntas incoherentes, repetidas o sobre exámenes que el paciente no se hizo.
+6. **Guardrail.** Cada oración se clasifica; las diagnósticas o alarmistas se marcan.
+7. **Salida.** Interfaz Streamlit y una **ficha para la consulta** en PDF (imprimible), PNG (para el celular) o texto.
 
-Con el motor principal, **un PDF digital se procesa entero sin Gemini**: lectura, reglas, explicación, revisión, guardrail y respuestas a dudas. Gemini solo entra para leer fotos o PDFs escaneados, que no tienen capa de texto. También entra si la lectura local no es confiable, o si el usuario pulsa "Leerlo otra vez con Gemini" porque algún valor no coincide. `LDM_LECTURA=local` o `LDM_LECTURA=gemini` fuerzan una de las dos lecturas.
+**Motores.** `MODO=propio` (por defecto) usa los modelos del equipo; `MODO=gemini` conserva el sistema original como **línea base de comparación** y respaldo.
 
-| Componente | Modelo | Entrenamiento | Código |
+## 6. Metodología
+
+El proyecto se desarrolló en fases incrementales; cada una tiene su script de evaluación y un archivo de resultados en `evaluacion/resultados/`. El detalle completo (decisiones, experimentos descartados y bitácora) está en [`PLAN.md`](PLAN.md).
+
+| Fase | Contenido | Código | Resultados |
 |---|---|---|---|
-| Estado del analito | Reglas | No aplica: se mide y se corrige | `backend.py` (`evaluar_con_rango`) |
-| RAG | `SINAI/ALIA-MrBERT-es-biomedical-embeddings` + FAISS | Ajuste contrastivo con negativos difíciles | `training/rag/` |
-| Guardrail | `BSC-LT/MrBERT-biomed` | Fine-tuning de clasificación en 3 clases | `training/guardrails/` |
-| Generador | `Qwen2.5-3B-Instruct` | QLoRA (4 bits, r = 16), exportado a GGUF Q4_K_M | `training/generador/` |
+| **0. Preparación** | Entorno, estructura y línea base | — | — |
+| **1. Datos sintéticos** | Generador de exámenes (`--n 2000 --seed 42`, 10.604 analitos) para medir y corregir las reglas de estado | `training/sintetico/` | `fase1_reglas.json` |
+| **2. RAG** | Base de conocimiento de MedlinePlus, comparación de recuperadores y ajuste contrastivo con negativos difíciles; *split* por analito para medir generalización | `training/rag/` | `fase2_rag.json` |
+| **3. Guardrail** | Frases sintéticas etiquetadas, red propia como referencia y *fine-tuning* de MrBERT-biomed; validación en texto real etiquetado por un LLM juez | `training/guardrails/` | `fase3_guardrails*.json` |
+| **4. Generador** | Casos del dataset sintético → respuestas de modelos profesores → filtrado por verificación automática → QLoRA sobre Qwen2.5-3B → GGUF | `training/generador/` | `fase4_generador.json`, `curvas.json` |
+| **5. Integración** | Lector local de PDF, RAG según el estado del analito, autocorrección y pruebas con PDFs reales | `app.py`, `backend.py`, `lector_pdf.py` | `fase5_*.json` |
+| **6. Informe** | Vínculo con la teoría del curso y figuras | `informe/` | `informe/figuras/` |
 
-## 📊 Resultados
+### 6.1 Datos
 
-Todos los números salen de `evaluacion/resultados/*.json`. Las figuras se regeneran con `python informe/figuras.py`.
+| Conjunto | Origen | Ubicación |
+|---|---|---|
+| Exámenes sintéticos | Generador propio con catálogo de analitos y semilla fija | `data/sintetico/` (se regenera) |
+| Base de conocimiento | MedlinePlus en español | `data/rag/documentos.jsonl` |
+| Consultas de entrenamiento del RAG | Generadas por LLM a partir de cada fragmento | `data/rag/consultas_entrenamiento.jsonl` |
+| Frases del guardrail | Sintéticas + muestra real etiquetada por juez | `data/guardrails/` |
+| Casos y SFT del generador | 1.250 casos con splits fijos; respuestas de profesores filtradas | `data/generador/` |
 
-| | Sistema original | **Modelos propios** |
+### 6.2 Destilación del generador
+
+El generador se entrena por **destilación**: modelos profesores más grandes (gpt-oss-120b, Qwen2.5-14B, Qwen3.8-27B) responden cada caso siguiendo una guía de estilo; un módulo de verificación automática (`training/generador/verificacion.py`) descarta las respuestas que contradicen el estado, usan tono diagnóstico o no se apoyan en el pasaje, y el estudiante (Qwen2.5-3B) se ajusta con QLoRA solo sobre las aprobadas.
+
+- **v1:** primer ajuste con todas las respuestas válidas.
+- **v2 (por defecto en la app):** menos datos pero más limpios; mejora en todas las métricas, aunque la pérdida de validación no lo refleja (ver `informe/fundamentos.md`, §10.2).
+- **v3 (en curso):** pasajes recuperados según el estado del analito y guía que exige tomar las causas del pasaje (ver [§12](#12-trabajo-en-curso-y-futuro)).
+
+## 7. Resultados
+
+Todas las cifras provienen de `evaluacion/resultados/*.json` y las figuras se regeneran con `python informe/figuras.py`.
+
+| Métrica | Sistema original | **Modelos propios** |
 |---|---|---|
 | Regla de estados: formatos del dataset sintético (10.604 analitos) | 83,4 % | **100 %** |
 | Regla de estados: formatos reales de sangre sondeados (33) | 22 / 33 | **33 / 33** |
-| RAG: acierto en el primer resultado, consultas coloquiales (40) | 5,0 % | **92,5 %** |
-| RAG: acierto en analitos que el modelo nunca vio (`split`) | 0,0 % | **91,2 %** |
+| RAG: acierto en el primer resultado (hit@1), consultas coloquiales (40) | 5,0 % | **92,5 %** |
+| RAG: hit@1 en analitos nunca vistos en entrenamiento | 0,0 % | **91,2 %** |
+| RAG: fragmento correcto según el estado del analito | 15,9 % (búsqueda solo por nombre) | **95,5 %** |
 | Guardrail: F1 binaria en frases de analitos no vistos | 0,219 | **0,991** |
-| Guardrail: falsos positivos en texto real (166 informativas) | 1 (pero no detecta ninguna riesgosa) | **3** (v2) |
+| Guardrail: falsos positivos en texto real (166 frases informativas) | 1 (sin detectar ninguna riesgosa) | **3** |
 | Generador: respeta el estado calculado (150 casos) | 69,7 % (Qwen base) | **99,4 %** |
 | Generador: respuestas con alguna oración riesgosa | 41,8 % (Qwen base) | **5,4 %** |
-| Tiempo por examen de 8 analitos | — | **28 s** en GPU, 85 s en CPU |
+| Lector local de PDF: 2 PDFs reales + 450 sintéticos (3 diseños) | — | **100 %** |
+| Tiempo por examen de 8 analitos | — | **28 s** GPU / **85 s** CPU |
 
-![RAG](informe/figuras/fig1_rag.png)
-![Guardrail](informe/figuras/fig2_guardrail.png)
-![Generador](informe/figuras/fig3_generador.png)
-![Curvas de aprendizaje](informe/figuras/fig4_curvas.png)
-![Velocidad](informe/figuras/fig5_velocidad.png)
+<table>
+<tr>
+<td><img src="informe/figuras/fig1_rag.png" alt="Resultados del RAG"></td>
+<td><img src="informe/figuras/fig2_guardrail.png" alt="Resultados del guardrail"></td>
+</tr>
+<tr>
+<td><img src="informe/figuras/fig3_generador.png" alt="Resultados del generador"></td>
+<td><img src="informe/figuras/fig6_generador_v2.png" alt="Generador v1 frente a v2"></td>
+</tr>
+<tr>
+<td><img src="informe/figuras/fig4_curvas.png" alt="Curvas de aprendizaje"></td>
+<td><img src="informe/figuras/fig5_velocidad.png" alt="Velocidad de inferencia"></td>
+</tr>
+</table>
 
-El detalle de cada experimento, sus decisiones y hallazgos está en [`PLAN.md`](PLAN.md). El vínculo con la teoría del curso (perceptrón, funciones de pérdida, descenso del gradiente, retropropagación, sobreajuste) está en [`informe/fundamentos.md`](informe/fundamentos.md).
+## 8. Fundamentos teóricos
 
----
+El documento [`informe/fundamentos.md`](informe/fundamentos.md) relaciona cada componente con los principios de redes neuronales del curso, ilustrando cada uno con una decisión o un resultado medido del proyecto:
 
-## 🚀 Instalación y uso
+| Principio | Dónde aparece en el proyecto |
+|---|---|
+| Asociacionismo y regla de Hebb | Ajuste contrastivo del RAG (contigüidad, frecuencia, similitud y contraste) |
+| Neurona de McCulloch-Pitts | El filtro de palabras del guardrail original como unidad de umbral sin aprendizaje |
+| Perceptrón y separabilidad lineal | Línea base TF-IDF del guardrail |
+| Funciones de activación | Capas de los clasificadores y del generador |
+| Arquitectura y conteo de parámetros | Red propia frente a MrBERT; adaptadores LoRA |
+| Capacidad y sobreajuste | *Split* por analito, decaimiento de pesos, curvas de aprendizaje |
+| Función de pérdida | Pérdida ponderada frente a umbral; cambio de distribución en texto real |
+| Descenso del gradiente | Tasa de aprendizaje, épocas y estabilidad |
+| Retropropagación | Regla de la cadena en el ajuste QLoRA |
+| Calidad frente a cantidad de datos | Generador v2 y pasajes del RAG según el estado |
 
-Probado con Python 3.11 en Windows 11.
+## 9. Reproducibilidad
 
-### 1. Dependencias
+Probado con **Python 3.11 en Windows 11**. Los entrenamientos pesados se ejecutaron en **Google Colab (GPU T4)** con los notebooks incluidos en `training/`.
+
+### 9.1 Instalación
 
 ```bash
 # Solo la app con el motor Gemini
 pip install -r requirements.txt
 
-# Modelos propios en CPU (llama-cpp-python desde ruedas precompiladas, sin compilar)
+# Modelos propios en CPU (llama-cpp-python desde ruedas precompiladas)
 pip install -r requirements-propio.txt --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-# Opcional: generador en una GPU NVIDIA (unas 3 veces más rápido que en CPU)
+# Opcional: generador en GPU NVIDIA (unas 3 veces más rápido)
 pip install -r requirements-gpu.txt --force-reinstall --no-deps --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124
+
+# Entrenamiento y evaluación
+pip install -r requirements-train.txt
 ```
 
-La app detecta sola si hay GPU; si no la hay, sigue en CPU. `LDM_GPU_CAPAS=0` obliga a usar la CPU.
+La app detecta la GPU automáticamente; `LDM_GPU_CAPAS=0` fuerza la CPU.
 
-### 2. Clave de Gemini
+### 9.2 Configuración
 
-Crea un archivo `.env` en la raíz:
+Crear un archivo `.env` en la raíz (no se versiona):
 
 ```env
 GEMINI_API_KEY=tu_clave_api_aqui
 ```
 
-### 3. Modelos propios
+Variables opcionales: `MODO` (`propio` | `gemini`), `LDM_LECTURA` (`local` | `gemini`), `LDM_MODELO_GENERADOR` (ruta a otro GGUF).
 
-Los pesos no se versionan, por tamaño. Van en `models/`:
+### 9.3 Modelos
+
+Los pesos no se versionan por tamaño. Se ubican en `models/`:
 
 ```
-models/rag/alia-ajustado-completo/          # embeddings del RAG
-models/rag/indice-alia-ajustado/            # índice FAISS (se construye solo la primera vez)
-models/guardrails/mrbert-biomed-v2/         # clasificador del guardrail
-models/generador/letrademedico-qwen2.5-3b-v2-q4_k_m.gguf   # generador v2 (por defecto)
-models/generador/letrademedico-qwen2.5-3b-q4_k_m.gguf      # generador v1 (respaldo si falta el v2)
+models/rag/alia-ajustado-completo/                          # embeddings del RAG
+models/rag/indice-alia-ajustado/                            # índice FAISS (se construye la primera vez)
+models/guardrails/mrbert-biomed-v2/                         # clasificador del guardrail
+models/generador/letrademedico-qwen2.5-3b-v2-q4_k_m.gguf    # generador v2 (por defecto)
+models/generador/letrademedico-qwen2.5-3b-q4_k_m.gguf       # generador v1 (respaldo)
 ```
 
-Si falta alguno, la app ofrece solo el motor Gemini y dice cuál falta. Cómo entrenarlos (con notebooks para Colab T4) está en `PLAN.md`.
+Si falta alguno, la app ofrece solo el motor Gemini e indica cuál falta. Las instrucciones para entrenarlos están en [`PLAN.md`](PLAN.md#cómo-verificar).
 
-### 4. Ejecutar
+### 9.4 Ejecución y pruebas
 
 ```bash
-streamlit run app.py
+streamlit run app.py                 # http://localhost:8501
+python -m pytest tests -q            # esperado: 161 passed (sin modelos ni Gemini)
 ```
 
-Abre `http://localhost:8501`. La pestaña de ejemplos interactivos funciona sin subir archivos.
-
-### 5. Pruebas
+### 9.5 Reproducir las evaluaciones
 
 ```bash
-python -m pytest tests -q      # esperado: 159 passed (sin modelos ni Gemini)
+python evaluacion/evaluar_reglas.py          # Fase 1
+python evaluacion/evaluar_rag.py             # Fase 2
+python evaluacion/evaluar_guardrails.py      # Fase 3
+python evaluacion/evaluar_generador.py       # Fase 4
+python evaluacion/evaluar_lector_pdf.py      # Fase 5
+python evaluacion/evaluar_rag_estado.py      # Fase 5
+python informe/figuras.py                    # figuras del informe
 ```
 
-## 📁 Estructura
+## 10. Estructura del repositorio
 
 ```
-app.py, ui_components.py     # interfaz Streamlit
-backend.py                   # pipeline: extracción, reglas, RAG, generador, revisión y guardrail
-modelos_propios.py           # carga y uso de los tres modelos del equipo
-ficha_consulta.py            # ficha para la consulta en PDF e imagen
-training/                    # datos sintéticos, RAG, guardrails y generador (scripts y notebooks de Colab)
-evaluacion/                  # scripts de métricas y resultados en JSON
-informe/                     # fundamentos teóricos y figuras
-tests/                       # pruebas con pytest
+Proyecto_LaLetraDeMedico/
+├── app.py                    # interfaz Streamlit
+├── ui_components.py          # componentes de la interfaz
+├── backend.py                # pipeline: extracción, reglas, RAG, generador, revisión y guardrail
+├── lector_pdf.py             # lector local de PDF digitales
+├── modelos_propios.py        # carga y uso de los tres modelos del equipo
+├── ficha_consulta.py         # ficha para la consulta (PDF e imagen)
+├── mock_medical_kb.json      # base mínima de respaldo
+├── requirements*.txt         # dependencias por uso (app, propio, GPU, entrenamiento)
+│
+├── training/                 # entrenamiento (scripts y notebooks de Colab)
+│   ├── sintetico/            #   Fase 1: generador de exámenes sintéticos
+│   ├── rag/                  #   Fase 2: base de conocimiento y ajuste contrastivo
+│   ├── guardrails/           #   Fase 3: frases, red propia y clasificador
+│   ├── generador/            #   Fase 4: casos, profesores, verificación, QLoRA y GGUF
+│   └── groq_cliente.py       #   cliente compartido para los modelos profesores
+│
+├── data/                     # datasets versionados (los sintéticos se regeneran)
+│   ├── rag/  guardrails/  generador/  sintetico/
+│
+├── evaluacion/               # scripts de métricas, rúbrica y resultados en JSON
+│   └── resultados/
+│
+├── informe/                  # fundamentos teóricos y figuras
+│   ├── fundamentos.md
+│   ├── figuras.py
+│   └── figuras/
+│
+├── tests/                    # 161 pruebas con pytest
+├── models/                   # pesos (no versionados)
+├── assets/                   # recursos de la interfaz
+└── PLAN.md                   # plan, decisiones, experimentos y bitácora
 ```
 
-## ⚠️ Limitaciones
+## 11. Limitaciones y consideraciones éticas
 
 - **No es un dispositivo médico.** Las explicaciones son informativas y la app siempre remite al médico.
-- **Las fotos y los PDF escaneados dependen de Gemini**, una API externa con cuotas, y una foto borrosa puede extraerse mal.
-- **El lector local reconoce diseños por bloques y por tabla.** Se midió con 2 PDFs reales de laboratorios distintos (Compensar 2021 y Colsanitas 2011) y 450 PDFs sintéticos en 3 diseños, todos leídos al 100 %. Si el texto del PDF viene en desorden, las filas se rearman por la posición de cada fragmento. Un diseño muy distinto puede leerse mal sin que el lector lo note: por eso la app avisa que el documento se leyó en local y ofrece releerlo con Gemini.
-- **Solo sangre y solo los analitos de la base.** El RAG cubre 41 analitos con páginas de MedlinePlus. Un examen que no está (por ejemplo, IGF-1) se explica sin guía y la app lo avisa.
-- **Los rangos de entrenamiento son de adultos.** La app usa siempre el rango que trae el laboratorio, pero el generador se entrenó con casos de 18 a 85 años.
-- **El generador todavía se equivoca a veces:**
-  - inventa el significado de algunas siglas ("VCM = Volumen de Célula Móvil");
-  - sugiere causas algo especulativas;
-  - repite preguntas o dice "alto" de un valor normal.
+- **Lectura de imágenes.** Las fotos y los PDF escaneados dependen de Gemini, una API externa con cuotas; una foto borrosa puede extraerse mal.
+- **Diseños de PDF.** El lector local se validó con 2 PDFs reales de laboratorios distintos y 450 sintéticos en 3 diseños. Un diseño muy distinto puede leerse mal sin que el lector lo note; por eso la app avisa y ofrece releerlo con Gemini.
+- **Cobertura.** Solo sangre y solo los 41 analitos de la base. Un examen fuera de ella (p. ej., IGF-1) se explica sin guía y la app lo advierte.
+- **Población.** El generador se entrenó con casos de adultos (18 a 85 años), aunque la app siempre usa el rango que trae el laboratorio.
+- **Errores residuales del generador.** A veces inventa el significado de siglas, sugiere causas que no están en el pasaje, repite preguntas o califica de "alto" un valor normal. La autocorrección y el guardrail atrapan una parte; el resto exige revisión humana.
+- **Etiquetas del guardrail en texto real.** Provienen de un LLM juez, no de anotadores humanos, y el conjunto real solo tiene 2 frases riesgosas; su cifra de detección es indicativa.
+- **Uso de datos de terceros.** Las salidas de Gemini se usan **solo para evaluar**, nunca para entrenar, conforme a sus términos de uso.
+- **Privacidad.** Con el motor propio, un PDF digital no sale del equipo del usuario.
 
-  La revisión de coherencia y el guardrail atrapan una parte; el resto queda para la revisión humana.
-- **Las etiquetas del guardrail en texto real vienen de un LLM juez**, no de humanos, y el test real tiene solo 2 frases riesgosas. Su cifra de detección es indicativa.
+## 12. Trabajo en curso y futuro
 
----
+**Generador v3 (datos preparados, entrenamiento pendiente).** El diagnóstico con `verificacion.causas_sin_respaldo` mostró que el ajuste fino **aumentó** la proporción de causas sin respaldo en el pasaje (Qwen base 50,9 %; v1 58,7 %; v2 64,8 %): el estudiante aprendió a escribir siempre causas, no a tomarlas del pasaje. El v3 ataca el problema desde los datos:
 
-## 👨‍💻 Autor
+- `preparar_casos.py --version v3` → `data/generador/casos_v3.jsonl`: los mismos 1.250 casos con los pasajes que usa la app (alias, umbral y fragmento según el estado).
+- `GUIA_PROFESOR_V3` (`prompt.py`): las causas deben salir del pasaje; si el pasaje no las trae, no se nombran causas concretas.
+- `profesor_v3_colab.ipynb` y `qlora_v3_colab.ipynb`: generación con el profesor (3 muestras por caso) y entrenamiento + exportación a GGUF.
+- `generar_respuestas_gguf.py` y `evaluar_generador.py --version v3`: evaluación comparativa de v1, v2 y v3 con los mismos GGUF que usa la app.
 
-- **Rubiano Valero** - Idea original y desarrollo.
+**Futuro.** Anotación humana del guardrail en texto real, decaimiento de pesos en el ajuste del RAG, ampliación de la base de conocimiento y validación con más laboratorios.
+
+## 13. Autoría y referencias
+
+**Autor:** Rubiano Valero — idea original y desarrollo.
+
+**Recursos utilizados**
+
+- MedlinePlus en español — Biblioteca Nacional de Medicina de EE. UU. (base de conocimiento del RAG).
+- `SINAI/ALIA-MrBERT-es-biomedical-embeddings` y `BSC-LT/MrBERT-biomed` (Hugging Face).
+- `Qwen/Qwen2.5-3B-Instruct` (Alibaba Cloud), ajustado con QLoRA (Dettmers et al., 2023) y servido con `llama.cpp`.
+- FAISS (Meta AI) para la búsqueda vectorial; Sentence-Transformers para el ajuste contrastivo.
+- Streamlit para la interfaz.
+
+**Documentación del proyecto**
+
+- [`PLAN.md`](PLAN.md): plan por fases, experimentos, decisiones y bitácora.
+- [`informe/fundamentos.md`](informe/fundamentos.md): relación con los principios de redes neuronales.

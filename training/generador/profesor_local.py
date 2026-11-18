@@ -15,6 +15,11 @@ Uso en Colab:
     python training/generador/profesor_local.py --motor transformers --modelo Qwen/Qwen2.5-7B-Instruct --salida ...
 
 Reanudable: salta los casos que ya están en su archivo de salida.
+
+v3 (`--version v3`): lee casos_v3.jsonl (pasajes de la app, según el estado), responde train y val con la guía
+GUIA_PROFESOR_V3 (causas tomadas del pasaje) y el pasaje completo, y escribe `--muestras` respuestas por caso en
+data/generador/respuestas_v3/ para que dataset.py --version v3 elija la mejor:
+    python training/generador/profesor_local.py --version v3 --muestras 3 --salida /content/drive/MyDrive/letrademedico/respuestas_v3
 """
 import argparse
 import json
@@ -29,7 +34,9 @@ from prompt import prompt_profesor  # noqa: E402
 from verificacion import es_ejemplo_limpio, parsear, verificar  # noqa: E402
 
 CASOS = RAIZ / "data" / "generador" / "casos.jsonl"
+CASOS_V3 = RAIZ / "data" / "generador" / "casos_v3.jsonl"
 RESPUESTAS_DIR = RAIZ / "data" / "generador" / "respuestas"
+RESPUESTAS_V3_DIR = RAIZ / "data" / "generador" / "respuestas_v3"
 
 
 def ids_ya_respondidos(carpetas):
@@ -47,18 +54,19 @@ def normalizar(texto):
     return json.dumps(datos, ensure_ascii=False) if datos is not None else texto
 
 
-def generador_vllm(modelo, max_tokens, max_len):
+def generador_vllm(modelo, max_tokens, max_len, muestras=1):
     from vllm import LLM, SamplingParams
     llm = LLM(model=modelo, max_model_len=max_len, gpu_memory_utilization=0.92, dtype="half", seed=13)
-    muestreo = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=max_tokens, seed=13)
+    muestreo = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=max_tokens, seed=13, n=muestras)
 
     def generar(prompts):
+        """Una lista de `muestras` textos por prompt."""
         salidas = llm.chat([[{"role": "user", "content": p}] for p in prompts], muestreo, use_tqdm=False)
-        return [s.outputs[0].text for s in salidas]
+        return [[o.text for o in s.outputs] for s in salidas]
     return generar
 
 
-def generador_transformers(modelo, max_tokens, max_len):
+def generador_transformers(modelo, max_tokens, max_len, muestras=1):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
     tokenizador = AutoTokenizer.from_pretrained(modelo)
@@ -78,8 +86,10 @@ def generador_transformers(modelo, max_tokens, max_len):
                               max_length=max_len - max_tokens).to(llm.device)
         with torch.no_grad():
             salida = llm.generate(**entrada, max_new_tokens=max_tokens, do_sample=True, temperature=0.7, top_p=0.9,
+                                  num_return_sequences=muestras,
                                   pad_token_id=tokenizador.pad_token_id or tokenizador.eos_token_id)
-        return tokenizador.batch_decode(salida[:, entrada["input_ids"].shape[1]:], skip_special_tokens=True)
+        textos = tokenizador.batch_decode(salida[:, entrada["input_ids"].shape[1]:], skip_special_tokens=True)
+        return [textos[i:i + muestras] for i in range(0, len(textos), muestras)]
     return generar
 
 
@@ -93,34 +103,50 @@ def main():
     parser.add_argument("--max-tokens", type=int, default=1500)
     parser.add_argument("--max-len", type=int, default=4096)
     parser.add_argument("--limite", type=int, help="Hacer solo N casos")
+    parser.add_argument("--version", default="v1", choices=["v1", "v3"])
+    parser.add_argument("--muestras", type=int, default=1, help="Respuestas por caso (v3: 3, se elige la mejor)")
     args = parser.parse_args()
+    v3 = args.version == "v3"
+    if v3 and args.salida == RESPUESTAS_DIR:
+        args.salida = RESPUESTAS_V3_DIR
 
     nombre = args.modelo.split("/")[-1].lower()
     args.salida.mkdir(parents=True, exist_ok=True)
     archivo = args.salida / f"{nombre}.jsonl"
-    # Se saltan los casos ya respondidos por cualquier profesor (los del repo y los de la carpeta de salida)
-    hechos = ids_ya_respondidos({RESPUESTAS_DIR, args.salida})
-    with open(CASOS, encoding="utf-8") as f:
-        casos = [c for c in map(json.loads, f) if c["split"] == "train" and c["id"] not in hechos]
-    casos = casos[::-1][:args.limite]  # desde el final: los de Groq van desde el principio
+    if v3:  # solo se saltan los casos que ya están en la salida del v3 (los pasajes cambiaron)
+        hechos = ids_ya_respondidos({args.salida})
+        with open(CASOS_V3, encoding="utf-8") as f:
+            casos = [c for c in map(json.loads, f) if c["split"] in ("train", "val") and c["id"] not in hechos]
+        casos = casos[:args.limite]
+    else:
+        # Se saltan los casos ya respondidos por cualquier profesor (los del repo y los de la carpeta de salida)
+        hechos = ids_ya_respondidos({RESPUESTAS_DIR, args.salida})
+        with open(CASOS, encoding="utf-8") as f:
+            casos = [c for c in map(json.loads, f) if c["split"] == "train" and c["id"] not in hechos]
+        casos = casos[::-1][:args.limite]  # desde el final: los de Groq van desde el principio
     lote = args.lote or (64 if args.motor == "vllm" else 8)
     print(f"{nombre} ({args.motor}): {len(hechos)} casos ya respondidos; este profesor hará {len(casos)}", flush=True)
 
-    generar = (generador_vllm if args.motor == "vllm" else generador_transformers)(args.modelo, args.max_tokens, args.max_len)
+    generar = (generador_vllm if args.motor == "vllm" else generador_transformers)(
+        args.modelo, args.max_tokens, args.max_len, args.muestras)
     limpios, inicio = 0, time.time()
     with open(archivo, "a", encoding="utf-8") as f:
         for i in range(0, len(casos), lote):
             grupo = casos[i:i + lote]
-            for caso, texto in zip(grupo, generar([prompt_profesor(c, c["pasajes"]) for c in grupo])):
-                texto = normalizar(texto)
-                v = verificar(texto, caso)
-                limpios += bool(es_ejemplo_limpio(v))
-                f.write(json.dumps({"id": caso["id"], "split": caso["split"], "profesor": args.modelo,
-                                    "respuesta": texto, "verificacion": v}, ensure_ascii=False) + "\n")
+            prompts = [prompt_profesor(c, c["pasajes"], version=args.version) for c in grupo]
+            for caso, textos in zip(grupo, generar(prompts)):
+                for muestra, texto in enumerate(textos):
+                    texto = normalizar(texto)
+                    v = verificar(texto, caso)
+                    limpios += bool(es_ejemplo_limpio(v))
+                    f.write(json.dumps({"id": caso["id"], "split": caso["split"], "profesor": args.modelo,
+                                        "muestra": muestra, "version": args.version, "respuesta": texto,
+                                        "verificacion": v}, ensure_ascii=False) + "\n")
             f.flush()
             hechos_ahora = min(i + lote, len(casos))
             minutos = (time.time() - inicio) / 60
-            print(f"  {hechos_ahora}/{len(casos)} casos, {limpios} limpios, {hechos_ahora / minutos:.1f} casos/min", flush=True)
+            print(f"  {hechos_ahora}/{len(casos)} casos, {limpios} respuestas limpias, "
+                  f"{hechos_ahora / minutos:.1f} casos/min", flush=True)
     print(f"Respuestas en {archivo}")
 
 

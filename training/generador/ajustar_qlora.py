@@ -64,8 +64,9 @@ def main():
     parser.add_argument("--limite", type=int, help="Usar solo N ejemplos (prueba rápida)")
     parser.add_argument("--checkpoints", type=Path, help="Carpeta de checkpoints (ej. en Google Drive)")
     parser.add_argument("--salida", type=Path)
-    parser.add_argument("--version", default="v1", choices=["v1", "v2"],
-                        help="Dataset: v1 = sft_train.jsonl; v2 = sft_train_v2.jsonl (filtros de calidad, ver dataset.py)")
+    parser.add_argument("--version", default="v1", choices=["v1", "v2", "v3"],
+                        help="Dataset: v1 = sft_train.jsonl; v2 = sft_train_v2.jsonl (filtros de calidad); "
+                             "v3 = sft_train_v3.jsonl (pasajes de la app y causas del pasaje). Ver dataset.py")
     args = parser.parse_args()
     sufijo = "" if args.version == "v1" else f"_{args.version}"
 

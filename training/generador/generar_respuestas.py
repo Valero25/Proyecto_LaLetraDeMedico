@@ -32,6 +32,9 @@ def main():
     parser.add_argument("--adaptador", type=Path, help="Carpeta del adaptador LoRA (sin él, se evalúa el modelo base)")
     parser.add_argument("--nombre", help="Nombre del archivo de salida (por defecto, según modelo y adaptador)")
     parser.add_argument("--split", default="test")
+    parser.add_argument("--casos", type=Path, default=CASOS,
+                        help="v3: data/generador/casos_v3.jsonl (pasajes de la app), con --salidas data/generador/salidas_v3")
+    parser.add_argument("--salidas", type=Path, default=SALIDAS)
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--max-tokens", type=int, default=1200)
     parser.add_argument("--sin-cuantizar", action="store_true")
@@ -43,13 +46,13 @@ def main():
 
     gpu = torch.cuda.is_available()
     nombre = args.nombre or (args.modelo.split("/")[-1].lower() + ("-ajustado" if args.adaptador else "-base"))
-    salida = SALIDAS / f"{nombre}.jsonl"
+    salida = args.salidas / f"{nombre}.jsonl"
     salida.parent.mkdir(parents=True, exist_ok=True)
     hechos = set()
     if salida.exists():
         with open(salida, encoding="utf-8") as f:
             hechos = {json.loads(linea)["id"] for linea in f}
-    with open(CASOS, encoding="utf-8") as f:
+    with open(args.casos, encoding="utf-8") as f:
         casos = [c for c in map(json.loads, f) if c["split"] == args.split and c["id"] not in hechos][:args.limite]
     print(f"{nombre}: {len(hechos)} hechos, faltan {len(casos)}", flush=True)
 

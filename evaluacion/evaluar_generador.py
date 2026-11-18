@@ -65,6 +65,10 @@ def evaluar_archivo(filas, casos, clasificar):
         "respuestas_con_pregunta_quitada": sum(q["preguntas_quitadas"] > 0 for q in calidades) / n,
         "ejemplos_siglas_inventadas": [s for q in calidades for s in q["siglas_inventadas"]][:10],
         "ejemplos_causas_repetidas": [s for q in calidades for s in q["causas_repetidas"]][:10],
+        # v3: oraciones de causas (de exámenes alterados) cuyas causas concretas no están en el pasaje del RAG
+        "causas_sin_respaldo": (sum(len(q["causas_sin_respaldo"]) for q in calidades)
+                                / max(sum(q["causas_evaluadas"] for q in calidades), 1)),
+        "ejemplos_causas_sin_respaldo": [f"{e}: {o}" for q in calidades for e, o in q["causas_sin_respaldo"]][:10],
     })
     if clasificar:
         frases = [frases_para_guardrails(r["respuesta"]) for r, _ in validas]
@@ -83,9 +87,16 @@ def main():
     parser.add_argument("--sin-guardrails", action="store_true")
     parser.add_argument("--clasificador", default="mrbert-biomed-v2",
                         help="Guardrail de la Fase 3 (v2: entrenado también con texto real)")
+    parser.add_argument("--version", default="v1", choices=["v1", "v3"],
+                        help="v3: casos_v3.jsonl (pasajes de la app) y salidas_v3/ -> fase4_generador_v3.json")
     args = parser.parse_args()
+    casos_ruta, salidas, destino = CASOS, SALIDAS, RESULTADOS
+    if args.version == "v3":
+        casos_ruta = CASOS.with_name("casos_v3.jsonl")
+        salidas = SALIDAS.with_name("salidas_v3")
+        destino = RESULTADOS.with_name("fase4_generador_v3.json")
 
-    with open(CASOS, encoding="utf-8") as f:
+    with open(casos_ruta, encoding="utf-8") as f:
         casos = {c["id"]: c for c in map(json.loads, f)}
     clasificar = None
     if not args.sin_guardrails:
@@ -93,7 +104,7 @@ def main():
         clasificar = lambda frases: [1 - p[0] for p in probabilidades_modelo(args.clasificador, frases)]  # noqa: E731
 
     resultados = {}
-    for archivo in sorted(SALIDAS.glob("*.jsonl")):
+    for archivo in sorted(salidas.glob("*.jsonl")):
         with open(archivo, encoding="utf-8") as f:
             filas = [json.loads(linea) for linea in f]
         if filas:
@@ -101,7 +112,8 @@ def main():
 
     columnas = ["n", "json_valido", "cobertura", "menciona_valor", "menciona_valor_alterados", "estado_consistente",
                 "inflesz", "oraciones_marcadas", "respuestas_con_marca", "causas_repetidas", "siglas_inventadas",
-                "usa_usted", "respuestas_con_pregunta_quitada", "palabras_por_respuesta", "segundos_por_caso"]
+                "usa_usted", "respuestas_con_pregunta_quitada", "causas_sin_respaldo", "palabras_por_respuesta",
+                "segundos_por_caso"]
     print(f"{'modelo':<34}" + "".join(f"{c[:12]:>13}" for c in columnas))
     for nombre, r in resultados.items():
         celdas = []
@@ -111,11 +123,11 @@ def main():
                           else f"{v:.1f}" if c == "inflesz" else f"{v:.1%}")
         print(f"{nombre:<34}" + "".join(f"{x:>13}" for x in celdas))
 
-    RESULTADOS.parent.mkdir(parents=True, exist_ok=True)
-    with open(RESULTADOS, "w", encoding="utf-8") as f:
-        json.dump({"clasificador": None if args.sin_guardrails else args.clasificador, "resultados": resultados},
-                  f, indent=2, ensure_ascii=False)
-    print(f"\nResultados guardados en {RESULTADOS.relative_to(RAIZ)}")
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    with open(destino, "w", encoding="utf-8") as f:
+        json.dump({"clasificador": None if args.sin_guardrails else args.clasificador, "casos": casos_ruta.name,
+                   "resultados": resultados}, f, indent=2, ensure_ascii=False)
+    print(f"\nResultados guardados en {destino.relative_to(RAIZ)}")
 
 
 if __name__ == "__main__":

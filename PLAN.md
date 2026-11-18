@@ -422,6 +422,28 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - Queda una muletilla del generador: "una condición metabólica" se repite en LDL, triglicéridos y AST. No viene del pasaje.
     - **Causa de fondo:** el v1 y el v2 se entrenaron con pasajes buscados solo por nombre, así que aún no aprovechan del todo un fragmento de causas. Un v3 entrenado con los pasajes según el estado lo atacaría desde los datos.
   - **Pruebas:** dos nuevas en `test_pdf_real.py`, sin modelos. **159 passed.**
+- [ ] **Generador v3: causas tomadas del pasaje (datos preparados el 2026-11-04).** Mismo modelo y mismos hiperparámetros; cambian los pasajes y las respuestas de referencia.
+  - **Diagnóstico** (`verificacion.causas_sin_respaldo`): oraciones de causas de exámenes alterados cuyas causas concretas no están en el pasaje. Es una aproximación léxica, por raíz de 5 letras, que no reconoce sinónimos.
+
+    | Quién escribe | Causas sin respaldo en el pasaje |
+    |---|---|
+    | Profesores (gpt-oss-120b / Qwen2.5-14B / Qwen3.8-27B) | 45,6 % / 51,6 % / 56,0 % |
+    | Qwen2.5-3B base | 50,9 % |
+    | Ajustado v1 / v2 | **58,7 % / 64,8 %** |
+
+    - El ajuste fino **aumentó** la invención: el estudiante aprendió que siempre hay que escribir causas, no que salen del pasaje.
+    - **Tres causas de fondo:**
+      1. Los pasajes del v1 y v2 venían de la búsqueda densa solo por nombre. En el 92,3 % de los analitos alterados (2.015 de 2.183) no son los que da la app.
+      2. La guía pedía "posibles causas generales".
+      3. Los profesores veían el pasaje cortado a 350 caracteres por las cuotas de Groq.
+  - **Datos v3:**
+    - `preparar_casos.py --version v3` → `casos_v3.jsonl`: los mismos 1.250 casos y splits, con los pasajes de la app (alias, umbral y fragmento según el estado).
+    - `GUIA_PROFESOR_V3` (`prompt.py`): pide tomar las causas del pasaje y, si el pasaje no trae causas, no nombrar causas concretas. El profesor recibe el pasaje completo de 700 caracteres.
+    - `profesor_local.py --version v3 --muestras 3`: Qwen2.5-14B-AWQ en vLLM, 3 respuestas por caso, train y val.
+    - `dataset.py --version v3`: los filtros del v2, más ninguna causa sin respaldo. Entre las muestras aprobadas de un caso, gana la que más causas respaldadas tiene.
+  - **Notebooks:** `profesor_v3_colab.ipynb` (3 a 4 h, reanudable) y `qlora_v3_colab.ipynb` (entrenar y exportar a GGUF).
+  - **Evaluación:** `generar_respuestas_gguf.py` genera localmente, en GPU, las respuestas del v1, v2 y v3 sobre el test de `casos_v3.jsonl`, con los mismos GGUF que usa la app. Luego `evaluar_generador.py --version v3` → `fase4_generador_v3.json`.
+  - **Pruebas:** dos nuevas (métrica de respaldo y guía v3). **161 passed.**
   - **Decisión:** el v2 queda por defecto (`modelos_propios.generador_por_defecto`). Si su GGUF no está, se usa el v1, y `LDM_MODELO_GENERADOR` elige otro.
 - [x] Evidencia teórica que exige `informe/fundamentos.md` (sección 10). Las secciones 10.2 y 10.3 se agregaron el 2026-11-04:
   - **10.2:** calidad frente a cantidad de datos con el v2. Incluye por qué la pérdida de validación no ve la mejora.
@@ -635,7 +657,7 @@ Desde la raíz del proyecto:
 ```bash
 pip install -r requirements-train.txt
 
-# Pruebas (esperado: 159 passed)
+# Pruebas (esperado: 161 passed)
 python -m pytest tests -v
 
 # Fase 1: regenerar el dataset sintético y medir la regla determinista del backend

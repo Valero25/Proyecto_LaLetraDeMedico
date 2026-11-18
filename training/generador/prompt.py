@@ -24,6 +24,17 @@ GUIA_PROFESOR = """Guía de estilo (síguela con cuidado):
 - Sin markdown, sin emojis y sin repetir el aviso de que no eres médico en cada examen."""
 
 
+# v3 (2026-11-04): las causas salen del pasaje. Con la guía anterior los profesores escribían "posibles causas
+# generales" de memoria, y el estudiante aprendió a inventarlas (AST alta: "una menor actividad física").
+GUIA_PROFESOR_V3 = GUIA_PROFESOR.replace(
+    "posibles causas generales en condicional y una invitación a conversarlo con su médico.",
+    "posibles causas en condicional TOMADAS DEL PASAJE de ese examen (elige 2 o 3 de las que el pasaje nombra; "
+    "no agregues causas que el pasaje no menciona) y una invitación a conversarlo con su médico. Si el pasaje no "
+    "trae causas o no hay pasaje, no nombres causas concretas: di que puede tener varias explicaciones y que tu "
+    "médico puede ayudarte a entenderlo.\n- No repitas la misma oración de causas en exámenes distintos.")
+assert GUIA_PROFESOR_V3 != GUIA_PROFESOR
+
+
 def formatear_resultado(a):
     unidad = f" {a['unidad']}" if a.get("unidad") else ""
     return f"- {a['examen']}: {a['valor']}{unidad} (referencia: {a['rango_referencia']}) → {a['estado']}"
@@ -68,6 +79,10 @@ def recortar(texto, limite):
 MAX_CARACTERES_PASAJE_PROFESOR = 350
 
 
-def prompt_profesor(caso, pasajes, max_caracteres=MAX_CARACTERES_PASAJE_PROFESOR):
+def prompt_profesor(caso, pasajes, max_caracteres=MAX_CARACTERES_PASAJE_PROFESOR, version="v1"):
+    """v3: guía con causas del pasaje y el pasaje completo (700 caracteres, lo mismo que ve el estudiante): el
+    profesor local no tiene cuotas, y a 350 caracteres se cortaba justo la lista de causas."""
+    if version == "v3":
+        return f"{SISTEMA}\n\n{GUIA_PROFESOR_V3}\n\n{construir_usuario(caso, pasajes)}"
     cortos = [{**p, "texto": recortar(p["texto"], max_caracteres)} for p in pasajes]
     return f"{SISTEMA}\n\n{GUIA_PROFESOR}\n\n{construir_usuario(caso, cortos)}"

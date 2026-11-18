@@ -364,3 +364,39 @@ def test_baja_densidad_no_cuenta_como_bajo():
     doc = {"texto": "El colesterol de baja densidad puede causar problemas.", "seccion": ""}
     assert mp.puntaje_estado(doc, "BAJO")[0] == 0
     assert mp.puntaje_estado({**doc, "texto": "Niveles bajos de HDL pueden ser un signo de riesgo."}, "BAJO")[0] == 2
+
+
+def test_causas_sin_respaldo_en_el_pasaje():
+    # PDF Colsanitas (2026-11-04): AST alta con "una menor actividad física", que el pasaje no menciona
+    from verificacion import causas_sin_respaldo
+    pasaje = ("Los niveles altos de AST en la sangre pueden deberse a una enfermedad hepática u otros problemas del "
+              "hígado. Otras razones pueden incluir: Hepatitis; Cirrosis; Mononucleosis; Pancreatitis.")
+    caso = {"analitos": [{"examen": "AST", "estado": "ALTO"}, {"examen": "ALT", "estado": "NORMAL"}],
+            "pasajes": [{"examen": "AST", "titulo": "Prueba de AST", "texto": pasaje},
+                        {"examen": "ALT", "titulo": "Prueba de ALT", "texto": "Mide la ALT."}]}
+
+    def con(explicacion):
+        return {"explicaciones": [{"examen": "AST", "explicacion": explicacion},
+                                  {"examen": "ALT", "explicacion": "Está dentro del rango."}]}
+
+    inventada = causas_sin_respaldo(con("Tu AST está alta. Esto puede deberse a una menor actividad física."), caso)
+    assert inventada["evaluadas"] == 1 and len(inventada["sin_respaldo"]) == 1
+    del_pasaje = causas_sin_respaldo(con("Tu AST está alta. Puede deberse a hepatitis o a una enfermedad hepática."), caso)
+    assert del_pasaje["evaluadas"] == 1 and not del_pasaje["sin_respaldo"]
+    # Sin causa concreta ("varios factores") no se evalúa, y "revisa otros factores" no es una causa
+    vaga = causas_sin_respaldo(con("Puede deberse a varios factores. Revísalo para confirmar otros factores."), caso)
+    assert vaga["evaluadas"] == 0
+    # Los exámenes normales no se revisan
+    assert causas_sin_respaldo({"explicaciones": [{"examen": "AST", "explicacion": "x"}, {"examen": "ALT",
+                               "explicacion": "Puede deberse a la luna."}]}, caso)["evaluadas"] == 0
+
+
+def test_guia_del_profesor_v3_pide_causas_del_pasaje():
+    sys.path.insert(0, str(RAIZ / "training" / "generador"))
+    from prompt import GUIA_PROFESOR, prompt_profesor
+    caso = {"tipo_de_examen": "Perfil Hepático", "paciente": {}, "analitos": [
+        {"examen": "AST", "valor": "40", "unidad": "U/L", "rango_referencia": "0 - 32", "estado": "ALTO"}]}
+    pasajes = [{"examen": "AST", "titulo": "Prueba de AST", "texto": "x" * 600}]
+    v1, v3 = prompt_profesor(caso, pasajes), prompt_profesor(caso, pasajes, version="v3")
+    assert GUIA_PROFESOR in v1 and "TOMADAS DEL PASAJE" in v3 and "TOMADAS DEL PASAJE" not in v1
+    assert "x" * 600 in v3 and "x" * 600 not in v1  # v3: pasaje completo; v1: recortado a 350

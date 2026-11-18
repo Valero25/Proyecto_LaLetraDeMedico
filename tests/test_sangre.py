@@ -200,6 +200,55 @@ def test_ficha_muestra_el_rango_aplicado():
     assert c["filas"][0]["referencia"] == "Mayor de 55"
 
 
+@pytest.mark.parametrize("valor, rango, esperado", [
+    ("-2.5", "-3 - 3", "NORMAL"), ("-4", "-3 - 3", "BAJO"), ("3.5", "-3 - 3", "ALTO"),
+    ("-1", "-2 a +2", "NORMAL"), ("−2.5", "−3 – 3", "NORMAL"), ("-6", "> -5", "BAJO"),
+    ("95", "70 - 99", "NORMAL"), ("7.20", "4.0 - 11.0 x10^3/uL", "NORMAL"),
+])
+def test_valores_y_rangos_negativos(valor, rango, esperado):
+    # Antes se perdía el signo: un exceso de bases de -2.5 con rango -3 - 3 salía BAJO
+    assert evaluar(valor, rango) == esperado
+
+
+@pytest.mark.parametrize("valor, rango, esperado", [
+    # Punto de miles en un solo lado (plaquetas en laboratorios colombianos)
+    ("250000", "150.000 - 450.000", "NORMAL"), ("500000", "150.000 - 450.000", "ALTO"),
+    ("4.500", "4500 - 11000", "NORMAL"), ("1.500.000", "150000 - 450000", "ALTO"),
+    ("250.000", "150.000 - 450.000", "NORMAL"), ("100000", "Mayor de 150.000", "BAJO"),
+    # Sin diferencia de escala el punto sigue siendo decimal
+    ("4.500", "0.4 - 4.0", "ALTO"), ("1.020", "1.005 - 1.030", "NORMAL"), ("0.010", "0 - 14", "NORMAL"),
+    ("250000", "150 - 450", "ALTO"),
+])
+def test_punto_de_miles(valor, rango, esperado):
+    assert evaluar(valor, rango) == esperado
+
+
+def test_indicador_y_regla_leen_igual_los_miles():
+    gauge = ui_components.calcular_gauge_html("250000", "150.000 - 450.000", "NORMAL")
+    assert "Rango normal: 150000 - 450000" in gauge
+
+
+def test_edad_infinita_no_rompe():
+    assert limpiar_paciente({"edad": "inf", "sexo": "F"}) == {"sexo": "F"}
+
+
+def test_lectura_local_de_una_imagen_explica_que_necesita_gemini():
+    b = LetraDeMedicoBackend(modo="gemini")
+    error = b.procesar_resultado(b"\x89PNG", "image/png", lectura="local")["error"]
+    assert "solo funciona con PDF" in error
+
+
+def test_indicador_dibuja_rangos_negativos():
+    assert ui_components.calcular_gauge_html("-2.5", "-3 - 3", "NORMAL")
+
+
+def test_ficha_txt_muestra_el_rango_aplicado():
+    analitos = [{"examen": "HDL", "valor": "57", "unidad": "mg/dl", "estado": "NORMAL",
+                 "rango_referencia": "Sin riesgo: Mayor de 55. Riesgo moderado: 35 - 55", "rango_aplicado": "mayor de 55"}]
+    ficha = ui_components.generar_ficha_medica_txt("Perfil", analitos, [])
+    assert "(Rango: mayor de 55)" in ficha and "Riesgo moderado" not in ficha
+
+
 @pytest.fixture
 def ficha_larga():
     analitos = [{"examen": f"Analito {i}", "valor": "1", "unidad": "", "rango_referencia": "0 - 2", "estado": "ALTO"}

@@ -8,7 +8,6 @@ import modelos_propios
 from ui_components import (
     ESTILOS_CSS,
     PRESETS,
-    calcular_gauge_html,
     render_tarjeta_html,
     generar_ficha_medica_txt,
 )
@@ -306,6 +305,10 @@ if not st.session_state.analisis_completado:
                     st.session_state.tipo_examen = preset["tipo_examen"]
                     st.session_state.paciente = {}
                     st.session_state.lectura = None  # los ejemplos no tienen documento
+                    # ...así que no se ofrece el de un análisis anterior en "Ver documento original subido"
+                    st.session_state.ultimo_archivo_bytes = None
+                    st.session_state.ultimo_archivo_mime = None
+                    st.session_state.ultimo_archivo_nombre = None
                     st.session_state.contexto_paciente = preset["contexto_paciente"]
                     st.session_state.modo_usado = modo
                     st.session_state.es_demo = True
@@ -652,16 +655,18 @@ else:
             with st.chat_message("assistant", avatar="🩺"):
                 st.write(item["respuesta"])
 
-    col_chat_input, col_chat_btn = st.columns([4, 1])
-    with col_chat_input:
-        pregunta_chat = st.text_input(
-            "Escribe tu duda aquí:",
-            placeholder="Ej. ¿Qué alimentos pueden ayudar a subir mi colesterol HDL sin medicamentos?",
-            label_visibility="collapsed",
-            key="input_duda_paciente"
-        )
-    with col_chat_btn:
-        btn_enviar_duda = st.button("Enviar Pregunta", use_container_width=True)
+    # En un formulario que se limpia al enviar: la duda no queda escrita para mandarla dos veces sin querer
+    with st.form("form_duda_paciente", clear_on_submit=True, border=False):
+        col_chat_input, col_chat_btn = st.columns([4, 1])
+        with col_chat_input:
+            pregunta_chat = st.text_input(
+                "Escribe tu duda aquí:",
+                placeholder="Ej. ¿Qué alimentos pueden ayudar a subir mi colesterol HDL sin medicamentos?",
+                label_visibility="collapsed",
+                key="input_duda_paciente"
+            )
+        with col_chat_btn:
+            btn_enviar_duda = st.form_submit_button("Enviar Pregunta", use_container_width=True)
 
     if btn_enviar_duda and pregunta_chat.strip():
         with st.spinner("LetraDeMédico está redactando una explicación clara y segura..."):

@@ -3,7 +3,6 @@ Lector local de PDFs digitales (lector_pdf.py): el motor principal no necesita G
 laboratorio. Usa los PDFs sintéticos de evaluacion/evaluar_lector_pdf.py, de respuesta conocida.
 Sin modelos ni Gemini.
 """
-import json
 import sys
 from pathlib import Path
 

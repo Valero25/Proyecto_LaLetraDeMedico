@@ -44,7 +44,7 @@ def normalizar_rango(rango_str):
     rango = str(rango_str or "").replace('≤', '<=').replace('≥', '>=')
     rango = unicodedata.normalize("NFD", rango.lower())
     rango = "".join(c for c in rango if unicodedata.category(c) != "Mn").replace(',', '.')
-    rango = re.sub(r'(\d)\s+a\s+(\d)', r'\1-\2', rango)
+    rango = re.sub(r'(\d)\s+a\s+([+-]?\d)', r'\1-\2', rango)  # "-2 a +2" -> "-2-+2"
     # Comparaciones en palabras. "o igual" incluye el límite: "Menor o igual a 200" -> "<=200"
     rango = re.sub(r'\b(?:igual\s+o\s+(?:menor|inferior)|(?:menor|inferior)\s+o\s+igual)\s+(?:de|que|a)\b', '<=', rango)
     rango = re.sub(r'\b(?:igual\s+o\s+(?:mayor|superior)|(?:mayor|superior)\s+o\s+igual)\s+(?:de|que|a)\b', '>=', rango)
@@ -56,6 +56,52 @@ def normalizar_rango(rango_str):
     # Muchos laboratorios escriben el rango con raya (–, —) o signo menos (−) en vez de guion
     rango = re.sub(r'[–—−‐‑‒]', '-', rango)
     return rango.replace(' ', '')
+
+
+# Punto como separador de miles, común en laboratorios colombianos: plaquetas "150.000 - 450.000".
+# Un grupo de miles nunca empieza en 0: "0.010" siempre es decimal.
+RE_MILES = re.compile(r'-?[1-9]\d{0,2}(?:\.\d{3})+')
+ESCALA_MILES = 500
+
+
+def leer_numero(texto):
+    """"4.5" -> 4.5; "1.500.000" -> 1500000.0 (con más de un punto solo puede ser separador de miles)."""
+    texto = str(texto).lstrip('+')
+    try:
+        return float(texto)
+    except ValueError:
+        if RE_MILES.fullmatch(texto):
+            return float(texto.replace('.', ''))
+        raise
+
+
+def reconciliar_miles(valor_txt, limites_txt):
+    """
+    (valor, [límites]) como números, a partir de sus textos ya extraídos.
+
+    Si el valor y el rango están a más de ESCALA_MILES veces de distancia y uno de los dos se puede leer con punto de
+    miles, se lee así: "250000" con "150.000 - 450.000", o "4.500" con "4500 - 11000". Sin esa diferencia de escala
+    no se toca nada ("4.500" con "0.4 - 4.0" sigue siendo 4,5). La usan la regla de estados y el indicador gráfico.
+    """
+    valor = leer_numero(valor_txt)
+    limites = [leer_numero(t) for t in limites_txt]
+
+    def fuera_de_escala(v, ls):
+        tope = max((abs(x) for x in ls), default=0)
+        return v != 0 and tope != 0 and not (1 / ESCALA_MILES <= abs(v) / tope <= ESCALA_MILES)
+
+    if not fuera_de_escala(valor, limites):
+        return valor, limites
+
+    def sin_miles(texto, numero):
+        texto = str(texto).lstrip('+')
+        return float(texto.replace('.', '')) if RE_MILES.fullmatch(texto) else numero
+
+    for v, ls in ((sin_miles(valor_txt, valor), limites),
+                  (valor, [sin_miles(t, x) for t, x in zip(limites_txt, limites)])):
+        if (v, ls) != (valor, limites) and not fuera_de_escala(v, ls):
+            return v, ls
+    return valor, limites
 
 
 # Etiquetas de los rangos con categorías ("Normal: < 5.7 Prediabetes: 5.7 - 6.4 ..."), sin tildes
@@ -156,7 +202,7 @@ def limpiar_paciente(paciente):
         edad = int(float(str(paciente.get("edad")).split()[0].replace(",", ".")))
         if 0 <= edad <= 120:
             limpio["edad"] = edad
-    except (TypeError, ValueError, IndexError):
+    except (TypeError, ValueError, IndexError, OverflowError):  # OverflowError: una edad "inf"
         pass
     return limpio
 
@@ -574,35 +620,34 @@ class LetraDeMedicoBackend:
             if (en_cruces or any(p in val_lower for p in cualitativos_enfermos)) and any(p in ref_lower for p in cualitativos_sanos):
                 return "ANORMAL"
 
-            # Extraer el valor numérico del paciente
-            valor_match = re.search(r'[\d\.]+', str(valor_str).replace(',', '.'))
+            # Extraer el valor numérico del paciente, con su signo (exceso de bases: "-2.5")
+            valor_match = re.search(r'-?[\d\.]+', re.sub(r'[–—−‐‑‒]', '-', str(valor_str).replace(',', '.')))
             if not valor_match:
                 return "DESCONOCIDO"
-            valor = float(valor_match.group())
+            valor_txt = valor_match.group()
 
             # Formatos en palabras que usan muchos laboratorios: "7 a 56", "Hasta 200", "Menor de 5.7", "Mayor de 50"
             rango_str = normalizar_rango(rango_str)
 
-            # Caso 1: Rango con guion ej. "70-99" o "4.0-5.6"
-            rango_match = re.search(r'([\d\.]+)-([\d\.]+)', rango_str)
+            # Caso 1: Rango con guion ej. "70-99", "4.0-5.6" o con negativos "-3-3", "-2-+2"
+            rango_match = re.search(r'(-?[\d\.]+)-([+-]?[\d\.]+)', rango_str)
             if rango_match:
-                min_val = float(rango_match.group(1))
-                max_val = float(rango_match.group(2))
+                valor, (min_val, max_val) = reconciliar_miles(valor_txt, rango_match.groups())
                 if valor < min_val: return "BAJO"
                 if valor > max_val: return "ALTO"
                 return "NORMAL"
-                
+
             # Caso 2: Menor que ej. "<200"; con "<=200" o "Hasta 200", el 200 todavía es normal
-            menor_match = re.search(r'<(=?)([\d\.]+)', rango_str)
+            menor_match = re.search(r'<(=?)(-?[\d\.]+)', rango_str)
             if menor_match:
-                max_val = float(menor_match.group(2))
+                valor, (max_val,) = reconciliar_miles(valor_txt, [menor_match.group(2)])
                 if valor > max_val or (valor == max_val and not menor_match.group(1)): return "ALTO"
                 return "NORMAL"
 
             # Caso 3: Mayor que ej. ">40"; con ">=40", el 40 todavía es normal
-            mayor_match = re.search(r'>(=?)([\d\.]+)', rango_str)
+            mayor_match = re.search(r'>(=?)(-?[\d\.]+)', rango_str)
             if mayor_match:
-                min_val = float(mayor_match.group(2))
+                valor, (min_val,) = reconciliar_miles(valor_txt, [mayor_match.group(2)])
                 if valor < min_val or (valor == min_val and not mayor_match.group(1)): return "BAJO"
                 return "NORMAL"
                 
@@ -827,6 +872,9 @@ class LetraDeMedicoBackend:
         resultado_multimodal, leido_con = self.leer_documento(file_bytes, mime_type, lectura)
 
         if not resultado_multimodal or "analitos" not in resultado_multimodal:
+            if leido_con == "local" and mime_type != "application/pdf":
+                return {"error": "La lectura local solo funciona con PDF digitales. Una foto o imagen necesita la "
+                                 "lectura con Gemini (OCR)."}
             if leido_con == "local":
                 return {"error": "No se pudo leer el PDF en local. Prueba la lectura con Gemini o sube el PDF "
                                  "original del laboratorio (no una foto ni un escaneo)."}

@@ -7,7 +7,7 @@ import html
 import re
 from datetime import datetime
 
-from backend import normalizar_rango
+from backend import normalizar_rango, reconciliar_miles
 
 # --- ESTILOS CSS MODERNOS PARA STREAMLIT ---
 ESTILOS_CSS = """
@@ -492,26 +492,22 @@ def calcular_gauge_html(valor_str, rango_str, estado):
     # Un rango que todavía trae etiquetas ("Hombres: ... / Mujeres: ...") no se puede dibujar sin elegir una
     if ":" in str(rango_str):
         return None
-    val_clean = str(valor_str).replace(',', '.').strip()
+    val_clean = re.sub(r'[–—−‐‑‒]', '-', str(valor_str).replace(',', '.').strip())
     # La misma normalización que la regla de estados: "7 a 56", "Hasta 200", "Menor de 5,7"...
     rng_clean = normalizar_rango(rango_str)
     val_attr = html.escape(val_clean, quote=True)
 
-    val_match = re.search(r'[\d\.]+', val_clean)
+    val_match = re.search(r'-?[\d\.]+', val_clean)  # con signo, como la regla de estados
     if not val_match:
         return None
-
-    try:
-        val = float(val_match.group())
-    except ValueError:
-        return None
+    val_txt = val_match.group()
 
     # Caso 1: Rango con guion '70 - 99' o '13.0 - 17.0'
-    m_range = re.search(r'(\d[\d\.]*)-(\d[\d\.]*)', rng_clean)
+    m_range = re.search(r'(-?\d[\d\.]*)-([+-]?\d[\d\.]*)', rng_clean)
     if m_range:
         try:
-            min_ref = float(m_range.group(1))
-            max_ref = float(m_range.group(2))
+            # La misma lectura de números que la regla (signo y punto de miles: "150.000 - 450.000")
+            val, (min_ref, max_ref) = reconciliar_miles(val_txt, m_range.groups())
             if max_ref > min_ref:
                 span = max_ref - min_ref
                 margin = span * 0.4
@@ -550,7 +546,7 @@ def calcular_gauge_html(valor_str, rango_str, estado):
     m_less = re.search(r'<\s*(=?)\s*([\d\.]+)', rng_clean)
     if m_less:
         try:
-            max_ref = float(m_less.group(2))
+            val, (max_ref,) = reconciliar_miles(val_txt, [m_less.group(2)])
             if max_ref > 0:
                 low_pct = 0
                 normal_width = 75
@@ -583,7 +579,7 @@ def calcular_gauge_html(valor_str, rango_str, estado):
     m_more = re.search(r'>\s*(=?)\s*([\d\.]+)', rng_clean)
     if m_more:
         try:
-            min_ref = float(m_more.group(2))
+            val, (min_ref,) = reconciliar_miles(val_txt, [m_more.group(2)])
             if min_ref > 0:
                 low_width = 30
                 normal_width = 70
@@ -682,6 +678,11 @@ def generar_ficha_medica_txt(tipo_examen, analitos, preguntas_seleccionadas, con
     para llevar a su próxima consulta con el médico.
     """
     fecha = datetime.now().strftime("%d/%m/%Y")
+
+    def rango_de(a):
+        # El segmento que aplicó la regla, como en la tarjeta y en la ficha PDF/PNG (no el texto con todas las categorías)
+        return a.get("rango_aplicado") or a.get("rango_referencia", "")
+
     lineas = [
         "=" * 60,
         "GUÍA PARA LA CONSULTA MÉDICA - LETRADEMÉDICO",
@@ -702,7 +703,7 @@ def generar_ficha_medica_txt(tipo_examen, analitos, preguntas_seleccionadas, con
             estado = a.get("estado", "ALTERADO").upper()
             lineas.append(
                 f" • [{estado}] {a.get('examen')}: {a.get('valor')} {a.get('unidad')} "
-                f"(Rango ref: {a.get('rango_referencia')})"
+                f"(Rango ref: {rango_de(a)})"
             )
     else:
         lineas.append(" • Todos los parámetros evaluados se encuentran dentro de los rangos de referencia.")
@@ -714,7 +715,7 @@ def generar_ficha_medica_txt(tipo_examen, analitos, preguntas_seleccionadas, con
     for a in normales:
         lineas.append(
             f" • [NORMAL] {a.get('examen')}: {a.get('valor')} {a.get('unidad')} "
-            f"(Rango: {a.get('rango_referencia')})"
+            f"(Rango: {rango_de(a)})"
         )
 
     # Los que la regla no pudo evaluar también van a la consulta: no se pierden en silencio
@@ -727,7 +728,7 @@ def generar_ficha_medica_txt(tipo_examen, analitos, preguntas_seleccionadas, con
         for a in sin_evaluar:
             lineas.append(
                 f" • [SIN EVALUAR] {a.get('examen')}: {a.get('valor')} {a.get('unidad')} "
-                f"(Rango: {a.get('rango_referencia')})"
+                f"(Rango: {rango_de(a)})"
             )
 
     lineas.append("\n" + "-" * 60)

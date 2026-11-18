@@ -3,3 +3,5 @@ google-genai==2.19.0
 streamlit==1.63.0
 python-dotenv==1.2.3
 fpdf2==2.9.0
+# Lector local de PDFs digitales (lector_pdf.py): sin él, todo PDF se manda a Gemini
+pypdf==6.21.1

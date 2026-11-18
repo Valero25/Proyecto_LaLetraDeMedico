@@ -1,0 +1,11 @@
+LetraDeMédico - medición de tiempo (GPU)
+Fecha: 2026-11-18 12:04:09
+CPU: 13th Gen Intel(R) Core(TM) i5-13420H (8 núcleos / 12 hilos)
+RAM: 15.7 GB
+GPU: NVIDIA GeForce RTX 4050 Laptop GPU, 6141 MiB, 616.92
+SO: Windows-10-10.0.26300-SP0 | Python 3.11.9
+Generador: letrademedico-qwen2.5-3b-v2-q4_k_m.gguf | n_gpu_layers = -1
+Lectura del documento: local
+Analitos procesados: 8
+Carga de modelos (una vez por sesión): 47.0 s
+TIEMPO POR EXAMEN (lectura + reglas + RAG + generador + guardrail): 19.7 s

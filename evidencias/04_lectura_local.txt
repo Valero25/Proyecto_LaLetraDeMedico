@@ -1,0 +1,13 @@
+Lectura LOCAL (lector_pdf.py, sin Gemini ni internet) del PDF real de 8 analitos (2 páginas)
+Paciente (solo lo que usa la app): {'edad': 15, 'sexo': 'M'}
+Tipo: Resultados de Laboratorio Clínico (Bioquimica y Endocrinologia)
+Analitos leídos: 8
+
+GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A ORINA | 76.7 mg/dl | ref: 60.0 - 100.0
+COLESTEROL TOTAL | 161.5 mg/dl | ref: 100.0 - 200.0. Sin riesgo: Menor de 200.0 mg/dl. Riesgo moderado: 200.0 -239.0 mg/dl. Riesgo alto: Mayor de 240 mg/dl
+COLESTEROL DE ALTA DENSIDAD | 57.0 mg/dl | ref: Sin riesgo: Mayor de 55 mg/dl. Riesgo moderado: 35 - 55 mg/dl. Alto Riesgo: Menor de 35 mg/dl
+COLESTEROL DE BAJA DENSIDAD LDL SEMIAUTOMATIZADO | 90.3 mg/dl | ref: 0.0 - 100.0. Sin riesgo: Menor de 100.0 mg/dl. Riesgo moderado: 100.0 - 129.0 mg/dl. Limite Alto: 130.0 - 159.0 mg/dl. Alto: 160.0 - 189.0 mg/dl. Muy Alto: Mayor de 190.0 mg/dl
+TRIGLICERIDOS | 71.0 mg/dl | ref: 4.0 - 200.0
+HORMONA ESTIMULANTE DEL TIROIDES ULTRASENSIBLE | 3.260 uUI/ml | ref: 0.510 - 4.300
+TIROXINA LIBRE | 1.46 ng/dl | ref: 0.98 - 1.63
+SOMATOMEDINA C FACTOR I DE CRECIMIENTO SIMILAR A LA INSULINA O I | 420.0 ng/ml | ref: 173.0 - 414.0

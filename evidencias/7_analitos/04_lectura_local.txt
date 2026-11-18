@@ -1,0 +1,16 @@
+Lector local: resultado sin nombre en la línea '215.5 mg/dL * 100 - 200'
+Lector local: resultado sin nombre en la línea '92.2 mg/dL'
+Lector local: resultado sin nombre en la línea '10.6 uUI/ml'
+Lector local: resultado sin nombre en la línea '60.9 uUI/ml'
+Lector local: el modo layout no dio una lectura confiable; se rearman las líneas por posición
+Lectura LOCAL (lector_pdf.py, sin Gemini ni internet) de laboratorio 2022.pdf
+Paciente (solo lo que usa la app): {'edad': 84, 'sexo': 'F'}
+Tipo: Resultados de Laboratorio Clínico (Bioquimica y Endocrinologia)
+
+GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A | 102.6 mg/dL | ref: 82 - 115
+GLICEMIA POST 2 HORAS | 117.7 mg/dL | ref: 
+COLESTEROL TOTAL | 215.5 mg/dL | ref: 100 - 200. Sin riesgo: Menor de 200.0 mg/dl. Riesgo moderado: 200.0 -239.0 mg/dl. Riesgo alto: Mayor de 240 mg/dl
+COLESTEROL DE ALTA DENSIDAD | 78.0 mg/dL | ref: Sin riesgo: Mayor de 65 mg/dl. Riesgo moderado: 45 - 65 mg/dl. Alto Riesgo: Menor de 45 mg/dl
+TRIGLICERIDOS | 92.2 mg/dL | ref: 4 - 200
+INSULINA CADA MUESTRA | 10.6 uUI/ml | ref: 2.6 - 24.9
+INSULINA 2 HORAS | 60.9 uUI/ml | ref: 

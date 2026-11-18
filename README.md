@@ -167,6 +167,13 @@ Todas las cifras provienen de `evaluacion/resultados/*.json` y las figuras se re
 </tr>
 </table>
 
+### Evidencias de funcionamiento
+
+La carpeta [`evidencias/`](evidencias/) reúne las pruebas de la app en uso, con su análisis en
+[`evidencias/LEEME.md`](evidencias/LEEME.md): capturas de la app con un examen real, la ficha PDF generada,
+los tiempos medidos el 2026-11-18 (**19,7 s** en GPU y **63,2 s** en CPU con el PDF real de 8 analitos), la lectura
+local de dos PDF reales con los datos personales tapados, los pesos de los modelos y el equipo de pruebas.
+
 ## 8. Fundamentos teóricos
 
 El documento [`informe/fundamentos.md`](informe/fundamentos.md) relaciona cada componente con los principios de redes neuronales del curso, ilustrando cada uno con una decisión o un resultado medido del proyecto:
@@ -275,6 +282,7 @@ Proyecto_LaLetraDeMedico/
 │   ├── rag/  guardrails/  generador/  sintetico/
 │
 ├── evaluacion/               # scripts de métricas, rúbrica y resultados en JSON
+├── evidencias/               # capturas, ficha, tiempos y PDF reales anonimizados (ver LEEME.md)
 │   └── resultados/
 │
 ├── informe/                  # fundamentos teóricos y figuras

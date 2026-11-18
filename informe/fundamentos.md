@@ -13,15 +13,32 @@ El ajuste contrastivo del modelo de embeddings (`training/rag/ajustar_embeddings
 - **Similitud:** cada consulta se acerca a su fragmento correcto de MedlinePlus en el espacio vectorial (ej. "tengo el LDL por las nubes" con la página de colesterol).
 - **Contraste:** cada consulta se aleja de un **negativo difícil**, elegido entre las confusiones medidas (HbA1c frente a hemoglobina, ALT frente a AST, sangre frente a orina), y de los demás fragmentos del lote.
 
-El material del curso describe la regla de Hebb pura como fundamentalmente inestable, por tres razones. El ajuste contrastivo resuelve dos de ellas de forma directa:
+El material del curso describe la regla de Hebb pura como fundamentalmente inestable, por tres razones. El ajuste contrastivo trata las tres:
 
 | Problema de la regla de Hebb | Cómo se trata en el proyecto |
 |---|---|
 | Sin noción de competencia | La pérdida (`MultipleNegativesRankingLoss`) es una softmax sobre las similitudes de la consulta con **todos** los fragmentos del lote. Lo que cuenta es la similitud con el positivo **en relación** con la de los negativos. Si todas suben por igual, la pérdida no cambia: un fragmento solo gana si le gana a los demás. |
 | El aprendizaje no tiene límites | La similitud es el coseno entre vectores, que siempre está entre −1 y 1, multiplicado por una escala fija de 20. Ninguna asociación puede crecer sin límite. Además, la pérdida deja de bajar cuando el positivo ya supera con holgura a los negativos. |
-| Sin reducción de pesos | **No se aplicó en el ajuste del RAG**: `SentenceTransformerTrainingArguments` usa por defecto un decaimiento de pesos (*weight decay*) de 0, y el script no lo cambió. Sí se aplica en los clasificadores de guardrails (0,01 en AdamW, sección 6), donde encoge en cada paso los pesos que no se necesitan. En el RAG, lo que evita que los pesos se alejen demasiado es la tasa de aprendizaje baja con pocas épocas (sección 8). Agregarlo es un experimento pendiente. |
+| Sin reducción de pesos | El script de ajuste ahora usa un decaimiento de pesos (*weight decay*) de 0,01 en AdamW, el mismo de los guardrails (`--weight-decay`; el valor por defecto de `SentenceTransformerTrainingArguments` es 0). Los modelos publicados se entrenaron sin él, y la sección 1.1 mide por qué la diferencia es despreciable: lo que de verdad acota los pesos es el paso de AdamW, del orden de la tasa de aprendizaje, durante pocos pasos. |
 
 **Resultado:** en los 12 analitos que el modelo nunca vio, ALIA ajustado sube de 84,4 % a 91,2 % de acierto en el primer resultado (hit@1), y e5-small de 88,8 % a 96,2 %.
+
+### 1.1 Medición: ¿crecen los pesos con el ajuste contrastivo?
+
+Si el ajuste se comportara como la regla de Hebb pura, los pesos crecerían paso a paso. `evaluacion/normas_pesos_rag.py` compara tensor por tensor los 149,7 millones de parámetros de ALIA base con los de los dos modelos ajustados (`evaluacion/resultados/fase2_normas_pesos.json`):
+
+| | ALIA ajustado `split` (78 pasos) | ALIA ajustado `completo` (114 pasos) |
+|---|---|---|
+| Norma L2 total de los pesos (base: 888,10) | 888,11 (**+0,0001 %**) | 888,11 (**+0,0002 %**) |
+| Distancia al modelo base, ‖W_ajustado − W_base‖ | 1,40 (0,16 % de ‖W_base‖) | 1,69 (0,19 % de ‖W_base‖) |
+| Tensores cuya norma crece | 84 de 134 | 96 de 134 |
+| Lo que habría encogido cada peso un weight decay de 0,01 | 0,0008 % (0,007 de norma) | 0,0011 % (0,010 de norma) |
+
+**Los pesos no crecen sin límite: se mueven, pero casi no crecen.** El modelo se desplaza 1,40 unidades de norma, mientras la norma total cambia apenas 0,001: el ajuste rota los pesos (los reorganiza) en lugar de agrandarlos. Es lo que predice la pérdida contrastiva. Con la similitud coseno, escalar un embedding no cambia la pérdida, así que el gradiente no empuja a agrandar las representaciones (el problema de Hebb "sin límites" queda resuelto por la propia pérdida).
+
+**¿Por qué el weight decay es casi inerte aquí?** AdamW aplica el decaimiento por separado: en cada paso, $w \leftarrow w - \eta_t \lambda w$. Con $\eta \le 2 \times 10^{-5}$, $\lambda = 0{,}01$ y 78 pasos, el factor total es $\prod_t (1 - \eta_t \lambda) \approx 1 - 7{,}8 \times 10^{-6}$. En cambio, Adam normaliza cada gradiente por su magnitud histórica, así que cada peso se mueve como mucho del orden de $\eta_t$ por paso, *sin importar el tamaño del gradiente*. Sumadas las tasas del calendario ($\sum_t \eta_t = 7{,}8 \times 10^{-4}$), el desplazamiento total queda acotado por unas $7{,}8 \times 10^{-4} \cdot \sqrt{1{,}5 \times 10^{8}} \approx 9{,}5$ unidades de norma; el medido es 1,40. **El límite al crecimiento lo pone el optimizador (paso acotado por la tasa de aprendizaje) y el presupuesto de pasos**, no el decaimiento: para que el weight decay pesara tanto como el aprendizaje haría falta $\lambda \cdot |w| \sim 1$, es decir, $\lambda$ del orden de 14 con pesos de magnitud típica 0,07.
+
+Lo mismo ocurre en el guardrail con MrBERT (tasa de 3 × 10⁻⁵, 228 pasos): su weight decay de 0,01 encoge cada peso cerca de un 0,003 %. Solo en la BiLSTM entrenada desde cero, con una tasa constante de 2 × 10⁻³ y unos 490 pasos, el decaimiento encoge los pesos cerca de un **1 %** y actúa como regularizador (sección 6). **Conclusión:** el weight decay importa cuando se entrena desde cero con tasas altas y muchos pasos; en el ajuste fino corto de un modelo preentrenado, la reducción de pesos la cumplen de hecho la tasa de aprendizaje baja y el número reducido de pasos (sección 8). Por eso no se reentrenaron los modelos publicados.
 
 ## 2. La neurona de McCulloch y Pitts y el filtro de palabras
 
@@ -292,14 +309,14 @@ Con esos datos, la forma más barata de bajar la pérdida es aprender una regula
 - Una guía que exige **tomar las causas del pasaje** y, si el pasaje no trae causas, no nombrar causas concretas. El profesor ve el pasaje completo de 700 caracteres.
 - Un filtro más: se descarta toda respuesta con causas sin respaldo, y entre las muestras aprobadas de un caso gana la que más causas respaldadas tiene.
 
-La predicción, coherente con todo lo anterior, es que la cifra de causas sin respaldo del v3 quede por debajo de la del modelo base. El entrenamiento y su evaluación (`evaluar_generador.py --version v3`) están pendientes; cuando estén, sus números completan esta sección.
+La predicción, coherente con todo lo anterior, es que la cifra de causas sin respaldo del v3 quede por debajo de la del modelo base. **El entrenamiento del v3 no se alcanzó a ejecutar dentro del plazo del proyecto y queda como trabajo futuro**: los datos, la guía, los filtros, los notebooks y el script de evaluación (`evaluar_generador.py --version v3`) están listos en el repositorio. La app usa el v2, y el riesgo que esta sección describe se mitiga en parte con la recuperación según el estado (sección 10.3) y se declara en las limitaciones.
 
 ## Resumen
 
 | Principio del curso | Dónde aparece en LetraDeMédico | Evidencia |
 |---|---|---|
 | Asociacionismo (4 leyes de Aristóteles) | Ajuste contrastivo con negativos difíciles | hit@1 en no vistos: 84,4 % → 91,2 % (ALIA) |
-| Hebb y su inestabilidad | Softmax (competencia) y coseno acotado (límite) en el RAG; weight decay (reducción) solo en guardrails | 2 de los 3 problemas resueltos en el RAG; el tercero queda pendiente |
+| Hebb y su inestabilidad | Softmax (competencia), coseno acotado (límite) y weight decay más paso acotado de AdamW (reducción) en el RAG | Norma de los pesos tras el ajuste: +0,0001 % (se mueven 0,16 %, pero no crecen); el weight decay de 0,01 aportaría solo 0,0008 % |
 | Neurona de McCulloch y Pitts (pesos fijos, sin aprendizaje, sin sinapsis inhibidoras) | Filtro de palabras original | F1 binario 0,219; 30 de 60 falsos positivos son el propio aviso de seguridad |
 | Perceptrón, sesgo y separabilidad lineal | TF-IDF + regresión logística (8.172 parámetros) | F1 binario 0,977; falla en los casos no lineales |
 | Funciones de activación | Sigmoide y tanh en la LSTM, ReLU en su cabeza, GeGLU y SiLU en MrBERT, softmax de salida | Elección justificada por capa |
@@ -311,7 +328,7 @@ La predicción, coherente con todo lo anterior, es que la cifra de causas sin re
 | Ajuste fino eficiente: LoRA + cuantización (QLoRA) | Generador Qwen2.5-3B, 1 % de parámetros entrenables | Cobertura 68,7 % → 99,3 %; estado consistente 69,7 % → 99,4 %; oraciones riesgosas 6,4 % → 0,5 %; validación siempre a la baja |
 | Aprendizaje supervisado: el estudiante imita la distribución de sus datos | Generador v2: mismos hiperparámetros, dataset filtrado (421 frente a 555 ejemplos) | Menciona el valor 68,5 % → 79,3 %; causas repetidas 13,4 % → 5,3 %; pérdida de validación 0,538 → 0,546 (la pérdida no lo ve) |
 | Cambio de distribución en la entrada (contexto del RAG) | Pasaje según el estado del analito | Fragmento que explica el resultado 15,9 % → 95,5 %; desaparece la causa inventada de la AST |
-| Aprendizaje por atajos: el estudiante imita también cómo se relacionan su entrada y su salida | Diagnóstico de causas sin respaldo en el pasaje y datos del generador v3 | Causas sin respaldo: base 50,9 % → v1 58,7 % → v2 64,8 %; v3 pendiente de entrenar |
+| Aprendizaje por atajos: el estudiante imita también cómo se relacionan su entrada y su salida | Diagnóstico de causas sin respaldo en el pasaje y datos del generador v3 | Causas sin respaldo: base 50,9 % → v1 58,7 % → v2 64,8 %; el v3 queda como trabajo futuro |
 | Retropropagación y regla de la cadena | GradCache para entrenar ALIA en la T4; retropropagación a través del tiempo en la BiLSTM | Lote efectivo de 32 con memoria de 8 |
 
 ## Referencias

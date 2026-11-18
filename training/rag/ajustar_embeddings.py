@@ -126,6 +126,9 @@ def main():
     parser.add_argument("--variante", choices=["split", "completo"], required=True)
     parser.add_argument("--epocas", type=int, default=2)
     parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--weight-decay", type=float, default=0.01,
+                        help="Decaimiento de pesos de AdamW, el mismo que los guardrails. Los modelos publicados se "
+                             "entrenaron con 0; evaluacion/normas_pesos_rag.py mide por qué la diferencia es despreciable")
     parser.add_argument("--batch", type=int, default=32)
     parser.add_argument("--max-seq", type=int, default=384, help="Truncado durante el entrenamiento, por velocidad")
     parser.add_argument("--limite", type=int, help="Usar solo los primeros N ejemplos (prueba rápida del script)")
@@ -161,6 +164,7 @@ def main():
         num_train_epochs=args.epocas,
         per_device_train_batch_size=args.batch,
         learning_rate=args.lr,
+        weight_decay=args.weight_decay,  # el valor por defecto de SentenceTransformerTrainingArguments es 0
         warmup_steps=0.1,  # En transformers 5 un float es la proporción de pasos de calentamiento
         # Sin duplicados en un batch: dos consultas del mismo fragmento serían falsos negativos entre sí
         batch_sampler=BatchSamplers.NO_DUPLICATES,
@@ -191,6 +195,7 @@ def main():
     with open(salida / "entrenamiento.json", "w", encoding="utf-8") as f:
         json.dump({"modelo_base": config["nombre"], "variante": args.variante, "ejemplos": len(anclas),
                    "analitos_entrenamiento": sorted(permitidos), "epocas": args.epocas, "lr": args.lr,
+                   "weight_decay": args.weight_decay,
                    "batch": args.batch, "mini_batch": args.mini_batch, "perdida": type(perdida).__name__,
                    "max_seq_entrenamiento": args.max_seq, "minutos": round(minutos, 1),
                    "perdida_por_paso": [h for h in entrenador.state.log_history if "loss" in h]},

@@ -6,7 +6,7 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
 ![PyTorch](https://img.shields.io/badge/PyTorch-QLoRA-ee4c2c?logo=pytorch)
 ![Pruebas](https://img.shields.io/badge/pruebas-161%20passed-brightgreen)
-![Estado](https://img.shields.io/badge/estado-informe%20en%20curso-yellow)
+![Estado](https://img.shields.io/badge/estado-entregado-brightgreen)
 
 > ⚠️ **Aviso.** LetraDeMédico es un proyecto académico. **No diagnostica ni reemplaza al médico**: su propósito es informar al paciente y prepararlo para la consulta.
 
@@ -25,7 +25,7 @@
 9. [Reproducibilidad](#9-reproducibilidad)
 10. [Estructura del repositorio](#10-estructura-del-repositorio)
 11. [Limitaciones y consideraciones éticas](#11-limitaciones-y-consideraciones-éticas)
-12. [Trabajo en curso y futuro](#12-trabajo-en-curso-y-futuro)
+12. [Trabajo futuro](#12-trabajo-futuro)
 13. [Autoría y referencias](#13-autoría-y-referencias)
 
 ---
@@ -131,7 +131,7 @@ El generador se entrena por **destilación**: modelos profesores más grandes (g
 
 - **v1:** primer ajuste con todas las respuestas válidas.
 - **v2 (por defecto en la app):** menos datos pero más limpios; mejora en todas las métricas, aunque la pérdida de validación no lo refleja (ver `informe/fundamentos.md`, §10.2).
-- **v3 (en curso):** pasajes recuperados según el estado del analito y guía que exige tomar las causas del pasaje (ver [§12](#12-trabajo-en-curso-y-futuro)).
+- **v3 (trabajo futuro):** pasajes recuperados según el estado del analito y guía que exige tomar las causas del pasaje. Los datos y notebooks están listos, pero el entrenamiento no se alcanzó a ejecutar en el plazo del proyecto (ver [§12](#12-trabajo-futuro)).
 
 ## 7. Resultados
 
@@ -173,7 +173,7 @@ El documento [`informe/fundamentos.md`](informe/fundamentos.md) relaciona cada c
 
 | Principio | Dónde aparece en el proyecto |
 |---|---|
-| Asociacionismo y regla de Hebb | Ajuste contrastivo del RAG (contigüidad, frecuencia, similitud y contraste) |
+| Asociacionismo y regla de Hebb | Ajuste contrastivo del RAG (contigüidad, frecuencia, similitud y contraste); medición de normas: los pesos se mueven 0,16 % pero no crecen |
 | Neurona de McCulloch-Pitts | El filtro de palabras del guardrail original como unidad de umbral sin aprendizaje |
 | Perceptrón y separabilidad lineal | Línea base TF-IDF del guardrail |
 | Funciones de activación | Capas de los clasificadores y del generador |
@@ -243,6 +243,7 @@ python -m pytest tests -q            # esperado: 161 passed (sin modelos ni Gemi
 ```bash
 python evaluacion/evaluar_reglas.py          # Fase 1
 python evaluacion/evaluar_rag.py             # Fase 2
+python evaluacion/normas_pesos_rag.py        # Fase 2: normas de los pesos (Hebb y weight decay)
 python evaluacion/evaluar_guardrails.py      # Fase 3
 python evaluacion/evaluar_generador.py       # Fase 4
 python evaluacion/evaluar_lector_pdf.py      # Fase 5
@@ -299,16 +300,18 @@ Proyecto_LaLetraDeMedico/
 - **Uso de datos de terceros.** Las salidas de Gemini se usan **solo para evaluar**, nunca para entrenar, conforme a sus términos de uso.
 - **Privacidad.** Con el motor propio, un PDF digital no sale del equipo del usuario.
 
-## 12. Trabajo en curso y futuro
+## 12. Trabajo futuro
 
-**Generador v3 (datos preparados, entrenamiento pendiente).** El diagnóstico con `verificacion.causas_sin_respaldo` mostró que el ajuste fino **aumentó** la proporción de causas sin respaldo en el pasaje (Qwen base 50,9 %; v1 58,7 %; v2 64,8 %): el estudiante aprendió a escribir siempre causas, no a tomarlas del pasaje. El v3 ataca el problema desde los datos:
+**Generador v3 (datos y notebooks listos; el entrenamiento no se alcanzó a ejecutar en el plazo del proyecto).** El diagnóstico con `verificacion.causas_sin_respaldo` mostró que el ajuste fino **aumentó** la proporción de causas sin respaldo en el pasaje (Qwen base 50,9 %; v1 58,7 %; v2 64,8 %): el estudiante aprendió a escribir siempre causas, no a tomarlas del pasaje. El v3 ataca el problema desde los datos:
 
 - `preparar_casos.py --version v3` → `data/generador/casos_v3.jsonl`: los mismos 1.250 casos con los pasajes que usa la app (alias, umbral y fragmento según el estado).
 - `GUIA_PROFESOR_V3` (`prompt.py`): las causas deben salir del pasaje; si el pasaje no las trae, no se nombran causas concretas.
 - `profesor_v3_colab.ipynb` y `qlora_v3_colab.ipynb`: generación con el profesor (3 muestras por caso) y entrenamiento + exportación a GGUF.
 - `generar_respuestas_gguf.py` y `evaluar_generador.py --version v3`: evaluación comparativa de v1, v2 y v3 con los mismos GGUF que usa la app.
 
-**Futuro.** Anotación humana del guardrail en texto real, decaimiento de pesos en el ajuste del RAG, ampliación de la base de conocimiento y validación con más laboratorios.
+**Otras líneas.** Anotación humana del guardrail en texto real, calibración de sus probabilidades (*temperature scaling*), OCR local para fotos y PDF escaneados (hoy dependen de Gemini), ampliación de la base de conocimiento y validación con más laboratorios.
+
+**Decaimiento de pesos en el RAG (resuelto).** El ajuste contrastivo ahora usa `--weight-decay 0.01`. La medición de normas (`evaluacion/normas_pesos_rag.py`) muestra que en este ajuste corto su efecto es despreciable (0,0008 % por peso), por lo que los modelos publicados no se reentrenaron (`informe/fundamentos.md`, §1.1).
 
 ## 13. Autoría y referencias
 

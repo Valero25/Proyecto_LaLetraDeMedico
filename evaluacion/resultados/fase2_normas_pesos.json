@@ -1,0 +1,201 @@
+{
+  "modelo_base": "SINAI/ALIA-MrBERT-es-biomedical-embeddings",
+  "parametros": 149653248,
+  "norma_base": 888.104339797608,
+  "modelos": {
+    "alia-ajustado-split": {
+      "tensores_comparados": 134,
+      "tensores_distintos": [],
+      "norma_ajustado": 888.1052302492337,
+      "cambio_norma_total": 1.0026430294973291e-06,
+      "cambio_relativo_total": 0.0015746338548313036,
+      "norma_del_cambio": 1.3984391600679174,
+      "tensores_que_crecen": 84,
+      "mayores_cambios_relativos": [
+        {
+          "tensor": "layers.0.attn.Wo.weight",
+          "norma_base": 26.576478237228805,
+          "norma_ajustado": 26.576089384153832,
+          "cambio_norma": -1.4631474926902499e-05,
+          "cambio_relativo": 0.003689299654845141
+        },
+        {
+          "tensor": "layers.1.attn.Wo.weight",
+          "norma_base": 32.48442559898481,
+          "norma_ajustado": 32.48460755484301,
+          "cambio_norma": 5.601326015396266e-06,
+          "cambio_relativo": 0.0029656709985268373
+        },
+        {
+          "tensor": "layers.2.attn.Wo.weight",
+          "norma_base": 35.75995735163402,
+          "norma_ajustado": 35.76003072700073,
+          "cambio_norma": 2.051886303696616e-06,
+          "cambio_relativo": 0.0026917920736266505
+        },
+        {
+          "tensor": "layers.3.attn.Wo.weight",
+          "norma_base": 37.51756936904533,
+          "norma_ajustado": 37.51776392315484,
+          "cambio_norma": 5.185680010121849e-06,
+          "cambio_relativo": 0.002549552348867979
+        },
+        {
+          "tensor": "layers.4.attn.Wo.weight",
+          "norma_base": 38.97814122231565,
+          "norma_ajustado": 38.9783359147484,
+          "cambio_norma": 4.994913216599655e-06,
+          "cambio_relativo": 0.0024180921912947888
+        }
+      ],
+      "mayores_crecimientos": [
+        {
+          "tensor": "layers.4.mlp_norm.weight",
+          "norma_base": 7.951683544231631,
+          "norma_ajustado": 7.952602037317741,
+          "cambio_norma": 0.00011550926052327008,
+          "cambio_relativo": 0.000435379937742172
+        },
+        {
+          "tensor": "layers.1.attn_norm.weight",
+          "norma_base": 11.35779987931576,
+          "norma_ajustado": 11.358412986875212,
+          "cambio_norma": 5.398119054456932e-05,
+          "cambio_relativo": 0.00030553096645684596
+        },
+        {
+          "tensor": "layers.3.mlp_norm.weight",
+          "norma_base": 7.637271956966108,
+          "norma_ajustado": 7.637580144472362,
+          "cambio_norma": 4.035308785521326e-05,
+          "cambio_relativo": 0.00042862391683249875
+        },
+        {
+          "tensor": "layers.1.mlp_norm.weight",
+          "norma_base": 7.509160627833781,
+          "norma_ajustado": 7.509319034088005,
+          "cambio_norma": 2.1095068020886917e-05,
+          "cambio_relativo": 0.0004707910449823432
+        },
+        {
+          "tensor": "layers.21.attn_norm.weight",
+          "norma_base": 26.940560551045913,
+          "norma_ajustado": 26.941128435514415,
+          "cambio_norma": 2.107916304956591e-05,
+          "cambio_relativo": 0.0001430564048067747
+        }
+      ],
+      "weight_decay_hipotetico": {
+        "0.01": {
+          "factor": 0.9999922000298994,
+          "reduccion_relativa": 7.799970100585973e-06,
+          "reduccion_norma": 0.006927187296621988,
+          "pasos": 78
+        },
+        "0.1": {
+          "factor": 0.9999220029898785,
+          "reduccion_relativa": 7.799701012145555e-05,
+          "reduccion_norma": 0.06926948318010262,
+          "pasos": 78
+        }
+      }
+    },
+    "alia-ajustado-completo": {
+      "tensores_comparados": 134,
+      "tensores_distintos": [],
+      "norma_ajustado": 888.1059493168912,
+      "cambio_norma_total": 1.8123087694396772e-06,
+      "cambio_relativo_total": 0.0019004700385791726,
+      "norma_del_cambio": 1.6878156889174907,
+      "tensores_que_crecen": 96,
+      "mayores_cambios_relativos": [
+        {
+          "tensor": "layers.0.attn.Wo.weight",
+          "norma_base": 26.576478237228805,
+          "norma_ajustado": 26.576125893684896,
+          "cambio_norma": -1.3257721386713272e-05,
+          "cambio_relativo": 0.004213827091490008
+        },
+        {
+          "tensor": "layers.1.attn.Wo.weight",
+          "norma_base": 32.48442559898481,
+          "norma_ajustado": 32.48462485127432,
+          "cambio_norma": 6.133779059909176e-06,
+          "cambio_relativo": 0.00344390912553612
+        },
+        {
+          "tensor": "layers.2.attn.Wo.weight",
+          "norma_base": 35.75995735163402,
+          "norma_ajustado": 35.76012569713085,
+          "cambio_norma": 4.70765373616538e-06,
+          "cambio_relativo": 0.003177553389226336
+        },
+        {
+          "tensor": "layers.3.attn.Wo.weight",
+          "norma_base": 37.51756936904533,
+          "norma_ajustado": 37.51769324693597,
+          "cambio_norma": 3.3018634394571315e-06,
+          "cambio_relativo": 0.0029824025892466162
+        },
+        {
+          "tensor": "layers.4.attn.Wo.weight",
+          "norma_base": 38.97814122231565,
+          "norma_ajustado": 38.97821489046909,
+          "cambio_norma": 1.889986313621043e-06,
+          "cambio_relativo": 0.002864134739907269
+        }
+      ],
+      "mayores_crecimientos": [
+        {
+          "tensor": "layers.4.mlp_norm.weight",
+          "norma_base": 7.951683544231631,
+          "norma_ajustado": 7.9521721990725425,
+          "cambio_norma": 6.14530040327849e-05,
+          "cambio_relativo": 0.0004905060585191734
+        },
+        {
+          "tensor": "layers.1.mlp_norm.weight",
+          "norma_base": 7.509160627833781,
+          "norma_ajustado": 7.509541411766842,
+          "cambio_norma": 5.070925392779205e-05,
+          "cambio_relativo": 0.0005171940841189905
+        },
+        {
+          "tensor": "layers.18.mlp_norm.weight",
+          "norma_base": 16.806360223799665,
+          "norma_ajustado": 16.807066554084777,
+          "cambio_norma": 4.20275583592456e-05,
+          "cambio_relativo": 0.00029632853214257995
+        },
+        {
+          "tensor": "layers.10.mlp_norm.weight",
+          "norma_base": 11.806484628028107,
+          "norma_ajustado": 11.806903936774711,
+          "cambio_norma": 3.5515122393740164e-05,
+          "cambio_relativo": 0.00035215589090725
+        },
+        {
+          "tensor": "layers.12.attn_norm.weight",
+          "norma_base": 19.434063173221954,
+          "norma_ajustado": 19.434621993958434,
+          "cambio_norma": 2.8754704124328396e-05,
+          "cambio_relativo": 0.00022980131361812934
+        }
+      ],
+      "weight_decay_hipotetico": {
+        "0.01": {
+          "factor": 0.9999886000642194,
+          "reduccion_relativa": 1.1399935780587178e-05,
+          "reduccion_norma": 0.010124332440153504,
+          "pasos": 114
+        },
+        "0.1": {
+          "factor": 0.999886006421728,
+          "reduccion_relativa": 0.00011399357827202028,
+          "reduccion_norma": 0.10123819157243952,
+          "pasos": 114
+        }
+      }
+    }
+  }
+}

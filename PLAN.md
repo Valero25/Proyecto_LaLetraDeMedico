@@ -14,7 +14,7 @@
 
 ## Estado actual
 
-**Fase en curso:** Fase 6 (informe). La app funciona de punta a punta con los tres modelos propios, verificada con un PDF real; el generador corre en GPU en ~28 s por examen. Modelos en la app: `alia-ajustado-completo` + alias (RAG), `mrbert-biomed-v2` (guardrail) y Qwen2.5-3B + QLoRA en GGUF (generador). Alcance: solo exámenes de sangre.
+**Estado:** proyecto entregado (2026-11-17); el generador v3 queda como trabajo futuro. La app funciona de punta a punta con los tres modelos propios, verificada con un PDF real; el generador corre en GPU en ~28 s por examen. Modelos en la app: `alia-ajustado-completo` + alias (RAG), `mrbert-biomed-v2` (guardrail) y Qwen2.5-3B + QLoRA en GGUF (generador). Alcance: solo exámenes de sangre.
 
 | Fase | Estado |
 |---|---|
@@ -24,7 +24,7 @@
 | 3. Clasificador de guardrails | ✅ Terminada (falta la revisión del equipo) |
 | 4. Fine-tuning QLoRA del generador | ✅ Terminada (falta la línea base de Gemini y la revisión del equipo) |
 | 5. Integración en la app | ✅ Terminada (falta la rúbrica humana contra el modo Gemini) |
-| 6. Informe | 🟡 En curso |
+| 6. Informe | ✅ Terminada (falta ensayar la demo con el equipo) |
 
 Leyenda: ✅ terminada · 🟡 en curso · ⬜ pendiente
 
@@ -422,7 +422,7 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
     - Queda una muletilla del generador: "una condición metabólica" se repite en LDL, triglicéridos y AST. No viene del pasaje.
     - **Causa de fondo:** el v1 y el v2 se entrenaron con pasajes buscados solo por nombre, así que aún no aprovechan del todo un fragmento de causas. Un v3 entrenado con los pasajes según el estado lo atacaría desde los datos.
   - **Pruebas:** dos nuevas en `test_pdf_real.py`, sin modelos. **159 passed.**
-- [ ] **Generador v3: causas tomadas del pasaje (datos preparados el 2026-11-04).** Mismo modelo y mismos hiperparámetros; cambian los pasajes y las respuestas de referencia.
+- [ ] **Generador v3: causas tomadas del pasaje (datos preparados el 2026-11-04; queda como trabajo futuro, no se alcanzó a entrenar en el plazo).** Mismo modelo y mismos hiperparámetros; cambian los pasajes y las respuestas de referencia.
   - **Diagnóstico** (`verificacion.causas_sin_respaldo`): oraciones de causas de exámenes alterados cuyas causas concretas no están en el pasaje. Es una aproximación léxica, por raíz de 5 letras, que no reconoce sinónimos.
 
     | Quién escribe | Causas sin respaldo en el pasaje |
@@ -591,11 +591,12 @@ FN = frases riesgosas que pasan; FP = frases informativas marcadas.
   - 6 pruebas nuevas, con los dos PDFs reales como regresión. **152 passed.**
 - [ ] Comparar contra el MODO gemini en los mismos exámenes (rúbrica humana).
 
-## Fase 6: informe 🟡
+## Fase 6: informe ✅
 
 - [x] **Figuras** (`informe/figuras.py` → `informe/figuras/`, 2026-11-02): RAG (hit@1 total y consultas manuales), guardrail (sintético frente a texto real, con las riesgosas que detecta cada modelo), generador base frente a ajustado, curvas de aprendizaje (QLoRA y BiLSTM) y velocidad. Se generan desde los JSON de `evaluacion/resultados/`; las curvas se copian a `evaluacion/resultados/curvas.json` para no depender de `models/`. Paleta validada para daltonismo y valores escritos en cada barra.
 - [x] **README** reescrito: qué hace, alcance (solo sangre), arquitectura con diagrama, tabla de resultados, figuras, instalación en CPU y GPU, estructura y limitaciones.
-- [ ] Revisión final del equipo: leer el README y `fundamentos.md` completos y ensayar la demo.
+- [x] Revisión final de `README.md` y `fundamentos.md` (2026-11-17): cifras contrastadas con `evaluacion/resultados/*.json` y con el código (p. ej., MrBERT-biomed: 307,6 M parámetros; ALIA: 149,7 M). Se corrigió la sección 1 (el weight decay de los transformers es casi inerte, ver 1.1), se agregaron la sección 10.4 y las referencias, y el README pasó a las cifras del generador v2.
+- [ ] Ensayar la demo con el equipo.
 - [x] `informe/fundamentos.md`: relaciona cada principio del curso con un resultado medido del proyecto. Se revisó contra el PDF del curso (*PTIA Principios NN*) y contra el código el 2026-10-18.
 
 ### Cobertura de los temas del curso
@@ -607,7 +608,7 @@ Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega
 | Asociacionismo, 4 leyes de Aristóteles (4-6) | Ajuste contrastivo del RAG | 1 |
 | Conexionismo: Hartley, Bain (7-11) | El conocimiento está en las conexiones (pesos) | 1 |
 | McCulloch y Pitts, sinapsis excitadora e inhibidora (12-13) | Filtro de palabras original | 2 |
-| Hebb y su inestabilidad (14-15) | Softmax, coseno acotado y weight decay | 1 |
+| Hebb y su inestabilidad (14-15) | Softmax, coseno acotado, weight decay y medición de normas de los pesos | 1 y 1.1 |
 | Perceptrón, sesgo como peso, convergencia y separabilidad (16-41) | TF-IDF + regresión logística | 3 |
 | Funciones de activación: escalón, signo, sigmoide, tanh, ReLU (18, 42-44) | LSTM, cabezas, MrBERT | 4 |
 | Red neuronal y conteo de neuronas, pesos y parámetros (45-46) | Red propia BiLSTM | 5 |
@@ -620,7 +621,7 @@ Fuente: *PTIA Principios NN*, 93 diapositivas. **Regla:** cada fase nueva agrega
 | Ajuste fino, calidad de datos y cambio de distribución en la entrada | Generador v2, RAG según el estado y diagnóstico del v3 (causas sin respaldo) | 10.2, 10.3 y 10.4 |
 
 **Pendiente teórico:**
-- Agregar weight decay al ajuste del RAG. Hoy vale 0, así que el problema de Hebb "sin reducción de pesos" queda sin resolver ahí.
+- [x] ~~Agregar weight decay al ajuste del RAG~~: hecho (2026-11-17). `ajustar_embeddings.py --weight-decay` (0,01 por defecto, registrado en `entrenamiento.json`). `evaluacion/normas_pesos_rag.py` → `fase2_normas_pesos.json`: tras el ajuste, la norma de los pesos de ALIA cambia +0,0001 % y la distancia al base es 0,16 %; un weight decay de 0,01 los habría encogido solo 0,0008 %. Con AdamW, el paso por peso está acotado por la tasa de aprendizaje, y eso, más los pocos pasos, es lo que limita el crecimiento. No se reentrenó: la diferencia es despreciable (`fundamentos.md`, 1.1).
 - [x] ~~La pérdida ponderada por clase en guardrails (sección 7)~~: hecha; no mejora (ver 7.1). Queda la calibración (temperature scaling).
 - [x] ~~Las curvas de aprendizaje como gráfica~~: hecha (`informe/figuras/fig4_curvas.png`).
 

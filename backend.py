@@ -364,7 +364,8 @@ class LetraDeMedicoBackend:
         modo "propio" (PRINCIPAL y por defecto): los modelos entrenados por el equipo (ver modelos_propios.py).
         modo "gemini" (segunda opción): el sistema original (RAG por subcadena, Gemini redacta, filtro de
         palabras), que se conserva como línea base de comparación y como respaldo si faltan los modelos.
-        La lectura del documento (OCR + NER) sigue siendo de Gemini en ambos modos.
+        La lectura del documento es igual en ambos modos (ver leer_documento): un PDF digital se lee en local
+        (lector_pdf.py); solo las fotos y los PDF escaneados, que no tienen capa de texto, necesitan Gemini (OCR).
         `modelos` permite inyectar {"rag", "generador", "guardrail"} ya cargados (la app los cachea; los tests usan dobles).
         """
         self.modo = modo or os.environ.get("MODO", "propio")

@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.63-red?logo=streamlit)
 ![PyTorch](https://img.shields.io/badge/PyTorch-QLoRA-ee4c2c?logo=pytorch)
-![Pruebas](https://img.shields.io/badge/pruebas-161%20passed-brightgreen)
+![Pruebas](https://img.shields.io/badge/pruebas-178%20passed-brightgreen)
 ![Estado](https://img.shields.io/badge/estado-entregado-brightgreen)
 
 > ⚠️ **Aviso.** LetraDeMédico es un proyecto académico. **No diagnostica ni reemplaza al médico**: su propósito es informar al paciente y prepararlo para la consulta.
@@ -42,7 +42,7 @@ El sistema original dependía por completo de una API externa (Gemini). Este tra
 | **Guardrail** | `BSC-LT/MrBERT-biomed` | *Fine-tuning* de clasificación en 3 clases |
 | **Generador** | `Qwen2.5-3B-Instruct` | QLoRA (4 bits, r = 16) con destilación desde modelos profesores; exportado a GGUF Q4_K_M |
 
-**Hallazgos principales.** Frente al sistema original, el RAG propio pasa de 5,0 % a **92,5 %** de acierto en el primer resultado con consultas coloquiales; el guardrail pasa de una F1 de 0,219 a **0,991** en analitos no vistos; y el generador ajustado respeta el estado calculado en el **99,4 %** de los casos (69,7 % el modelo base), con solo un **2,7 %** de respuestas que contienen alguna oración riesgosa (41,8 % el modelo base). Un PDF digital se procesa **de principio a fin en local**, sin servicios externos.
+**Hallazgos principales.** Frente al sistema original, el RAG propio pasa de 5,0 % a **92,5 %** de acierto en el primer resultado con consultas coloquiales; el guardrail pasa de una F1 de 0,219 a **0,989** en analitos no vistos; y el generador ajustado respeta el estado calculado en el **99,4 %** de los casos (69,7 % el modelo base), con solo un **2,7 %** de respuestas que contienen alguna oración riesgosa (41,8 % el modelo base). Un PDF digital se procesa **de principio a fin en local**, sin servicios externos.
 
 ## 2. Planteamiento del problema
 
@@ -144,7 +144,7 @@ Todas las cifras provienen de `evaluacion/resultados/*.json` y las figuras se re
 | RAG: acierto en el primer resultado (hit@1), consultas coloquiales (40) | 5,0 % | **92,5 %** |
 | RAG: hit@1 en analitos nunca vistos en entrenamiento | 0,0 % | **91,2 %** |
 | RAG: fragmento correcto según el estado del analito | 15,9 % (búsqueda solo por nombre) | **95,5 %** |
-| Guardrail: F1 binaria en frases de analitos no vistos | 0,219 | **0,991** |
+| Guardrail: F1 binaria en frases de analitos no vistos | 0,219 | **0,989** |
 | Guardrail: falsos positivos en texto real (166 frases informativas) | 1 (sin detectar ninguna riesgosa) | **3** |
 | Generador v2: respeta el estado calculado (150 casos) | 69,7 % (Qwen base) | **99,4 %** |
 | Generador v2: menciona el valor de los exámenes alterados | 10,7 % (Qwen base) | **79,3 %** |
@@ -235,7 +235,7 @@ Si falta alguno, la app ofrece solo el motor Gemini e indica cuál falta. Las in
 
 ```bash
 streamlit run app.py                 # http://localhost:8501
-python -m pytest tests -q            # esperado: 161 passed (sin modelos ni Gemini)
+python -m pytest tests -q            # esperado: 178 passed 5 skipped (sin modelos ni Gemini)
 ```
 
 ### 9.5 Reproducir las evaluaciones
@@ -282,7 +282,7 @@ Proyecto_LaLetraDeMedico/
 │   ├── figuras.py
 │   └── figuras/
 │
-├── tests/                    # 161 pruebas con pytest
+├── tests/                    # 183 pruebas con pytest
 ├── models/                   # pesos (no versionados)
 ├── assets/                   # recursos de la interfaz
 └── PLAN.md                   # plan, decisiones, experimentos y bitácora

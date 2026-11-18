@@ -10,6 +10,8 @@ import random
 import sys
 from pathlib import Path
 
+import pytest
+
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "training" / "guardrails"))
 sys.path.insert(0, str(RAIZ / "evaluacion"))
@@ -76,6 +78,7 @@ def test_kappa_cohen():
 
 
 def test_red_propia_tokeniza_y_codifica():
+    pytest.importorskip("torch")  # solo se instala con requirements-train.txt
     from red_propia import PAD, UNK, codificar, construir_vocabulario, tokenizar
     assert tokenizar("¡Tú tienes ANEMIA, según el examen!") == ["tú", "tienes", "anemia", "según", "el", "examen"]
     vocab = construir_vocabulario(["tu valor es alto", "tu valor es normal"])  # solo palabras con frecuencia >= 2
@@ -87,6 +90,7 @@ def test_red_propia_tokeniza_y_codifica():
 
 def test_red_propia_ignora_el_relleno():
     """La misma frase debe dar la misma salida sola o en un lote con frases más largas."""
+    pytest.importorskip("torch")
     import torch
     from red_propia import ClasificadorBiLSTM, codificar, construir_vocabulario
 
